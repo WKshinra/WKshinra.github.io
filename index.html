@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>呼吸器の疑似症例トレーニング</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --safranin:#C0396B;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --safranin:#F08AAE;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --safranin:#F08AAE;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+.wrap{max-width:640px;margin:0 auto;padding:40px 20px 32px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8.5vw,2.8rem);line-height:1.3;margin:0}
+.motif{display:block;width:150px;height:auto;margin:16px 0 18px}
+.motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
+.lead{color:var(--muted);margin:0 0 28px}
+.cases{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.cases li{border-bottom:1px solid var(--line)}
+.cases a{display:block;padding:20px 12px 20px 4px;color:inherit;text-decoration:none;border-radius:6px}
+.cases a:hover{background:var(--violet-soft)}
+.cases a:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.kind{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6}
+.cases h2{font-family:var(--serif);font-weight:600;font-size:1.45rem;line-height:1.4;margin:8px 0 4px}
+.cases p{margin:0}
+.meta{color:var(--muted);font-size:.85rem;margin-top:6px !important}
+.notes{margin:28px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.85rem;line-height:1.7}
+.notes li{margin:0 0 6px}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>呼吸器の<br>疑似症例トレーニング</h1>
+  <svg class="motif" viewBox="0 0 150 20" aria-hidden="true">
+    <g class="v" transform="translate(12 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
+    <g class="s" transform="translate(44 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
+    <g class="v" transform="translate(76 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
+    <g class="s" transform="translate(108 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
+    <g class="v" transform="translate(140 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
+  </svg>
+  <p class="lead">医学生と初期研修医のための、ゲーム形式の症例演習です。好きな症例を選んで始めてください。</p>
+
+  <ul class="cases">
+    <li><a href="respiratory_challenge.html">
+      <span class="kind">クイズ</span>
+      <h2>呼吸器感染症チャレンジ</h2>
+      <p>市中肺炎、非定型肺炎、結核、誤嚥性肺炎などを13問で。研修医の5日間をたどるストーリーモードと、ライフ制のチャレンジモードがあります。</p>
+      <p class="meta">全13問、10〜15分</p>
+    </a></li>
+    <li><a href="pneumococcal_course.html">
+      <span class="kind">入院経過</span>
+      <h2>肺炎球菌肺炎 入院の7日間</h2>
+      <p>70歳男性の主治医として、初期治療、72時間目の効果判定、感受性に基づく抗菌薬の見直し、退院前の評価までを経験します。</p>
+      <p class="meta">全13問＋入院中の出来事、20〜30分</p>
+    </a></li>
+    <li><a href="asthma_course.html">
+      <span class="kind">入院経過</span>
+      <h2>気管支喘息発作 入院の5日間</h2>
+      <p>深夜の救急外来に来た52歳女性の発作を、PEFと wheezes の変化を追いながら退院まで診ます。</p>
+      <p class="meta">全14問＋入院中の出来事、20〜30分</p>
+    </a></li>
+  </ul>
+
+  <ul class="notes">
+    <li>すべて学習用の架空症例です。実際の診療では、最新のガイドラインと施設の方針を確認してください。</li>
+    <li>得点や自己ベストは、お使いの端末のブラウザにだけ保存されます。</li>
+    <li>効果音が出ます。音を出したくない場合は、各症例の画面で効果音をオフにできます。</li>
+  </ul>
+</main>
+</body>
+</html>
