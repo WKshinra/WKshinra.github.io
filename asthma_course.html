@@ -1154,6 +1154,7 @@ function newGame(ev){
     });
   }
   hud.hidden = false;
+  G.log = []; G.startedAt = Date.now();
   $("#score").textContent = "0";
   renderMeters(0, 0); setMuteLabel();
   renderStep();
@@ -1291,6 +1292,7 @@ function answer(step, oi, btn){
   const q = QMAP[step.id];
   const chosen = q.options[oi], ok = !!chosen.correct, fx = chosen.fx || {};
   const bonus = Math.round(SPEED_MAX * Math.max(0, 1 - (performance.now() - G.t0) / 1000 / G.limit));
+  (G.log = G.log || []).push({ qid: q.id, category: q.category, question: q.question, ok, chosen: chosen.text, seconds: Math.round((performance.now() - G.t0) / 100) / 10 });
 
   app.querySelectorAll(".opt").forEach(b => {
     const o = q.options[+b.dataset.oi]; b.disabled = true;
@@ -1379,12 +1381,24 @@ function renderResult(){
     <h2>入院中の出来事</h2>
     ${G.events.length ? `<ul class="evlog">${G.events.map(e => `<li><b>${e.when}：${e.variant}</b><span>${e.total}問中${e.right}問正解、入院 +${e.delay}日</span></li>`).join("")}</ul>` : `<p class="empty-note">${G.evMode === "forced" ? "指導用の設定で、出来事は起こしませんでした。" : "今回は大きな出来事は起きませんでした。"}</p>`}
     <p class="nextrank" style="margin-top:8px">自己ベスト ${Math.max(best, G.score).toLocaleString()}点</p>
+    <div id="fb-mount"></div>
     <h2>間違えた問題の復習</h2>
     ${review}
     <button class="primary" id="again" type="button">もう一度診療する</button>
     <button class="ghost" id="home" type="button">タイトルに戻る</button>
   </section>`;
   animateNumber($("#final"), 0, G.score, 900);
+  if (window.Feedback) Feedback.mount($("#fb-mount"), {
+    caseId: "asthma-course", caseTitle: "気管支喘息発作 入院の5日間",
+    mode: G.evMode === "forced" ? "指導用（出来事を指定）" : "通常",
+    score: G.score, correct: G.correct, total: G.qi, maxCombo: G.maxCombo,
+    meters: `回復 ${G.rec} / 医療安全 ${G.safe}`,
+    ending: G.ending,
+    events: G.events.map(e => `${e.when}：${e.variant}（${e.right}/${e.total}）`).join("、"),
+    discharge: `Day ${BASE_DAY + G.delay}`,
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+    answers: G.log || []
+  });
   SFX.clear();
   $("#again").addEventListener("click", () => { SFX.tap(); newGame(G.setting); });
   $("#home").addEventListener("click", () => { SFX.tap(); renderTitle(); window.scrollTo(0, 0); });
@@ -1393,5 +1407,6 @@ function renderResult(){
 setMuteLabel();
 renderTitle();
 </script>
+<script src="feedback.js"></script>
 </body>
 </html>
