@@ -1,0 +1,128 @@
+/* =========================================================
+   結果と感想の送信（3つの症例で共通）
+
+   FEEDBACK_URL に、Apps Script のウェブアプリのURL
+   （https://script.google.com/macros/s/……/exec）を貼り付けてください。
+   空のままだと、送信ボタンを押しても送られません。
+   ========================================================= */
+const FEEDBACK_URL = "https://script.google.com/macros/s/AKfycbxPbM0ehMjWaoEe6Dd2shKBogHF4s8dbuJ1hMULDgiicmBshdIwl4bYb623giKAuEXGtw/exec";
+
+/* 選択肢（変更する場合は Apps Script 側の同じ一覧も変更してください） */
+const FEEDBACK_ROLES = ["学部生", "ポリクリ", "クリクラ", "初期研修医1年目", "初期研修医2年目", "その他"];
+const FEEDBACK_SESSIONS = ["初回", "2回目", "3回目以上"];
+
+(function () {
+  const ROLE_KEY = "feedback-role";
+
+  const css = `
+  .fbk{border-top:1px solid var(--line);margin-top:26px;padding-top:18px}
+  .fbk h2{font-size:1rem;margin:0 0 4px}
+  .fbk-lead{color:var(--muted);font-size:.88rem;margin:0 0 14px}
+  .fbk fieldset{border:0;padding:0;margin:0 0 14px}
+  .fbk legend{font-weight:700;font-size:.9rem;padding:0;margin-bottom:6px}
+  .fbk-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .fbk-chip{position:relative;cursor:pointer}
+  .fbk-chip input{position:absolute;opacity:0;width:1px;height:1px}
+  .fbk-chip span{display:inline-block;padding:7px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-size:.92rem;line-height:1.4}
+  .fbk-chip input:checked + span{background:var(--violet);border-color:var(--violet);color:var(--on-violet,#fff);font-weight:700}
+  .fbk-chip input:focus-visible + span{outline:3px solid var(--violet);outline-offset:2px}
+  .fbk-field{display:block;margin:0 0 14px}
+  .fbk-field > span{display:block;font-weight:700;font-size:.9rem;margin-bottom:6px}
+  .fbk input[type=date],.fbk textarea{width:100%;font:inherit;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
+  .fbk input[type=date]{max-width:220px}
+  .fbk textarea{resize:vertical;min-height:96px;line-height:1.6}
+  .fbk input:focus-visible,.fbk textarea:focus-visible{outline:3px solid var(--violet);outline-offset:1px}
+  .fbk-what{font-size:.85rem;color:var(--muted);margin:0 0 10px}
+  .fbk-what summary{cursor:pointer}
+  .fbk-what p{margin:6px 0 0}
+  .fbk-msg{min-height:1.6em;margin:6px 0 0;font-weight:700;font-size:.92rem}
+  .fbk-msg.ok{color:var(--ok)} .fbk-msg.ng{color:var(--ng)}
+  .fbk .primary:disabled{opacity:.55;cursor:default}
+  `;
+  function injectStyle() {
+    if (document.getElementById("fbk-style")) return;
+    const s = document.createElement("style");
+    s.id = "fbk-style"; s.textContent = css;
+    document.head.appendChild(s);
+  }
+  function today() {
+    const d = new Date(), p = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function uid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+  function getRole() { try { return localStorage.getItem(ROLE_KEY) || ""; } catch (e) { return ""; } }
+  function setRole(v) { try { localStorage.setItem(ROLE_KEY, v); } catch (e) {} }
+  function chips(name, list, checked) {
+    return list.map(v => `<label class="fbk-chip"><input type="radio" name="${name}" value="${v}"${v === checked ? " checked" : ""}><span>${v}</span></label>`).join("");
+  }
+
+  async function post(payload) {
+    const body = JSON.stringify(payload);
+    try {
+      const res = await fetch(FEEDBACK_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body });
+      const data = await res.json();
+      if (data && data.ok) return;
+      throw new Error((data && data.error) || "受信側でエラーが起きました");
+    } catch (e) {
+      // 応答を読めない環境では、応答を確認しない方法で送り直す（受信側で重複は除かれる）
+      if (e instanceof TypeError) {
+        await fetch(FEEDBACK_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body });
+        return;
+      }
+      throw e;
+    }
+  }
+
+  window.Feedback = {
+    mount(el, result) {
+      if (!el) return;
+      injectStyle();
+      const id = uid();
+      el.innerHTML = `<section class="fbk" aria-labelledby="fbk-title">
+        <h2 id="fbk-title">結果と感想を送る</h2>
+        <p class="fbk-lead">教材の改善のため、結果と感想を匿名で集めています。名前など個人が分かる情報は送られません。送信は任意です。</p>
+        <fieldset><legend>あなたの立場</legend><div class="fbk-chips">${chips("fbk-role", FEEDBACK_ROLES, getRole())}</div></fieldset>
+        <fieldset><legend>このセッションへの参加</legend><div class="fbk-chips">${chips("fbk-sess", FEEDBACK_SESSIONS, "")}</div></fieldset>
+        <label class="fbk-field"><span>参加した日</span><input type="date" id="fbk-date" value="${today()}"></label>
+        <label class="fbk-field"><span>感想・コメント（任意）</span><textarea id="fbk-comment" maxlength="1000" rows="4" placeholder="分かりにくかった問題、良かった点、改善してほしい点など"></textarea></label>
+        <details class="fbk-what"><summary>送信される内容</summary><p>上の4項目に加えて、症例名、得点、正答数、問題ごとの正誤と選んだ選択肢、所要時間、エンディングが送られます。</p></details>
+        <p class="fbk-msg" id="fbk-msg" role="status" aria-live="polite"></p>
+        <button class="primary" id="fbk-send" type="button">結果と感想を送る</button>
+      </section>`;
+      const msg = el.querySelector("#fbk-msg"), btn = el.querySelector("#fbk-send");
+      const say = (text, kind) => { msg.textContent = text; msg.className = "fbk-msg " + (kind || ""); };
+      el.querySelectorAll("input").forEach(i => i.addEventListener("change", () => { if (msg.classList.contains("ng")) say("", ""); }));
+
+      btn.addEventListener("click", async () => {
+        const role = (el.querySelector('input[name="fbk-role"]:checked') || {}).value;
+        const sessions = (el.querySelector('input[name="fbk-sess"]:checked') || {}).value;
+        const date = el.querySelector("#fbk-date").value;
+        const comment = el.querySelector("#fbk-comment").value.trim();
+        if (!role || !sessions){ say("立場と、このセッションへの参加回数を選んでください。", "ng"); return; }
+        if (!date){ say("参加した日を入力してください。", "ng"); return; }
+        if (!FEEDBACK_URL){ say("送信先が設定されていないため、送れません。運営者に連絡してください。", "ng"); return; }
+        setRole(role);
+        btn.disabled = true; btn.textContent = "送信しています";
+        say("", "");
+        const total = result.total || 0;
+        const payload = Object.assign({}, result, {
+          id, role, sessions, date, comment,
+          rate: total ? Math.round(result.correct / total * 1000) / 10 : 0,
+          sentAt: new Date().toISOString()
+        });
+        try {
+          await post(payload);
+          say("送信しました。ご協力ありがとうございます。", "ok");
+          btn.textContent = "送信しました";
+          el.querySelectorAll("input, textarea").forEach(i => { i.disabled = true; });
+        } catch (e) {
+          say("送信できませんでした。通信状態を確認して、もう一度お試しください。", "ng");
+          btn.disabled = false; btn.textContent = "結果と感想を送る";
+        }
+      });
+    }
+  };
+})();
