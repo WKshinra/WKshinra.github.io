@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>呼吸器感染症チャレンジ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --on-violet:#FFFFFF; --safranin:#C0396B;
+  --ok:#1E7A55; --ok-soft:#E3F3EA; --ng:#B23A2E; --ng-soft:#FBE7E4;
+  --eyepiece:#1D1A24;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+    --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+    --eyepiece:#0F0D15;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+  --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+  --eyepiece:#0F0D15;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{touch-action:manipulation}
+.wrap{max-width:680px;margin:0 auto;padding:18px 18px 32px}
+
+/* ステータスバー */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.hud-in{max-width:680px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.lives{display:flex;gap:4px}
+.heart{width:26px;height:26px;color:var(--safranin);display:block}
+.heart svg{width:100%;height:100%;display:block;fill:currentColor}
+.heart.empty{color:var(--muted);opacity:.5}
+.heart.empty svg{fill:none;stroke:currentColor;stroke-width:1.8}
+.heart.lost{animation:lose .55s ease-out}
+.heart.gain{animation:pop .5s ease-out}
+@keyframes lose{0%{transform:scale(1.3);opacity:1}45%{transform:scale(.6) rotate(-14deg)}100%{transform:none}}
+.trust{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+.tbar{width:58px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.tfill{display:block;height:100%;width:30%;background:var(--violet);transition:width .5s ease-out}
+.tnum{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.7em}
+.trust.up .tbar{animation:glow .7s ease-out}
+.trust.down{animation:shake .4s}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 7px transparent}}
+.scorebox{margin-left:auto;display:flex;align-items:center;gap:8px}
+.combo{font-size:.75rem;font-weight:700;color:var(--on-violet);background:var(--violet);padding:2px 9px;border-radius:999px;white-space:nowrap;visibility:hidden}
+.combo.on{visibility:visible}
+.combo.pop{animation:pop .4s ease-out}
+.score{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;min-width:3em;text-align:right}
+.pts{font-size:.8rem;color:var(--muted);margin-left:-4px}
+.mute{flex:none;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem;cursor:pointer;display:grid;place-items:center}
+.mute:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.2)}100%{transform:none}}
+
+/* タイトル */
+.title{padding-top:24px}
+.title h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1.3;margin:0}
+.motif{display:block;width:150px;height:auto;margin:14px 0 16px}
+.motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
+.title .sub{color:var(--muted);margin:0 0 8px}
+.mode{border-top:1px solid var(--line);padding:18px 0 4px}
+.mode h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:0}
+.mode p{margin:4px 0 0}
+.mode .best{color:var(--muted);font-size:.88rem;margin-top:8px}
+.mode .best b{color:var(--ink);font-variant-numeric:tabular-nums}
+.common{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:.88rem;color:var(--muted)}
+.common p{margin:0 0 6px}
+
+/* ストーリー */
+.chapter{min-height:58vh;display:flex;flex-direction:column;justify-content:center;padding:16px 2px}
+.chapter .day{color:var(--muted);margin:0;font-size:.95rem}
+.chapter h2{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,10vw,3rem);line-height:1.3;margin:6px 0 6px;animation:settle 1.1s ease-out both}
+@keyframes settle{from{opacity:0;letter-spacing:.35em;filter:blur(3px)}to{opacity:1;letter-spacing:.02em;filter:none}}
+.chapter .place{color:var(--violet);font-weight:700;margin:0}
+.chapter .motif{margin:18px 0 0}
+.scene{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.log{display:grid;gap:14px}
+.talk{display:flex;gap:10px;align-items:flex-start;animation:rise .3s ease-out}
+.talk.me{flex-direction:row-reverse}
+.avatar{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid var(--c);color:var(--c);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:1.2rem;background:var(--surface)}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:7px 14px 9px;max-width:calc(100% - 54px)}
+.talk.me .bubble{border-radius:14px 4px 14px 14px;background:var(--violet-soft)}
+.who{font-size:.78rem;font-weight:700;color:var(--c);margin:0}
+.who small{font-weight:500;color:var(--muted);margin-left:6px}
+.say{margin:2px 0 0;min-height:1.75em}
+.narr{font-family:var(--serif);font-weight:600;color:var(--muted);margin:2px;line-height:1.95;animation:rise .4s ease-out}
+.dtag{font-size:.72rem;font-weight:700;margin-left:8px}
+.dtag.ok{color:var(--ok)} .dtag.ng{color:var(--ng)}
+.fb .talk{margin:10px 0 12px}
+
+/* 問題 */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.q.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.qtop{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.qno{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6;flex:none}
+.bonus{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.gauge{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:8px 0 14px}
+.gauge-fill{height:100%;background:var(--violet);transform-origin:left center}
+.gauge-fill.low{background:var(--safranin)}
+.story{font-family:var(--serif);font-weight:600;font-size:clamp(1.08rem,4vw,1.28rem);line-height:1.85;margin:0 0 12px}
+.monitor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.vital{background:var(--surface);padding:6px 10px 8px;display:flex;flex-direction:column}
+.vital .k{font-size:.74rem;color:var(--muted)}
+.vital .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
+.vital .v small{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:3px}
+@media (min-width:600px){.monitor{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.qtext{font-size:1.1rem;line-height:1.6;margin:0}
+.scope{background:var(--eyepiece);border-radius:16px;padding:16px 14px 10px;margin:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.scope svg{width:100%;max-width:280px;height:auto;display:block}
+.scope figcaption{color:#CFC8DA;font-size:.78rem}
+.opts{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;font:inherit;line-height:1.6;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;min-height:52px;transition:border-color .15s,background-color .15s}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt .key{flex:none;width:1.75em;height:1.75em;margin-top:.05em;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.85rem;font-weight:700;color:var(--muted)}
+.opt .txt{flex:1}
+.opt .tag{flex:none;font-size:.75rem;font-weight:700;align-self:center}
+.opt.is-correct{border-color:var(--ok);background:var(--ok-soft)}
+.opt.is-correct .key{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.is-correct .tag{color:var(--ok)}
+.opt.is-wrong{border-color:var(--ng);background:var(--ng-soft)}
+.opt.is-wrong .key{background:var(--ng);border-color:var(--ng);color:var(--surface)}
+.opt.is-wrong .tag{color:var(--ng)}
+.opt.is-dim{opacity:.5}
+
+/* 回答後 */
+.fb.show{margin-top:18px;animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-weight:700;font-size:1.15rem;margin:0 0 4px}
+.fb-head.ok{color:var(--ok)}
+.fb-head.ng{color:var(--ng)}
+.calc{font-size:.8rem;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fb > p{margin:0 0 8px}
+.right{color:var(--ok);font-weight:700}
+.over{color:var(--ng);font-weight:700}
+.explain{border-left:3px solid var(--violet);padding:2px 0 2px 14px;margin-top:14px}
+.explain h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
+.explain p{margin:0}
+
+.primary{display:block;margin-top:20px;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--violet);color:var(--on-violet);font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.ghost{display:block;margin-top:10px;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer}
+.mode .primary,.mode .ghost{margin-top:12px}
+.primary:focus-visible,.ghost:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
+
+/* 結果 */
+.verdict{font-weight:700;font-size:1.05rem;margin:20px 0 0}
+.verdict.ok{color:var(--ok)} .verdict.ng{color:var(--ng)}
+.ending{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin:2px 0 0}
+.final{display:flex;align-items:baseline;gap:8px;margin:2px 0 6px}
+.final .big{font-family:var(--serif);font-size:3.6rem;line-height:1.1;color:var(--violet);font-variant-numeric:tabular-nums}
+.final .of{font-weight:700}
+.newbest{display:inline-block;background:var(--safranin);color:var(--on-violet);font-weight:700;font-size:.85rem;padding:2px 12px;border-radius:999px;margin:0 0 6px;animation:pop .5s ease-out}
+.rank{margin:6px 0 0}
+.rank b{font-family:var(--serif);font-size:1.45rem;font-weight:600;margin-left:6px}
+.nextrank{color:var(--muted);font-size:.9rem;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0 0}
+.stats.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats div{background:var(--surface);padding:8px 12px}
+.stats dt{font-size:.76rem;color:var(--muted)}
+.stats dd{margin:0;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.result h2{font-size:1rem;margin:26px 0 4px}
+.review{border-bottom:1px solid var(--line);padding:10px 0}
+.review summary{cursor:pointer;display:flex;gap:8px;align-items:flex-start;list-style:none;font-weight:500}
+.review summary::-webkit-details-marker{display:none}
+.review summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.review .body{padding:8px 0 0;font-size:.95rem}
+.review .body p{margin:0 0 6px}
+.empty-note{color:var(--muted);margin:4px 0 0}
+
+/* 演出 */
+.pt{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:8px 0 0 var(--violet);pointer-events:none;z-index:50;animation:fly .75s cubic-bezier(.2,.7,.3,1) forwards}
+.pt.pink{background:var(--safranin);box-shadow:8px 0 0 var(--safranin)}
+@keyframes fly{from{transform:translate(-50%,-50%) rotate(0deg);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
+.float{position:fixed;font-weight:700;font-size:1.2rem;color:var(--ok);pointer-events:none;z-index:40;transform:translate(-50%,0);animation:floatup .9s ease-out forwards;font-variant-numeric:tabular-nums}
+@keyframes floatup{to{transform:translate(-50%,-52px);opacity:0}}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translate(-50%,-10px);opacity:0;pointer-events:none;z-index:30;background:var(--violet);color:var(--on-violet);font-weight:700;padding:10px 20px;border-radius:999px;white-space:nowrap;transition:opacity .25s,transform .25s}
+.toast.heal{background:var(--ok)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.note{max-width:680px;margin:0 auto;padding:0 18px 28px;color:var(--muted);font-size:.8rem;line-height:1.6}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+</style>
+</head>
+<body>
+<header class="hud" id="hud" hidden>
+  <div class="hud-in">
+    <div class="lives" id="lives" role="img" aria-label="ライフ"></div>
+    <div class="trust" id="trust" role="img" aria-label="指導医の信頼"><span>信頼</span><span class="tbar"><span class="tfill" id="tfill"></span></span><span class="tnum" id="tnum">30</span></div>
+    <div class="scorebox">
+      <span class="combo" id="combo"></span>
+      <span class="score" id="score">0</span><span class="pts">点</span>
+    </div>
+    <button class="mute" id="mute" type="button"></button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="note"><a href="./" style="color:var(--violet);font-weight:700">症例の一覧に戻る</a><br>学習用の架空症例です。実際の診療では最新のガイドラインと施設の方針を確認してください。</footer>
+
+<script>
+/* =========================================================
+   問題データ（両モード共通）
+   1問ずつ { } で囲んで追加できます。
+   id：問題の名前（ストーリーから呼び出すときに使う）
+   category：分野名／case：症例文／vitals：バイタルの表
+   visual："gram" でグラム染色模式図を表示
+   options：選択肢。正解に correct: true、why に選んだときの説明
+   fixedOrder：true なら選択肢を並べ替えない
+   timeLimit：スピードボーナスの秒数（省略時30秒）
+   ========================================================= */
+const QUESTIONS = [
+  {
+    id: "adrop",
+    category: "重症度",
+    case: "72歳男性。3日前から発熱と咳嗽、さび色の痰。胸部X線で右下肺野に浸潤影。BUN 24 mg/dL。",
+    vitals: [["体温","38.9","℃"],["血圧","128/76","mmHg"],["脈拍","104","/分"],["呼吸数","24","/分"],["SpO₂（室内気）","89","%"],["意識","清明",""]],
+    question: "A-DROPスコアは何点？",
+    fixedOrder: true,
+    timeLimit: 40,
+    options: [
+      { text: "1点", why: "年齢以外にも該当する項目があります。BUNとSpO₂を基準値と比べてみましょう。" },
+      { text: "2点", why: "もう1項目該当します。年齢・BUN・SpO₂をそれぞれ基準と照らし合わせましょう。" },
+      { text: "3点", correct: true, why: "A（年齢）・D（脱水）・R（呼吸）の3項目が該当します。" },
+      { text: "4点", why: "該当しない項目まで数えています。意識は清明で、血圧も保たれています。" }
+    ],
+    explanation: "A：男性70歳以上（女性75歳以上）、D：BUN 21 mg/dL以上または脱水、R：SpO₂ 90%以下、O：意識障害、P：収縮期血圧90 mmHg以下。3点は重症で入院適応、4〜5点は超重症でICUを考慮します。ショックがあれば1項目でも超重症です。"
+  },
+  {
+    id: "gram",
+    category: "グラム染色",
+    case: "市中肺炎で入院した患者の、抗菌薬投与前の喀痰グラム染色です。",
+    visual: "gram",
+    question: "最も考えられる起炎菌は？",
+    timeLimit: 40,
+    options: [
+      { text: "肺炎球菌", correct: true, why: "紫に染まるグラム陽性の双球菌で、周囲に莢膜による透明帯があります。好中球による貪食像も見られます。" },
+      { text: "インフルエンザ菌", why: "インフルエンザ菌はグラム陰性（赤く染まる）の小さな短桿菌です。この視野の菌は紫に染まっています。" },
+      { text: "モラクセラ・カタラーリス", why: "モラクセラも双球菌ですが、グラム陰性（赤く染まる）で、そら豆形の菌が向かい合う形です。" },
+      { text: "黄色ブドウ球菌", why: "黄色ブドウ球菌はグラム陽性球菌ですが、ブドウの房状に集まります。この視野は2個1組の配列です。" }
+    ],
+    explanation: "グラム染色は「検体の質→染色性→形と配列→貪食像」の順に見ます。好中球が多く扁平上皮がほとんどない良質な検体で、ランセット型のグラム陽性双球菌が貪食されています。"
+  },
+  {
+    id: "cap-abx",
+    category: "抗菌薬",
+    case: "72歳男性、市中肺炎（A-DROP 3点）。喀痰グラム染色でグラム陽性双球菌、尿中肺炎球菌抗原陽性。一般病棟で治療を始める。",
+    question: "初期治療として最も適切な抗菌薬は？",
+    options: [
+      { text: "セフトリアキソン 2g 24時間毎 点滴", correct: true, why: "一般病棟で治療する市中肺炎の標準的な選択肢です。肺炎球菌を確実にカバーし、過度に広域でもありません。" },
+      { text: "レボフロキサシン 500mg 24時間毎", why: "肺炎球菌にも有効ですが、結核の診断を遅らせるおそれや耐性化の懸念から、起炎菌の見当がついている入院例でまず選ぶ薬ではありません。" },
+      { text: "メロペネム 1g 8時間毎 点滴", why: "緑膿菌や耐性菌まで覆う広域薬です。耐性菌リスクのない市中肺炎には広すぎます。" },
+      { text: "アジスロマイシン 500mg 24時間毎（単剤）", why: "日本の肺炎球菌はマクロライド耐性率が高く、単剤では治療に失敗するおそれがあります。" }
+    ],
+    explanation: "セフトリアキソンやスルバクタム・アンピシリンが標準的です。血液・喀痰培養を提出してから開始し、ペニシリン感受性が確認できればアンピシリンなどへの狭域化を検討します。"
+  },
+  {
+    id: "legionella",
+    category: "起炎菌",
+    case: "65歳男性。温泉旅行の5日後から40℃の発熱、下痢、見当識障害。Na 126 mEq/L、CK上昇。セフトリアキソンを3日間投与したが改善しない。",
+    question: "最も考えられる起炎菌は？",
+    options: [
+      { text: "レジオネラ", correct: true, why: "温泉・循環式浴槽への曝露、消化器症状、意識障害、低Na血症、CK上昇はレジオネラ肺炎を示唆します。β-ラクタム系が効かない点も合致します。" },
+      { text: "肺炎球菌", why: "肺炎球菌ならセフトリアキソンで改善が期待できます。曝露歴と低Na血症の組み合わせも典型的ではありません。" },
+      { text: "マイコプラズマ", why: "若年者に多く、高熱・意識障害・低Na血症を伴う重症像は典型的ではありません。" },
+      { text: "クレブシエラ", why: "通常はセフトリアキソンが有効で、温泉への曝露との関連もありません。" }
+    ],
+    explanation: "レジオネラは細胞内寄生菌のためβ-ラクタム系は無効で、キノロン系やアジスロマイシンで治療します。尿中抗原は主に血清群1しか検出しないため、陰性でも否定できません。"
+  },
+  {
+    id: "myco",
+    category: "抗菌薬",
+    case: "20歳大学生。1週間続く頑固な乾性咳嗽と微熱。聴診では明らかな異常なし。WBC 7,200/μL。マイコプラズマ肺炎を疑う。",
+    question: "無効な抗菌薬はどれ？",
+    options: [
+      { text: "セフトリアキソン", correct: true, why: "マイコプラズマは細胞壁を持たないため、細胞壁合成を阻害するβ-ラクタム系は効きません。" },
+      { text: "アジスロマイシン", why: "第一選択として用いられる薬です。ただしマクロライド耐性株もあり、効果が乏しければ変更を考えます。" },
+      { text: "ミノサイクリン", why: "マクロライドが効かないときの代替薬として有効です。" },
+      { text: "レボフロキサシン", why: "成人のマイコプラズマ肺炎に有効です。" }
+    ],
+    explanation: "細胞壁がないためβ-ラクタム系は無効です。第一選択はマクロライド系で、効果が乏しい場合はテトラサイクリン系やキノロン系を考えます。"
+  },
+  {
+    id: "atypical",
+    category: "鑑別",
+    question: "日本呼吸器学会の「細菌性肺炎と非定型肺炎の鑑別」6項目に含まれないものは？",
+    options: [
+      { text: "CRP 20 mg/dL以上", correct: true, why: "CRPの値は鑑別項目に含まれていません。" },
+      { text: "年齢60歳未満", why: "鑑別項目の1つです。" },
+      { text: "頑固な咳がある", why: "鑑別項目の1つです。" },
+      { text: "末梢血白血球数が10,000/μL未満", why: "鑑別項目の1つです。" }
+    ],
+    explanation: "6項目は、60歳未満、基礎疾患がない（軽微）、頑固な咳、胸部聴診所見が乏しい、痰がない（迅速診断で原因菌が証明されない）、白血球数10,000/μL未満。4項目以上で非定型肺炎を疑います。"
+  },
+  {
+    id: "tb",
+    category: "感染対策",
+    case: "78歳男性。1か月続く咳嗽、微熱、寝汗、体重減少。胸部X線で右上葉に空洞を伴う陰影。",
+    question: "最初に行うべき対応は？",
+    options: [
+      { text: "空気感染予防策（陰圧個室、職員はN95マスク）をとり、喀痰抗酸菌検査を3回提出する", correct: true, why: "肺結核を強く疑う所見です。診断がつくまで空気感染予防策を続けます。" },
+      { text: "レボフロキサシンを開始して経過をみる", why: "キノロン系は結核菌にも効くため一時的に改善し、診断が遅れるおそれがあります。" },
+      { text: "サージカルマスクのみで一般病室に入院させる", why: "結核は空気感染します。患者は陰圧個室で管理し、職員はN95マスクを使います。" },
+      { text: "喀痰グラム染色の結果だけで判断する", why: "結核菌はグラム染色ではほとんど染まりません。抗酸菌染色、培養、核酸増幅検査が必要です。" }
+    ],
+    explanation: "長引く咳、寝汗、体重減少、上葉の空洞影は肺結核の典型です。喀痰の抗酸菌塗抹・培養・核酸増幅検査を提出し、結果が出るまで空気感染予防策を続けます。"
+  },
+  {
+    id: "aspiration",
+    category: "抗菌薬",
+    case: "85歳女性。脳梗塞後で嚥下障害がある。食事中のむせ込みの後に発熱。胸部CTで右下葉背側に浸潤影。",
+    question: "初期治療として最も適切な抗菌薬は？",
+    options: [
+      { text: "スルバクタム・アンピシリン", correct: true, why: "口腔内の連鎖球菌や嫌気性菌をカバーでき、誤嚥性肺炎でよく用いられます。" },
+      { text: "アジスロマイシン", why: "口腔内の嫌気性菌を十分にカバーできません。" },
+      { text: "レボフロキサシン", why: "嫌気性菌へのカバーが弱く、結核の診断を遅らせるおそれもあります。" },
+      { text: "バンコマイシン", why: "MRSAを疑う根拠がない状況では不要です。グラム陰性菌や嫌気性菌もカバーしません。" }
+    ],
+    explanation: "誤嚥性肺炎では口腔内の連鎖球菌や嫌気性菌を想定します。右主気管支は太く短く傾きが急なため、右下葉に起こりやすくなります。"
+  },
+  {
+    id: "flu-sa",
+    category: "起炎菌",
+    case: "45歳男性。インフルエンザ発症から5日目、いったん解熱した後に再び高熱と膿性痰。胸部CTで空洞を伴う多発結節影。",
+    question: "最も考えるべき起炎菌は？",
+    options: [
+      { text: "黄色ブドウ球菌", correct: true, why: "インフルエンザ後の二次性細菌性肺炎の重要な原因で、空洞を伴う壊死性肺炎を起こすことがあります。" },
+      { text: "マイコプラズマ", why: "インフルエンザ後の二次感染の主要菌ではなく、空洞形成も典型的ではありません。" },
+      { text: "レジオネラ", why: "曝露歴がなく、インフルエンザ後の二次感染として典型的ではありません。" },
+      { text: "緑膿菌", why: "基礎疾患や入院歴のない市中発症例では可能性は低めです。" }
+    ],
+    explanation: "インフルエンザ後の二次性細菌性肺炎は肺炎球菌、黄色ブドウ球菌、インフルエンザ菌が主な原因です。空洞形成を伴う場合は黄色ブドウ球菌を強く疑い、MRSAも考慮します。"
+  },
+  {
+    id: "hflu",
+    category: "グラム染色",
+    case: "COPDの70歳男性。咳と膿性痰が増えた。喀痰グラム染色で、赤く染まる小さな短桿菌（形が不揃い）が多数見られた。",
+    question: "最も考えられる菌は？",
+    options: [
+      { text: "インフルエンザ菌", correct: true, why: "グラム陰性の小さく多形性の短桿菌は、インフルエンザ菌の典型像です。" },
+      { text: "肺炎球菌", why: "肺炎球菌はグラム陽性（紫）の双球菌です。" },
+      { text: "モラクセラ・カタラーリス", why: "モラクセラはグラム陰性ですが、桿菌ではなく双球菌です。" },
+      { text: "黄色ブドウ球菌", why: "黄色ブドウ球菌はグラム陽性（紫）で、ブドウの房状の球菌です。" }
+    ],
+    explanation: "インフルエンザ菌はCOPDの増悪や肺炎でよく見られます。日本ではβ-ラクタマーゼ産生株に加え、BLNAR（β-ラクタマーゼ非産生アンピシリン耐性）株にも注意が必要です。"
+  },
+  {
+    id: "kleb",
+    category: "起炎菌",
+    case: "58歳男性、大酒家。急な高熱と、赤褐色でゼリー状の痰。胸部X線で右上葉の大葉性肺炎があり、葉間裂が下方に膨隆している。",
+    question: "最も考えられる起炎菌は？",
+    options: [
+      { text: "クレブシエラ（肺炎桿菌）", correct: true, why: "アルコール多飲者、ゼリー状の痰、葉間裂の膨隆はクレブシエラ肺炎の古典的な組み合わせです。" },
+      { text: "肺炎球菌", why: "大葉性肺炎は起こしますが、ゼリー状の痰や葉間裂の膨隆はクレブシエラにより特徴的です。" },
+      { text: "マイコプラズマ", why: "大葉性の浸潤や膿性痰は典型的ではありません。" },
+      { text: "結核菌", why: "急性発症の高熱や大葉性肺炎は典型的ではありません。" }
+    ],
+    explanation: "クレブシエラ肺炎はアルコール多飲者や糖尿病患者に多く、カラントゼリー様の痰や葉間裂の膨隆（bulging fissure sign）が古典的所見です。グラム染色では太めのグラム陰性桿菌が見られます。"
+  },
+  {
+    id: "uag",
+    category: "検査",
+    question: "肺炎球菌尿中抗原検査について正しいものは？",
+    options: [
+      { text: "治療後も数週間以上陽性が続くことがある", correct: true, why: "抗原は長く排泄されるため、過去の感染でも陽性になりえます。" },
+      { text: "抗菌薬を投与するとすぐに陰性になる", why: "すぐには陰性になりません。そのため抗菌薬投与後でも検出できる利点があります。" },
+      { text: "薬剤感受性も判定できる", why: "抗原の有無しか分からないため、感受性を知るには培養が必要です。" },
+      { text: "小児では偽陽性がほとんどない", why: "小児では鼻咽頭の保菌でも陽性になりやすく、偽陽性が問題になります。" }
+    ],
+    explanation: "尿中抗原は迅速で抗菌薬投与後でも検出できますが、過去の感染や保菌でも陽性になりえます。感受性を確認するため、培養も必ず提出します。"
+  },
+  {
+    id: "hap",
+    category: "抗菌薬",
+    case: "大腸癌術後で入院中の68歳男性。入院7日目に発熱と膿性痰が出現し、胸部X線で新たな浸潤影。過去90日以内に抗菌薬の使用歴がある。",
+    question: "緑膿菌をカバーできるエンピリック治療薬は？",
+    options: [
+      { text: "タゾバクタム・ピペラシリン", correct: true, why: "緑膿菌を含むグラム陰性桿菌を広くカバーします。" },
+      { text: "セフトリアキソン", why: "緑膿菌には効きません。" },
+      { text: "スルバクタム・アンピシリン", why: "緑膿菌には効きません。" },
+      { text: "アジスロマイシン", why: "緑膿菌はカバーしません。" }
+    ],
+    explanation: "耐性菌リスクのある院内肺炎では、タゾバクタム・ピペラシリンや抗緑膿菌作用のあるセフェム系（セフェピムなど）を選び、培養結果に応じて狭めます。"
+  }
+];
+
+
+/* =========================================================
+   ストーリーの台本
+   登場人物（CAST）と、章ごとの場面（STORY）を書き換えると
+   物語を自由に作り直せます。
+   場面の種類：
+   { t: "talk", lines: [[話す人, せりふ], ...] }  会話（"narr" は地の文）
+   { t: "q", id: 問題のid, react: { ok: 正解時, ng: 不正解時 } }  出題
+   ========================================================= */
+const CAST = {
+  takano: { name: "鷹野先生", role: "呼吸器内科 指導医", mark: "鷹", color: "var(--violet)" },
+  mori:   { name: "森さん",   role: "病棟看護師",       mark: "森", color: "var(--ok)" },
+  me:     { name: "あなた",   role: "初期研修医1年目",   mark: "研", color: "var(--muted)" },
+  pt:     { name: "患者さん", role: "",                 mark: "患", color: "var(--safranin)" }
+};
+
+const STORY = [
+  { day: "1日目　月曜日", place: "救急外来", title: "さび色の痰", scenes: [
+    { t: "talk", lines: [
+      ["narr", "呼吸器内科ローテーション初日。白衣のポケットには、まだ折り目のついたガイドラインのコピーが入っている。"],
+      ["takano", "君が今週の研修医だね。鷹野だ。さっそくだが、救急外来に肺炎疑いの患者さんが来ている。"],
+      ["mori", "72歳の男性です。3日前から熱と咳があって、今朝から息苦しいそうです。SpO₂は89%です。"],
+      ["takano", "まずは重症度だ。入院させるかどうか、数字で決めよう。"]
+    ]},
+    { t: "q", id: "adrop", react: { ok: "その通り。3点、重症だ。入院の準備をしよう。", ng: "惜しいな。基準を一つずつ指で数えてみるといい。3点で重症、入院だ。" }},
+    { t: "talk", lines: [
+      ["mori", "痰が採れました。グラム染色、先生が見ますか？"],
+      ["takano", "せっかくだ、君が見てごらん。いい痰が採れているぞ。"]
+    ]},
+    { t: "q", id: "gram", react: { ok: "いい目をしている。肺炎球菌だな。", ng: "紫のランセット型で、周りに透明帯。この形は一度で覚えよう。肺炎球菌だ。" }},
+    { t: "talk", lines: [
+      ["me", "尿中肺炎球菌抗原も陽性でした。"],
+      ["takano", "では抗菌薬を選んでくれ。広すぎず、狭すぎず、だ。"]
+    ]},
+    { t: "q", id: "cap-abx", react: { ok: "いい選択だ。起炎菌が見えていれば、薬は必要十分でいい。", ng: "その薬でも効くかもしれない。だが、ここで最初に選ぶ薬ではないんだ。" }},
+    { t: "talk", lines: [["narr", "夕方、患者さんの呼吸は少しだけ楽になっていた。"]] }
+  ]},
+  { day: "2日目　火曜日", place: "一般外来", title: "止まらない咳", scenes: [
+    { t: "talk", lines: [
+      ["narr", "火曜日の外来。最初の患者は20歳の大学生だった。"],
+      ["pt", "1週間ずっと咳が止まらなくて……。熱は微熱くらいです。レポートの締め切りが近いのに。"],
+      ["takano", "聴診はきれいで、白血球も正常。どう見る？"],
+      ["me", "非定型肺炎、とくにマイコプラズマを疑います。"],
+      ["takano", "よし。では逆に聞こう。この患者さんに効かない薬はどれだ？"]
+    ]},
+    { t: "q", id: "myco", react: { ok: "その通り。細胞壁のない相手に、細胞壁を壊す薬は効かない。", ng: "マイコプラズマには細胞壁がない。そこから考えれば答えが見える。" }},
+    { t: "talk", lines: [
+      ["takano", "今の推論は、学会の鑑別項目に沿うともっと説得力が出る。ちょっとしたクイズだ。"]
+    ]},
+    { t: "q", id: "atypical", react: { ok: "完璧だ。根拠を項目で語れる研修医は強い。", ng: "CRPは入っていない。6項目、今日のうちに覚えてしまおう。" }}
+  ]},
+  { day: "3日目　水曜日", place: "夜間当直", title: "温泉帰りの高熱", scenes: [
+    { t: "talk", lines: [
+      ["narr", "初めての当直。時計は午前1時を回った。"],
+      ["mori", "先生、3日前に入院した65歳の方の熱が下がりません。セフトリアキソンを使っているんですが……。"],
+      ["mori", "ご家族のお話では、温泉旅行から帰ってから具合が悪くなったそうです。下痢もあって、少しぼんやりしています。"],
+      ["me", "（Naは126、CKも上がっている……）"],
+      ["narr", "鷹野先生に電話で相談する。"]
+    ]},
+    { t: "q", id: "legionella", react: { ok: "電話越しだが、いい判断だ。すぐに治療を変えよう。", ng: "β-ラクタムが効かない理由を考えてみよう。温泉、低Na血症、意識障害。答えはそこにある。" }},
+    { t: "talk", lines: [
+      ["narr", "午前3時。救急外来から、また電話が鳴る。"],
+      ["mori", "45歳の男性です。先週インフルエンザにかかって一度熱が下がったのに、また高熱と膿性痰が出てきたそうです。"],
+      ["me", "CTでは、空洞を伴う結節が多発している……。"]
+    ]},
+    { t: "q", id: "flu-sa", react: { ok: "夜中によく気づいた。MRSAまで考えておこう。", ng: "インフルエンザのあとに空洞。この組み合わせは要注意だ、覚えておこう。" }},
+    { t: "talk", lines: [["narr", "当直明けの朝日が、やけにまぶしかった。"]] }
+  ]},
+  { day: "4日目　木曜日", place: "病棟", title: "むせ込みのあとで", scenes: [
+    { t: "talk", lines: [
+      ["mori", "先生、脳梗塞後の85歳の方が、昼食でむせてから熱が出ています。"],
+      ["takano", "右下葉の背側か。誤嚥のときに想定する菌を思い浮かべてごらん。"]
+    ]},
+    { t: "q", id: "aspiration", react: { ok: "いいね。口の中の菌を思い浮かべれば、薬は自然に決まる。", ng: "口腔内の嫌気性菌を忘れずに。それをカバーできる薬を選ぼう。" }},
+    { t: "talk", lines: [
+      ["narr", "午後、外科病棟からコンサルトの電話が入った。"],
+      ["me", "大腸癌の術後7日目の方に、新しい浸潤影が出たそうです。最近、抗菌薬の使用歴もあります。"],
+      ["takano", "院内肺炎だな。市中肺炎と同じ考え方でいいか、よく考えよう。"]
+    ]},
+    { t: "q", id: "hap", react: { ok: "その通り。院内では緑膿菌を想定に入れる。", ng: "入院中の発症で、抗菌薬の使用歴もある。緑膿菌を外せない状況だ。" }},
+    { t: "talk", lines: [
+      ["mori", "月曜日に入院した72歳の方、経過がよくて来週には退院できそうです。"],
+      ["takano", "よかった。ところで、あの方の尿中抗原を退院後の外来でもう一度測ったら、どうなると思う？"]
+    ]},
+    { t: "q", id: "uag", react: { ok: "そう。陽性が続いても、再発とは限らない。", ng: "尿中抗原はしばらく陽性が続く。結果だけで再発と決めないことだ。" }}
+  ]},
+  { day: "5日目　金曜日", place: "一般外来", title: "赤いゼリー", scenes: [
+    { t: "talk", lines: [
+      ["narr", "ローテーション最終日。外来は朝から混んでいる。最初はCOPDで通院中の70歳の男性だ。"],
+      ["pt", "最近、痰が増えて、色も黄色っぽいんです。"],
+      ["takano", "グラム染色を見てきてくれ。所見を言葉で説明できるかな。"]
+    ]},
+    { t: "q", id: "hflu", react: { ok: "正確な観察だ。所見を言葉で伝えられると、チームが動きやすい。", ng: "赤くて小さく、形が不揃いな桿菌。これがインフルエンザ菌の顔つきだ。" }},
+    { t: "talk", lines: [
+      ["mori", "次の方は58歳の男性です。お酒をかなり飲まれるそうで……痰が赤いゼリーみたいなんです。"],
+      ["takano", "X線を見てごらん。葉間裂の形に注目だ。"]
+    ]},
+    { t: "q", id: "kleb", react: { ok: "教科書どおりの症例を、教科書どおりに見抜けたな。", ng: "大酒家、ゼリー状の痰、膨らんだ葉間裂。肺炎桿菌の典型的な組み合わせだ。" }}
+  ]},
+  { day: "5日目　金曜日　夕方", place: "一般外来", title: "最後の患者", scenes: [
+    { t: "talk", lines: [
+      ["narr", "外来の終わり際。待合室から、長く続く咳が聞こえてくる。"],
+      ["mori", "先生、78歳の方です。1か月咳が続いていて、寝汗と体重減少もあるそうです。X線で右上葉に空洞が……。"],
+      ["takano", "この患者さんの対応は、君に任せる。最初の一手を決めてくれ。"]
+    ]},
+    { t: "q", id: "tb", react: { ok: "よく止めた。君の判断で、待合室の人たちも病棟も守られた。", ng: "待て。症状と画像から、まず疑うべき病気があるはずだ。空気感染への対策が先だ。" }}
+  ]}
+];
+
+/* エンディング（最終的な信頼度で分岐） */
+const EPILOGUE = { day: "エピローグ", place: "医局", title: "5日間を終えて" };
+const ENDINGS = [
+  { min: 80, name: "指導医からの誘い", lines: [
+    ["takano", "5日間、よくやった。患者さんを診る目が、初日とはまるで違う。"],
+    ["takano", "来年の進路にもし迷っていたら、呼吸器内科も考えてみないか。"],
+    ["narr", "ポケットのガイドラインのコピーは、すっかりくたびれていた。"]
+  ]},
+  { min: 40, name: "次のローテへ", lines: [
+    ["takano", "おつかれさま。迷った場面もあったが、毎回ちゃんと考えていた。"],
+    ["mori", "先生、当直のときは助かりました。"],
+    ["takano", "復習してから、また呼吸器を回ってくれ。次はもっと任せられる。"]
+  ]},
+  { min: 0, name: "再挑戦の約束", lines: [
+    ["takano", "おつかれさま。正直、ひやりとする場面もあったな。"],
+    ["takano", "だが、間違えた問題こそいちばんの教材だ。復習して、もう一度来てくれ。"],
+    ["narr", "帰り道、今日の症例を一つずつ思い返した。"]
+  ]}
+];
+
+/* ランク（必要な得点, 名前） */
+const RANKS = [[0,"医学生"],[400,"初期研修医"],[900,"専攻医"],[1500,"呼吸器専門医"],[2200,"感染症エキスパート"],[3000,"伝説の指導医"]];
+
+/* ゲームの設定 */
+const LIVES_MAX = 3;     // チャレンジモードのライフ
+const HEAL_EVERY = 5;    // 何連続正解でライフ回復するか
+const TRUST_START = 30;  // ストーリーモードの信頼度（最初）
+const TRUST_UP = 6;      // 正解で上がる信頼度
+const TRUST_DOWN = 8;    // 不正解で下がる信頼度
+const BASE = 100;        // 1問正解の基本点
+const SPEED_MAX = 50;    // スピードボーナスの最大点
+const COMBO_STEP = 0.25; // 連続正解1回ごとに増える倍率
+const COMBO_MAX = 2.0;   // 倍率の上限
+const TYPE_MS = 26;      // せりふの文字送りの速さ（ミリ秒）
+
+/* =========================================================
+   ここから下はゲームの動作（通常は変更不要）
+   ========================================================= */
+const KEYS = ["a","b","c","d","e"];
+const BEST = { challenge: "resp-challenge-best", story: "resp-story-best" };
+const MUTE_KEY = "resp-challenge-muted";
+const QMAP = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+const $ = s => document.querySelector(s);
+const app = $("#app"), hud = $("#hud");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.2-4.4-9.3-8.9C1.2 8.3 3.2 4.5 6.8 4.5c2.1 0 3.7 1.2 5.2 3 1.5-1.8 3.1-3 5.2-3 3.6 0 5.6 3.8 4.1 7.1-2.1 4.5-9.3 8.9-9.3 8.9z"/></svg>';
+const PAIR = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+let muted = store.get(MUTE_KEY) === "1";
+let G = null;
+
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rankIndex(score){ let r = 0; RANKS.forEach(([t], i) => { if (score >= t) r = i; }); return r; }
+function correctText(q){ return q.options.find(o => o.correct).text; }
+function multOf(c){ return Math.min(1 + (c - 1) * COMBO_STEP, COMBO_MAX); }
+function multLabel(m){ return m.toFixed(2).replace(/0$/, ""); }
+function motifHTML(){ return `<svg class="motif" viewBox="0 0 150 20" aria-hidden="true">${[12,44,76,108,140].map((x, i) => `<g class="${i % 2 ? "s" : "v"}" transform="translate(${x} 10)">${PAIR}</g>`).join("")}</svg>`; }
+function toTop(){ window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }
+
+/* ---------- 効果音（Web Audioで合成） ---------- */
+let actx = null;
+function audio(){
+  if (!actx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; try { actx = new C(); } catch(e){ return null; } }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, start, dur, type = "triangle", vol = 0.15){
+  if (muted) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  correct(c){ const f = 660 * Math.pow(2, Math.min(c - 1, 7) / 12); tone(f, 0, .12); tone(f * 1.26, .08, .2); },
+  wrong(){ tone(190, 0, .22, "sawtooth", .07); tone(125, .12, .32, "sawtooth", .07); },
+  rank(){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .22)); },
+  heal(){ tone(880, 0, .1, "sine", .12); tone(1175, .08, .22, "sine", .12); },
+  over(){ [392, 330, 262].forEach((f, i) => tone(f, i * .18, .32, "triangle", .12)); },
+  clear(){ [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * .1, .26)); },
+  chapter(){ tone(262, 0, .9, "sine", .07); tone(392, .06, .9, "sine", .05); tone(523, .12, .9, "sine", .04); },
+  tap(){ tone(520, 0, .06, "sine", .06); }
+};
+function setMuteLabel(){
+  const b = $("#mute"); b.textContent = muted ? "🔇" : "🔊";
+  b.setAttribute("aria-label", muted ? "効果音をオンにする" : "効果音をオフにする");
+  const b2 = $("#mute2"); if (b2) b2.textContent = "効果音：" + (muted ? "オフ" : "オン");
+}
+function toggleMute(){ muted = !muted; store.set(MUTE_KEY, muted ? "1" : "0"); setMuteLabel(); if (!muted) SFX.tap(); }
+$("#mute").addEventListener("click", toggleMute);
+
+/* ---------- 演出 ---------- */
+function burst(x, y){
+  if (reduceMotion) return;
+  for (let i = 0; i < 16; i++){
+    const p = document.createElement("span");
+    p.className = "pt" + (i % 3 === 0 ? " pink" : "");
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 80;
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+    p.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+    p.style.setProperty("--r", Math.round(Math.random() * 360) + "deg");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+function floatText(text, x, y){
+  if (reduceMotion) return;
+  const f = document.createElement("span");
+  f.className = "float"; f.textContent = text;
+  f.style.left = x + "px"; f.style.top = (y - 10) + "px";
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 950);
+}
+function animateNumber(el, from, to, ms){
+  if (reduceMotion || ms <= 0){ el.textContent = to.toLocaleString(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const toastEl = $("#toast"); let toastQ = [], toastBusy = false;
+function toast(kind, msg){ toastQ.push([kind, msg]); if (!toastBusy) nextToast(); }
+function nextToast(){
+  const t = toastQ.shift(); if (!t){ toastBusy = false; return; }
+  toastBusy = true; const [kind, msg] = t;
+  toastEl.textContent = msg; toastEl.className = "toast show " + kind;
+  kind === "rank" ? SFX.rank() : SFX.heal();
+  setTimeout(() => { toastEl.className = "toast " + kind; setTimeout(nextToast, 260); }, 1600);
+}
+
+/* ---------- ステータスバー ---------- */
+function renderLives(anim){
+  const el = $("#lives");
+  el.innerHTML = Array.from({ length: LIVES_MAX }, (_, i) => `<span class="heart${i < G.lives ? "" : " empty"}">${HEART}</span>`).join("");
+  if (anim === "lost" && el.children[G.lives]) el.children[G.lives].classList.add("lost");
+  if (anim === "gain" && el.children[G.lives - 1]) el.children[G.lives - 1].classList.add("gain");
+  el.setAttribute("aria-label", `ライフ 残り${G.lives}`);
+}
+function renderTrust(delta){
+  const el = $("#trust");
+  $("#tfill").style.width = G.trust + "%";
+  $("#tnum").textContent = G.trust;
+  el.setAttribute("aria-label", `指導医の信頼 ${G.trust}`);
+  if (delta && !reduceMotion){ el.classList.remove("up", "down"); void el.offsetWidth; el.classList.add(delta > 0 ? "up" : "down"); }
+}
+function renderCombo(popIt){
+  const el = $("#combo");
+  if (G.combo >= 2){
+    el.textContent = `${G.combo}連続`;
+    el.classList.add("on");
+    if (popIt && !reduceMotion){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  } else { el.classList.remove("on", "pop"); el.textContent = ""; }
+}
+
+/* ---------- 会話 ---------- */
+function talkHTML(who, text, extra = ""){
+  if (who === "narr") return `<p class="narr">${text}</p>`;
+  const c = CAST[who];
+  return `<div class="talk${who === "me" ? " me" : ""}" style="--c:${c.color}">
+    <span class="avatar" aria-hidden="true">${c.mark}</span>
+    <div class="bubble"><p class="who">${c.name}${c.role ? `<small>${c.role}</small>` : ""}${extra}</p><p class="say">${text}</p></div>
+  </div>`;
+}
+let typing = null;
+function typeInto(el, text){
+  if (reduceMotion){ el.textContent = text; return; }
+  let i = 0; el.textContent = "";
+  const id = setInterval(() => {
+    i++; el.textContent = text.slice(0, i);
+    if (i >= text.length){ clearInterval(id); typing = null; }
+  }, TYPE_MS);
+  typing = { finish(){ clearInterval(id); el.textContent = text; typing = null; } };
+}
+
+/* ---------- グラム染色の模式図 ---------- */
+function gramHTML(){
+  const neut = [[90,100,1],[185,80,-1],[240,120,1],[160,140,1],[210,180,1],[110,200,1],[60,170,-1]];
+  const free = [[140,55,20],[42,132,-30],[135,108,60],[235,80,10],[250,165,-45],[170,215,30],[70,225,80],
+                [200,245,-15],[120,250,40],[200,128,-60],[105,150,15],[255,210,50],[45,90,25]];
+  const inside = [[3,-13,14,35],[5,13,13,-20],[4,-15,12,70]];
+  const coccus = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+  const nc = "#B03C72";
+  const cells = neut.map(([x, y, f]) => {
+    const lobes = [[-10,-5],[1,6],[11,-5]].map(([lx, ly]) => [lx, ly * f]);
+    const path = `M${lobes[0][0]} ${lobes[0][1]}L${lobes[1][0]} ${lobes[1][1]}L${lobes[2][0]} ${lobes[2][1]}`;
+    return `<g transform="translate(${x} ${y})"><circle r="28" fill="#F4C5D5" stroke="#E3A2BB" stroke-width="1.2"/><path d="${path}" stroke="${nc}" stroke-width="3" fill="none" stroke-linecap="round"/>${lobes.map(([lx, ly]) => `<circle cx="${lx}" cy="${ly}" r="7.5" fill="${nc}"/>`).join("")}</g>`;
+  }).join("");
+  const pairs = free.map(([x, y, a]) => `<g transform="translate(${x} ${y}) rotate(${a}) scale(.75)"><ellipse rx="14" ry="8" fill="#fff" opacity=".75"/><g fill="#3B1E6B">${coccus}</g></g>`).join("");
+  const eaten = inside.map(([n, dx, dy, a]) => `<g transform="translate(${neut[n][0] + dx} ${neut[n][1] + dy}) rotate(${a}) scale(.6)"><g fill="#3B1E6B">${coccus}</g></g>`).join("");
+  return `<figure class="scope">
+    <svg viewBox="0 0 300 300" role="img" aria-labelledby="gram-title">
+      <title id="gram-title">喀痰グラム染色の模式図。多数の好中球と、周囲に透明帯を伴う紫色の双球菌が見られ、一部は好中球に取り込まれている。</title>
+      <defs><radialGradient id="fld" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#FDF3F6"/><stop offset="1" stop-color="#E9C1D1"/></radialGradient><clipPath id="clp"><circle cx="150" cy="150" r="140"/></clipPath></defs>
+      <g clip-path="url(#clp)">
+        <rect width="300" height="300" fill="url(#fld)"/>
+        <path d="M0 150C70 125 120 175 180 152S260 128 300 160" stroke="#E6B1C5" stroke-width="10" fill="none" opacity=".45"/>
+        <path d="M30 250C90 230 150 262 210 238S280 220 300 232" stroke="#E6B1C5" stroke-width="7" fill="none" opacity=".35"/>
+        <path d="M20 60C80 72 140 40 200 58S270 70 300 50" stroke="#E6B1C5" stroke-width="6" fill="none" opacity=".35"/>
+        ${cells}${eaten}${pairs}
+      </g>
+      <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
+    </svg>
+    <figcaption>喀痰グラム染色（模式図、×1000）</figcaption>
+  </figure>`;
+}
+
+
+/* ---------- タイトル画面 ---------- */
+function renderTitle(){
+  hud.hidden = true;
+  const bs = +store.get(BEST.story) || 0, bc = +store.get(BEST.challenge) || 0;
+  app.innerHTML = `<section class="title">
+    <h1>呼吸器感染症<br>チャレンジ</h1>
+    ${motifHTML()}
+    <p class="sub">全${QUESTIONS.length}問。肺炎の重症度判定から、グラム染色、抗菌薬選択、感染対策まで。</p>
+    <div class="mode">
+      <h2>ストーリーモード</h2>
+      <p>呼吸器内科ローテーションの5日間。救急外来、当直、病棟で出会う患者さんを診ながら、指導医の信頼を得ていきます。結末は信頼度で変わります。</p>
+      ${bs ? `<p class="best">自己ベスト <b>${bs.toLocaleString()}</b> 点</p>` : ""}
+      <button class="primary" id="go-story" type="button">ストーリーを始める</button>
+    </div>
+    <div class="mode">
+      <h2>チャレンジモード</h2>
+      <p>ランダムに出題。ライフは${LIVES_MAX}つで、${HEAL_EVERY}連続正解で1つ回復します。</p>
+      ${bc ? `<p class="best">自己ベスト <b>${bc.toLocaleString()}</b> 点</p>` : ""}
+      <button class="ghost" id="go-challenge" type="button">チャレンジを始める</button>
+    </div>
+    <div class="common">
+      <p>どちらのモードも、連続正解でコンボ倍率が上がり（最大×${COMBO_MAX.toFixed(1)}）、速く答えるほどスピードボーナス（最大+${SPEED_MAX}点）が付きます。</p>
+      <p>ランク：${RANKS.map(r => r[1]).join(" ＞ ")}</p>
+    </div>
+    <button class="ghost" id="mute2" type="button"></button>
+  </section>`;
+  setMuteLabel();
+  $("#mute2").addEventListener("click", toggleMute);
+  $("#go-story").addEventListener("click", () => { audio(); SFX.tap(); newGame("story"); });
+  $("#go-challenge").addEventListener("click", () => { audio(); SFX.tap(); newGame("challenge"); });
+}
+
+/* ---------- 進行 ---------- */
+function buildStory(){
+  const seq = [];
+  STORY.forEach(ch => { seq.push({ t: "chapter", ch }); ch.scenes.forEach(s => seq.push(s)); });
+  seq.push({ t: "ending" });
+  return seq;
+}
+
+function newGame(mode){
+  const story = mode === "story";
+  const seq = story ? buildStory() : shuffle(QUESTIONS.map(q => q.id)).map(id => ({ t: "q", id }));
+  G = { mode, seq, pos: 0, qi: 0, qTotal: seq.filter(s => s.t === "q").length,
+        lives: LIVES_MAX, trust: TRUST_START, score: 0, combo: 0, maxCombo: 0, correct: 0, missed: [],
+        answered: false, t0: 0, raf: 0, limit: 30, bonus: SPEED_MAX, rankIdx: 0, ending: null };
+  hud.hidden = false;
+  G.log = []; G.startedAt = Date.now();
+  $("#lives").hidden = story; $("#trust").hidden = !story;
+  $("#score").textContent = "0";
+  renderLives(); renderTrust(0); renderCombo(false); setMuteLabel();
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function renderStep(){
+  const s = G.seq[G.pos];
+  if (!s) return renderResult();
+  if (s.t === "chapter") return renderChapter(s.ch);
+  if (s.t === "talk") return renderTalk(s);
+  if (s.t === "q") return renderQ(s);
+  if (s.t === "ending"){
+    const e = ENDINGS.find(x => G.trust >= x.min);
+    G.ending = e.name;
+    G.seq.splice(G.pos, 1, { t: "chapter", ch: EPILOGUE }, { t: "talk", lines: e.lines });
+    return renderStep();
+  }
+}
+function advance(){ G.pos++; renderStep(); toTop(); }
+
+function renderChapter(ch){
+  app.innerHTML = `<section class="chapter">
+    <p class="day">${ch.day}</p>
+    <h2>${ch.title}</h2>
+    <p class="place">${ch.place}</p>
+    ${motifHTML()}
+    <button class="primary" id="go" type="button">はじめる</button>
+  </section>`;
+  SFX.chapter();
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderTalk(step){
+  const nextStep = G.seq[G.pos + 1];
+  const finalLabel = !nextStep ? "結果を見る" : nextStep.t === "q" ? "診察する" : "次へ";
+  app.innerHTML = `<section class="scene" id="scene"><div class="log" id="log" aria-live="polite"></div><button class="primary" id="adv" type="button">次へ</button></section>`;
+  let n = 0;
+  const btn = $("#adv"), log = $("#log");
+  const show = () => {
+    const [who, text] = step.lines[n++];
+    log.insertAdjacentHTML("beforeend", talkHTML(who, ""));
+    const el = log.lastElementChild;
+    typeInto(who === "narr" ? el : el.querySelector(".say"), text);
+    if (n >= step.lines.length) btn.textContent = finalLabel;
+    setTimeout(() => btn.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 30);
+  };
+  $("#scene").addEventListener("click", () => {
+    if (typing){ typing.finish(); return; }
+    if (n < step.lines.length){ show(); return; }
+    SFX.tap(); advance();
+  });
+  show();
+}
+
+function vitalsHTML(v){
+  return `<div class="monitor">${v.map(([k, val, u]) => `<div class="vital"><span class="k">${k}</span><span class="v">${val}${u ? `<small>${u}</small>` : ""}</span></div>`).join("")}</div>`;
+}
+
+function renderQ(step){
+  const q = QMAP[step.id];
+  const idx = q.options.map((_, i) => i);
+  const order = q.fixedOrder ? idx : shuffle(idx);
+  G.limit = q.timeLimit || 30;
+  app.innerHTML = `<section class="q" id="qcard" aria-labelledby="qtext">
+    <div class="qtop"><span class="qno">問 ${G.qi + 1} / ${G.qTotal}</span><span class="chip">${q.category}</span><span class="bonus" id="bonus">ボーナス +${SPEED_MAX}</span></div>
+    <div class="gauge" aria-hidden="true"><div class="gauge-fill" id="gauge"></div></div>
+    ${q.case ? `<p class="story">${q.case}</p>` : ""}
+    ${q.vitals ? vitalsHTML(q.vitals) : ""}
+    ${q.visual === "gram" ? gramHTML() : ""}
+    <h2 class="qtext" id="qtext">${q.question}</h2>
+    <ul class="opts">${order.map((oi, k) => `<li><button class="opt" type="button" data-oi="${oi}"><span class="key" aria-hidden="true">${KEYS[k]}</span><span class="txt">${q.options[oi].text}</span></button></li>`).join("")}</ul>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  app.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(step, +b.dataset.oi, b)));
+  startTimer();
+}
+
+function startTimer(){
+  G.t0 = performance.now(); G.bonus = SPEED_MAX;
+  const fill = $("#gauge"), lab = $("#bonus");
+  const tick = now => {
+    if (G.answered) return;
+    const frac = Math.max(0, 1 - (now - G.t0) / 1000 / G.limit);
+    fill.style.transform = `scaleX(${frac})`;
+    fill.classList.toggle("low", frac < 0.3);
+    const b = Math.round(SPEED_MAX * frac);
+    if (b !== G.bonus){ G.bonus = b; lab.textContent = b > 0 ? `ボーナス +${b}` : "ボーナス終了"; }
+    if (frac > 0) G.raf = requestAnimationFrame(tick);
+  };
+  G.raf = requestAnimationFrame(tick);
+}
+
+function answer(step, oi, btn){
+  if (G.answered) return;
+  G.answered = true; cancelAnimationFrame(G.raf);
+  const story = G.mode === "story";
+  const q = QMAP[step.id];
+  const chosen = q.options[oi], ok = !!chosen.correct;
+  const bonus = Math.round(SPEED_MAX * Math.max(0, 1 - (performance.now() - G.t0) / 1000 / G.limit));
+  (G.log = G.log || []).push({ qid: q.id, category: q.category, question: q.question, ok, chosen: chosen.text, seconds: Math.round((performance.now() - G.t0) / 100) / 10 });
+
+  app.querySelectorAll(".opt").forEach(b => {
+    const o = q.options[+b.dataset.oi]; b.disabled = true;
+    if (o.correct){ b.classList.add("is-correct"); b.insertAdjacentHTML("beforeend", '<span class="tag">正解</span>'); }
+    else if (b === btn){ b.classList.add("is-wrong"); b.insertAdjacentHTML("beforeend", '<span class="tag">あなたの回答</span>'); }
+    else b.classList.add("is-dim");
+  });
+
+  const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let head = "", events = [];
+  if (ok){
+    G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++;
+    const mult = multOf(G.combo), gained = Math.round((BASE + bonus) * mult), prev = G.score;
+    G.score += gained;
+    animateNumber($("#score"), prev, G.score, 500);
+    burst(cx, cy); floatText(`+${gained}`, cx, r.top); SFX.correct(G.combo);
+    let healed = false;
+    if (story){ G.trust = Math.min(100, G.trust + TRUST_UP); renderTrust(1); }
+    else if (G.combo % HEAL_EVERY === 0 && G.lives < LIVES_MAX){ G.lives++; healed = true; events.push(["heal", `${G.combo}連続正解！ ライフ回復`]); }
+    const ri = rankIndex(G.score);
+    if (ri > G.rankIdx){ G.rankIdx = ri; events.push(["rank", `ランクアップ！ ${RANKS[ri][1]}`]); }
+    if (!story) renderLives(healed ? "gain" : null);
+    renderCombo(true);
+    const multTxt = mult > 1 ? ` ×${multLabel(mult)}` : "";
+    head = `<p class="fb-head ok"><span>${G.combo >= 2 ? `正解！ ${G.combo}連続` : "正解！"}</span><span>+${gained}点</span><span class="calc">（基本${BASE} + スピード${bonus}）${multTxt}</span></p>`;
+  } else {
+    G.combo = 0; G.missed.push({ q, chosen: oi });
+    SFX.wrong();
+    const card = $("#qcard");
+    if (!reduceMotion){ card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+    if (story){ G.trust = Math.max(0, G.trust - TRUST_DOWN); renderTrust(-1); }
+    else { G.lives--; renderLives("lost"); }
+    renderCombo(false);
+    head = `<p class="fb-head ng"><span>不正解</span></p>`;
+  }
+  if (events.length) setTimeout(() => events.forEach(([k, m]) => toast(k, m)), 380);
+
+  const react = story && step.react
+    ? talkHTML(step.who || "takano", ok ? step.react.ok : step.react.ng,
+        `<span class="dtag ${ok ? "ok" : "ng"}">信頼 ${ok ? "+" + TRUST_UP : "−" + TRUST_DOWN}</span>`)
+    : "";
+  const over = !story && G.lives <= 0;
+  const lastQ = G.qi === G.qTotal - 1;
+  const label = story ? "次へ" : (over || lastQ ? "結果を見る" : "次の問題へ");
+  const fb = $("#fb");
+  fb.innerHTML = `${head}
+    ${react}
+    <p>${chosen.why}</p>
+    ${ok ? "" : `<p class="right">正解：${correctText(q)}</p>`}
+    ${over ? `<p class="over">ライフがなくなりました</p>` : ""}
+    <div class="explain"><h3>解説</h3><p>${q.explanation}</p></div>
+    <button class="primary" id="next" type="button">${label}</button>`;
+  fb.classList.add("show");
+  $("#next").addEventListener("click", () => {
+    SFX.tap(); G.qi++; G.answered = false;
+    if (over){ renderResult(); toTop(); } else advance();
+  });
+  setTimeout(() => fb.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 60);
+}
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  hud.hidden = true;
+  const story = G.mode === "story";
+  const cleared = story || G.lives > 0;
+  const key = BEST[G.mode];
+  const best = +store.get(key) || 0;
+  const isBest = G.score > best;
+  if (isBest) store.set(key, String(G.score));
+  const ri = rankIndex(G.score), next = RANKS[ri + 1];
+  const review = G.missed.length
+    ? G.missed.map(({ q, chosen }) => `<details class="review"><summary><span class="chip">${q.category}</span><span>${q.question}</span></summary>
+        <div class="body">${q.case ? `<p>${q.case}</p>` : ""}<p>あなたの回答：${q.options[chosen].text}</p><p class="right">正解：${correctText(q)}</p><p>${q.explanation}</p></div></details>`).join("")
+    : `<p class="empty-note">間違えた問題はありません。</p>`;
+  const verdict = story ? `<p class="verdict ok">ストーリー完了</p><p class="ending">エンディング「${G.ending}」</p>`
+                        : `<p class="verdict ${cleared ? "ok" : "ng"}">${cleared ? "全問クリア" : "ゲームオーバー"}</p>`;
+  app.innerHTML = `<section class="result">
+    ${verdict}
+    <p class="final"><span class="big" id="final">0</span><span class="of">点</span></p>
+    ${isBest ? `<p class="newbest">自己ベスト更新</p>` : ""}
+    <p class="rank">ランク<b>${RANKS[ri][1]}</b></p>
+    ${next ? `<p class="nextrank">「${next[1]}」まであと${(next[0] - G.score).toLocaleString()}点</p>` : ""}
+    <dl class="stats${story ? " four" : ""}">
+      <div><dt>正解</dt><dd>${G.correct} / ${G.qi}</dd></div>
+      <div><dt>最大コンボ</dt><dd>${G.maxCombo}</dd></div>
+      ${story ? `<div><dt>指導医の信頼</dt><dd>${G.trust}</dd></div>` : ""}
+      <div><dt>自己ベスト</dt><dd>${Math.max(best, G.score).toLocaleString()}</dd></div>
+    </dl>
+    <div id="fb-mount"></div>
+    <h2>間違えた問題の復習</h2>
+    ${review}
+    <button class="primary" id="again" type="button">もう一度挑戦</button>
+    <button class="ghost" id="home" type="button">タイトルに戻る</button>
+  </section>`;
+  animateNumber($("#final"), 0, G.score, 900);
+  if (window.Feedback) Feedback.mount($("#fb-mount"), {
+    caseId: "respiratory-challenge", caseTitle: "呼吸器感染症チャレンジ",
+    mode: story ? "ストーリー" : "チャレンジ",
+    score: G.score, correct: G.correct, total: G.qi, maxCombo: G.maxCombo,
+    meters: story ? `指導医の信頼 ${G.trust}` : `ライフ残り ${G.lives}`,
+    ending: story ? G.ending : (cleared ? "全問クリア" : "ゲームオーバー"),
+    events: "", discharge: "",
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+    answers: G.log || []
+  });
+  cleared ? SFX.clear() : SFX.over();
+  $("#again").addEventListener("click", () => { SFX.tap(); newGame(G.mode); });
+  $("#home").addEventListener("click", () => { SFX.tap(); renderTitle(); window.scrollTo(0, 0); });
+}
+
+setMuteLabel();
+renderTitle();
+</script>
+<script src="feedback.js"></script>
+</body>
+</html>
