@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>癌性胸水 入院の10日間</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --on-violet:#FFFFFF; --safranin:#C0396B;
+  --ok:#1E7A55; --ok-soft:#E3F3EA; --ng:#B23A2E; --ng-soft:#FBE7E4;
+  --eyepiece:#1D1A24;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+    --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+    --eyepiece:#0F0D15;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+  --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+  --eyepiece:#0F0D15;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{touch-action:manipulation}
+.wrap{max-width:680px;margin:0 auto;padding:18px 18px 32px}
+
+/* ステータスバー */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.hud-in{max-width:680px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.lives{display:flex;gap:4px}
+.heart{width:26px;height:26px;color:var(--safranin);display:block}
+.heart svg{width:100%;height:100%;display:block;fill:currentColor}
+.heart.empty{color:var(--muted);opacity:.5}
+.heart.empty svg{fill:none;stroke:currentColor;stroke-width:1.8}
+.heart.lost{animation:lose .55s ease-out}
+.heart.gain{animation:pop .5s ease-out}
+@keyframes lose{0%{transform:scale(1.3);opacity:1}45%{transform:scale(.6) rotate(-14deg)}100%{transform:none}}
+.trust{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+.tbar{width:58px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.tfill{display:block;height:100%;width:30%;background:var(--violet);transition:width .5s ease-out}
+.tnum{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.7em}
+.trust.up .tbar{animation:glow .7s ease-out}
+.trust.down{animation:shake .4s}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 7px transparent}}
+.scorebox{margin-left:auto;display:flex;align-items:center;gap:8px}
+.combo{font-size:.75rem;font-weight:700;color:var(--on-violet);background:var(--violet);padding:2px 9px;border-radius:999px;white-space:nowrap;visibility:hidden}
+.combo.on{visibility:visible}
+.combo.pop{animation:pop .4s ease-out}
+.score{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;min-width:3em;text-align:right}
+.pts{font-size:.8rem;color:var(--muted);margin-left:-4px}
+.mute{flex:none;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem;cursor:pointer;display:grid;place-items:center}
+.mute:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.2)}100%{transform:none}}
+
+/* タイトル */
+.title{padding-top:24px}
+.title h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1.3;margin:0}
+.motif{display:block;width:150px;height:auto;margin:14px 0 16px}
+.motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
+.title .sub{color:var(--muted);margin:0 0 8px}
+.mode{border-top:1px solid var(--line);padding:18px 0 4px}
+.mode h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:0}
+.mode p{margin:4px 0 0}
+.mode .best{color:var(--muted);font-size:.88rem;margin-top:8px}
+.mode .best b{color:var(--ink);font-variant-numeric:tabular-nums}
+.common{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:.88rem;color:var(--muted)}
+.common p{margin:0 0 6px}
+
+/* ストーリー */
+.chapter{min-height:58vh;display:flex;flex-direction:column;justify-content:center;padding:16px 2px}
+.chapter .day{color:var(--muted);margin:0;font-size:.95rem}
+.chapter h2{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,10vw,3rem);line-height:1.3;margin:6px 0 6px;animation:settle 1.1s ease-out both}
+@keyframes settle{from{opacity:0;letter-spacing:.35em;filter:blur(3px)}to{opacity:1;letter-spacing:.02em;filter:none}}
+.chapter .place{color:var(--violet);font-weight:700;margin:0}
+.chapter .motif{margin:18px 0 0}
+.scene{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.log{display:grid;gap:14px}
+.talk{display:flex;gap:10px;align-items:flex-start;animation:rise .3s ease-out}
+.talk.me{flex-direction:row-reverse}
+.avatar{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid var(--c);color:var(--c);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:1.2rem;background:var(--surface)}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:7px 14px 9px;max-width:calc(100% - 54px)}
+.talk.me .bubble{border-radius:14px 4px 14px 14px;background:var(--violet-soft)}
+.who{font-size:.78rem;font-weight:700;color:var(--c);margin:0}
+.who small{font-weight:500;color:var(--muted);margin-left:6px}
+.say{margin:2px 0 0;min-height:1.75em}
+.narr{font-family:var(--serif);font-weight:600;color:var(--muted);margin:2px;line-height:1.95;animation:rise .4s ease-out}
+.dtag{font-size:.72rem;font-weight:700;margin-left:8px}
+.dtag.ok{color:var(--ok)} .dtag.ng{color:var(--ng)}
+.fb .talk{margin:10px 0 12px}
+
+/* 問題 */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.q.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.qtop{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.qno{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6;flex:none}
+.bonus{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.gauge{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:8px 0 14px}
+.gauge-fill{height:100%;background:var(--violet);transform-origin:left center}
+.gauge-fill.low{background:var(--safranin)}
+.story{font-family:var(--serif);font-weight:600;font-size:clamp(1.08rem,4vw,1.28rem);line-height:1.85;margin:0 0 12px}
+.monitor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.vital{background:var(--surface);padding:6px 10px 8px;display:flex;flex-direction:column}
+.vital .k{font-size:.74rem;color:var(--muted)}
+.vital .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
+.vital .v small{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:3px}
+@media (min-width:600px){.monitor{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.qtext{font-size:1.1rem;line-height:1.6;margin:0}
+.scope{background:var(--eyepiece);border-radius:16px;padding:16px 14px 10px;margin:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.scope svg{width:100%;max-width:280px;height:auto;display:block}
+.scope figcaption{color:#CFC8DA;font-size:.78rem}
+.opts{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;font:inherit;line-height:1.6;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;min-height:52px;transition:border-color .15s,background-color .15s}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt .key{flex:none;width:1.75em;height:1.75em;margin-top:.05em;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.85rem;font-weight:700;color:var(--muted)}
+.opt .txt{flex:1}
+.opt .tag{flex:none;font-size:.75rem;font-weight:700;align-self:center}
+.opt.is-correct{border-color:var(--ok);background:var(--ok-soft)}
+.opt.is-correct .key{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.is-correct .tag{color:var(--ok)}
+.opt.is-wrong{border-color:var(--ng);background:var(--ng-soft)}
+.opt.is-wrong .key{background:var(--ng);border-color:var(--ng);color:var(--surface)}
+.opt.is-wrong .tag{color:var(--ng)}
+.opt.is-dim{opacity:.5}
+
+/* 回答後 */
+.fb.show{margin-top:18px;animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-weight:700;font-size:1.15rem;margin:0 0 4px}
+.fb-head.ok{color:var(--ok)}
+.fb-head.ng{color:var(--ng)}
+.calc{font-size:.8rem;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fb > p{margin:0 0 8px}
+.right{color:var(--ok);font-weight:700}
+.over{color:var(--ng);font-weight:700}
+.explain{border-left:3px solid var(--violet);padding:2px 0 2px 14px;margin-top:14px}
+.explain h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
+.explain p{margin:0}
+
+.primary{display:block;margin-top:20px;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--violet);color:var(--on-violet);font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.ghost{display:block;margin-top:10px;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer}
+.mode .primary,.mode .ghost{margin-top:12px}
+.primary:focus-visible,.ghost:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
+
+/* 結果 */
+.verdict{font-weight:700;font-size:1.05rem;margin:20px 0 0}
+.verdict.ok{color:var(--ok)} .verdict.ng{color:var(--ng)}
+.ending{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin:2px 0 0}
+.final{display:flex;align-items:baseline;gap:8px;margin:2px 0 6px}
+.final .big{font-family:var(--serif);font-size:3.6rem;line-height:1.1;color:var(--violet);font-variant-numeric:tabular-nums}
+.final .of{font-weight:700}
+.newbest{display:inline-block;background:var(--safranin);color:var(--on-violet);font-weight:700;font-size:.85rem;padding:2px 12px;border-radius:999px;margin:0 0 6px;animation:pop .5s ease-out}
+.rank{margin:6px 0 0}
+.rank b{font-family:var(--serif);font-size:1.45rem;font-weight:600;margin-left:6px}
+.nextrank{color:var(--muted);font-size:.9rem;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0 0}
+.stats.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats div{background:var(--surface);padding:8px 12px}
+.stats dt{font-size:.76rem;color:var(--muted)}
+.stats dd{margin:0;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.result h2{font-size:1rem;margin:26px 0 4px}
+.review{border-bottom:1px solid var(--line);padding:10px 0}
+.review summary{cursor:pointer;display:flex;gap:8px;align-items:flex-start;list-style:none;font-weight:500}
+.review summary::-webkit-details-marker{display:none}
+.review summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.review .body{padding:8px 0 0;font-size:.95rem}
+.review .body p{margin:0 0 6px}
+.empty-note{color:var(--muted);margin:4px 0 0}
+
+/* 演出 */
+.pt{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:8px 0 0 var(--violet);pointer-events:none;z-index:50;animation:fly .75s cubic-bezier(.2,.7,.3,1) forwards}
+.pt.pink{background:var(--safranin);box-shadow:8px 0 0 var(--safranin)}
+@keyframes fly{from{transform:translate(-50%,-50%) rotate(0deg);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
+.float{position:fixed;font-weight:700;font-size:1.2rem;color:var(--ok);pointer-events:none;z-index:40;transform:translate(-50%,0);animation:floatup .9s ease-out forwards;font-variant-numeric:tabular-nums}
+@keyframes floatup{to{transform:translate(-50%,-52px);opacity:0}}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translate(-50%,-10px);opacity:0;pointer-events:none;z-index:30;background:var(--violet);color:var(--on-violet);font-weight:700;padding:10px 20px;border-radius:999px;white-space:nowrap;transition:opacity .25s,transform .25s}
+.toast.heal{background:var(--ok)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.note{max-width:680px;margin:0 auto;padding:0 18px 28px;color:var(--muted);font-size:.8rem;line-height:1.6}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+
+/* ===== この症例用の追加スタイル ===== */
+.alert-tag{display:inline-block;align-self:flex-start;font-size:.78rem;font-weight:700;color:var(--on-violet);background:var(--safranin);padding:2px 12px;border-radius:999px;margin:0 0 10px}
+.chapter.alert .place{color:var(--safranin)}
+.teach{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:.92rem;cursor:pointer}
+.teach input,.evlist input{accent-color:var(--violet);width:1.05em;height:1.05em;flex:none}
+.evlist label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.evlist input{margin-top:.4em}
+#teachbox{margin-top:8px}
+.evlist{list-style:none;margin:6px 0 0;padding:0 0 0 4px;border-left:2px solid var(--line)}
+.evlist label{padding:5px 0 5px 10px}
+.evlist small{display:block;color:var(--muted);font-size:.8rem}
+.evlog{list-style:none;margin:6px 0 0;padding:0}
+.evlog li{border-bottom:1px solid var(--line);padding:8px 0}
+.evlog b{display:block}
+.evlog span{color:var(--muted);font-size:.88rem}
+.labs{display:flex;flex-wrap:wrap;gap:2px 20px;margin:14px 0 4px;font-size:.95rem}
+.labs div{display:flex;gap:6px}
+.labs dt{color:var(--muted)}
+.labs dd{margin:0;font-variant-numeric:tabular-nums}
+.meters{display:flex;gap:10px}
+.meter{display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--muted)}
+.mbar{width:46px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.mfill{display:block;height:100%;width:50%;background:var(--ok);transition:width .5s ease-out}
+.mfill.safe{background:var(--violet)}
+.meter.up .mbar{animation:glow .7s ease-out}
+.meter.down{animation:shake .4s}
+
+.round{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.rlabel{font-family:var(--serif);font-weight:600;font-size:1.3rem;margin:0 0 12px}
+.round .labs{margin:0 0 14px}
+.rh{font-size:.9rem;color:var(--muted);margin:16px 0 8px}
+.notes{margin:12px 0 0;padding-left:1.2em;font-size:.95rem}
+.notes li{margin:2px 0}
+.q .labs{margin:-4px 0 14px}
+
+.ausc{margin:0 0 14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;background:var(--surface)}
+.ausc figcaption{display:flex;flex-direction:column;line-height:1.5}
+.ausc .site{font-size:.76rem;color:var(--muted)}
+.ausc figcaption b{font-size:.98rem}
+.ausc figcaption span:last-child{font-size:.85rem;color:var(--muted)}
+.ausc svg{display:block;width:100%;max-width:420px;height:auto;margin-top:4px}
+.ausc .ph{font-size:9px;fill:var(--muted)}
+.ausc .bl{font-size:10px;fill:var(--ink);font-weight:700}
+.ausc .none{font-size:11px;fill:var(--ok);font-weight:700}
+.ausc .div{stroke:var(--line);stroke-dasharray:2 3}
+.ausc .ib{fill:var(--violet-soft);stroke:var(--violet);stroke-width:1.2}
+.ausc .eb{fill:var(--line)}
+.ausc .ck{fill:var(--safranin)}
+.ausc .wz{stroke:var(--safranin);fill:none;stroke-linejoin:round;stroke-linecap:round}
+.ausc .rl{font-size:10px;fill:var(--muted)}
+
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.spark{border:1px solid var(--line);border-radius:10px;padding:6px 8px 2px;background:var(--surface)}
+.sk{display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:.74rem;color:var(--muted);margin:0}
+.sk b{font-size:1rem;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:2px}
+.spark svg{display:block;width:100%;height:auto}
+.spark .ax{stroke:var(--line)}
+.spark .ref{stroke:var(--safranin);stroke-dasharray:3 3;opacity:.7}
+.spark .ln{stroke:var(--violet);stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+.spark .dt{fill:var(--violet)}
+.spark .dt.last{fill:var(--surface);stroke:var(--violet);stroke-width:2.2}
+.spark .xl{font-size:9px;fill:var(--muted)}
+.spark .xl.fut{opacity:.35}
+.cnote{font-size:.76rem;color:var(--muted);margin:6px 0 0}
+
+.sus{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.5}
+.sus caption{text-align:left;font-weight:700;margin-bottom:6px}
+.sus th{font-weight:500;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.sus td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.sus td:nth-child(2),.sus td:last-child,.sus th{white-space:nowrap}
+.sus .S{color:var(--ok);font-weight:700}
+.sus .R{color:var(--ng);font-weight:700}
+.tablewrap{overflow-x:auto;margin:0 0 14px}
+.rules{list-style:none;padding:0;margin:18px 0;display:grid;gap:10px}
+.rules li{display:flex;gap:12px;align-items:flex-start}
+.rules .ic{flex:none;width:2.8em;text-align:center;font-weight:700;color:var(--violet);font-size:.85rem;padding-top:.2em}
+/* 胸水の試験管と検査値 */
+.fluid{display:flex;gap:14px;align-items:flex-start;margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
+.tube{flex:none;width:52px;height:auto}
+.tube .glass{fill:none;stroke:var(--muted);stroke-width:1.6}
+.tube .rim{fill:var(--line);stroke:var(--muted);stroke-width:1}
+.tube .tube-air{fill:var(--bg)}
+.fl-body{flex:1;min-width:0}
+.fl-look{margin:0 0 6px;font-weight:700}
+.fl-look span{display:inline-block;font-size:.72rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px}
+.fl-tab{width:100%;border-collapse:collapse;font-size:.88rem;line-height:1.45}
+.fl-tab th{font-weight:500;color:var(--muted);text-align:left;padding:4px 8px 4px 0;white-space:nowrap;vertical-align:top}
+.fl-tab td{padding:4px 0;font-variant-numeric:tabular-nums}
+.fl-tab tr+tr th,.fl-tab tr+tr td{border-top:1px solid var(--line)}
+
+.cxr,.drain{margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface)}
+.cxr svg{display:block;width:100%;max-width:300px;height:auto;margin:0 auto}
+.drain svg{display:block;width:100%;max-width:360px;height:auto;margin:0 auto}
+.cxr figcaption,.drain figcaption{font-size:.8rem;color:var(--muted);margin-top:6px;text-align:center}
+.drain .ch{fill:var(--surface);stroke:var(--muted);stroke-width:1.4}
+.drain .water{fill:#8fb8e3;opacity:.55}
+.drain .arrow{stroke:var(--violet);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.drain .flat{stroke:var(--ng);stroke-width:2;stroke-dasharray:4 3}
+.drain .bub{fill:none;stroke:#2f6fb0;stroke-width:1.5}
+.drain .hd{font-size:11px;font-weight:700;fill:var(--ink)}
+.drain .sm{font-size:10px;fill:var(--muted)}
+</style>
+</head>
+<body>
+<header class="hud" id="hud" hidden>
+  <div class="hud-in">
+    <div class="meters">
+      <div class="meter" id="m-rec" role="img" aria-label="回復"><span>回復</span><span class="mbar"><span class="mfill" id="f-rec"></span></span></div>
+      <div class="meter" id="m-safe" role="img" aria-label="安全"><span>安全</span><span class="mbar"><span class="mfill safe" id="f-safe"></span></span></div>
+    </div>
+    <div class="scorebox">
+      <span class="score" id="score">0</span><span class="pts">点</span>
+    </div>
+    <button class="mute" id="mute" type="button"></button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="note"><a href="./" style="color:var(--violet);font-weight:700">症例の一覧に戻る</a><br>学習用の架空症例です。実際の診療では最新のガイドラインと施設の方針を確認してください。</footer>
+
+<script>
+/* =========================================================
+   登場人物
+   ========================================================= */
+const CAST = {
+  kikawa: { name: "木川先生", role: "呼吸器内科 指導医", mark: "木", color: "var(--violet)" },
+  hayase: { name: "早瀬さん", role: "病棟看護師", mark: "早", color: "var(--ok)" },
+  me:     { name: "あなた", role: "初期研修医（主治医）", mark: "研", color: "var(--muted)" },
+  pt:     { name: "藤田さん", role: "68歳", mark: "藤", color: "var(--safranin)" },
+  tech:   { name: "病理部", role: "細胞検査士", mark: "病", color: "var(--ink)" }
+};
+
+const BASE_DAY = 10;
+
+const META = {
+  id: "mpe-course", title: "癌性胸水 入院の10日間", h1: "癌性胸水<br>入院の10日間",
+  sub: "68歳女性、藤田さん。片側の大量胸水の診断から、胸腔ドレーンの留置、排液とドレーンの管理、ユニタルクによる胸膜癒着術まで、主治医として診ていきます。",
+  rules: [["回復", "判断が適切なほど、藤田さんの回復が順調に進みます。"], ["安全", "危険な処置や必要のない治療を選ぶと下がります。選び方によっては、思わぬ出来事が起きることも。"], ["図", "回診ごとに胸部X線の模式図とドレーンバッグの図が更新されます。肺の膨らみと排液の変化を追いかけてください。"]],
+  lead: "kikawa", rec: "回復", safe: "安全", best: "mpe-course-best", ev: "mpe-course-events"
+};
+
+/* =========================================================
+   回診データ
+   cxr：massive / partial / expanded / post（胸部X線の模式図）
+   drain：DRAINS のキー（ドレーンバッグの図）
+   ========================================================= */
+const ROUNDS = {
+  r0: { label: "Day 0　入院時", cxr: "massive", chart: 0,
+    vitals: [["SpO₂（室内気）","91","%"],["呼吸数","24","/分"],["脈拍","102","/分"],["血圧","128/76","mmHg"],["体温","36.8","℃"],["PS","1",""]],
+    labs: [["総蛋白","7.0 g/dL"],["LDH","230 IU/L"],["CRP","1.2 mg/dL"],["血小板","28万 /μL"],["PT-INR","1.02"]],
+    notes: ["1か月前から息切れが増えてきた。非喫煙者", "胸部X線：左の大量胸水。縦隔は右へ偏位", "抗凝固薬・抗血小板薬の内服なし"] },
+  r2: { label: "Day 2　朝の回診", cxr: "partial", drain: "d2", chart: 1,
+    vitals: [["SpO₂（室内気）","95","%"],["呼吸数","18","/分"],["脈拍","88","/分"],["血圧","124/74","mmHg"],["体温","36.9","℃"],["排液（24時間）","650","mL"]],
+    labs: [["CRP","1.0 mg/dL"]],
+    notes: ["Day 1に左胸腔ドレーン（16 Fr、ダブルルーメン）を留置", "排液は淡血性。刺入部の痛みは鎮痛薬で落ち着いている"] },
+  r4: { label: "Day 4　朝の回診", cxr: "expanded", drain: "d4", chart: 2,
+    vitals: [["SpO₂（室内気）","96","%"],["呼吸数","16","/分"],["脈拍","82","/分"],["血圧","122/72","mmHg"],["体温","36.7","℃"],["排液（24時間）","120","mL"]],
+    labs: [["CRP","0.8 mg/dL"]],
+    notes: ["胸部X線：左肺は全拡張している", "ステロイドは使っていない"] },
+  r6: { label: "Day 6　朝の回診", cxr: "post", drain: "d6", chart: 3,
+    vitals: [["SpO₂（室内気）","95","%"],["呼吸数","18","/分"],["脈拍","90","/分"],["血圧","126/74","mmHg"],["体温","37.6","℃"],["排液（24時間）","90","mL"]],
+    labs: [["CRP","11.5 mg/dL"]],
+    notes: ["Day 5にユニタルクによる胸膜癒着術を施行", "昨夜は38.0℃、胸の痛みあり。今朝は少し落ち着いた"] },
+  r10: { label: "Day {退院日}　退院前の回診", cxr: "post", chart: 4,
+    vitals: [["SpO₂（室内気）","96","%"],["呼吸数","16","/分"],["脈拍","80","/分"],["血圧","120/72","mmHg"],["体温","36.8","℃"],["ドレーン","抜去済み",""]],
+    labs: [["CRP","4.0 mg/dL"]],
+    notes: ["ドレーン抜去後のX線で、胸水の再貯留と気胸はない", "セルブロックの結果：EGFR遺伝子変異（エクソン19欠失）陽性"] }
+};
+
+/* 経過グラフ */
+const TREND = {
+  x: [0, 1, 2, 3, 4],
+  labels: ["D0", "D2", "D4", "D6", "退院前"],
+  note: "排液量の点線は150 mL/日（癒着術の効果判定の目安）。D0は診断・排液の穿刺量。",
+  series: [
+    { name: "排液量", unit: "mL/日", vals: [1000, 650, 120, 90, 0], min: 0, max: 1100, ref: 150, fmt: v => v.toLocaleString() },
+    { name: "SpO₂", unit: "%", vals: [91, 95, 96, 95, 96], min: 86, max: 100, fmt: v => String(v) },
+    { name: "CRP", unit: "mg/dL", vals: [1.2, 1.0, 0.8, 11.5, 4.0], min: 0, max: 14, fmt: v => v.toFixed(1) },
+    { name: "最高体温", unit: "℃", vals: [36.8, 36.9, 36.7, 38.0, 36.8], min: 36, max: 39, ref: 37.5, fmt: v => v.toFixed(1) }
+  ]
+};
+const AUSC = {};
+
+/* ドレーンバッグの状態 */
+const DRAINS = {
+  d2:     { vol: 650, color: "#C66A6A", fluct: true, leak: "none", suction: "水封" },
+  d4:     { vol: 120, color: "#D9A38F", fluct: true, leak: "none", suction: "水封" },
+  d6:     { vol: 90, color: "#D9A38F", fluct: true, leak: "none", suction: "−15 cmH₂O" },
+  ok:     { vol: 650, color: "#C66A6A", fluct: true, leak: "none", suction: "水封" },
+  still:  { vol: 40, color: "#C66A6A", fluct: false, leak: "none", suction: "水封" },
+  leak:   { vol: 200, color: "#C66A6A", fluct: true, leak: "continuous", suction: "−15 cmH₂O" }
+};
+
+/* =========================================================
+   問題データ
+   visual："cxr:massive" で胸部X線の模式図、"drain:ok" でドレーンバッグ、"chart:2" で経過グラフ
+   fluid：試験管の図と胸水の検査値
+   ========================================================= */
+const QUESTIONS = [
+  {
+    id: "cxr-shift", category: "画像", timeLimit: 40,
+    case: "68歳女性。1か月で増えてきた息切れ。胸部X線で左の胸郭がほぼ真っ白になっており、縦隔は右へ偏位している。",
+    visual: "cxr:massive",
+    question: "この所見から考えられることとして最も適切なのは？",
+    options: [
+      { text: "胸水の量による圧排が主体で、排液すれば肺の再拡張が期待できる", correct: true, why: "大量胸水で縦隔が反対側へ押されているのは、胸水そのものが肺を押している所見です。" },
+      { text: "縦隔が偏位しているので、主気管支の閉塞による無気肺が主体と考える", why: "無気肺では、縦隔は病変のある側へ引き寄せられます。反対側への偏位は、胸水の圧排を示します。" },
+      { text: "縦隔の偏位は緊張性気胸と同じく、すぐに脱気が必要な状態である", why: "息切れは強いものの、循環は保たれています。まずエコーで胸水を確認し、計画的に排液します。" },
+      { text: "縦隔の位置は胸水の量とは関係しないので、判断の材料にはならない", why: "大量胸水で縦隔が偏位しないときは、気管支の閉塞や縦隔の固定など、排液しても肺が膨らみにくい状態を考えます。" }
+    ],
+    explanation: "大量胸水なのに縦隔が偏位していない、あるいは患側に寄っている場合は、気管支の閉塞や肺の拡張不全を疑います。排液しても息切れが良くならないことがあるため、事前に確認しておきます。"
+  },
+  {
+    id: "tap-first", category: "初期対応", timeLimit: 40,
+    question: "最初に行うこととして最も適切なのは？",
+    options: [
+      { text: "エコーで確認して穿刺し、検体を提出しつつ症状が和らぐ量まで抜く", correct: true, fx: { safe: 5 }, why: "診断と症状緩和を一度の穿刺で両立させます。" },
+      { text: "息切れが強いので、診断用の検体を取ったら、できるだけ一度にすべての胸水を抜ききる", fx: { safe: -10, flag: "drainAll" }, why: "一度に大量に抜くと、再膨張性肺水腫や強い胸部不快感を起こすことがあります。1.5 L未満を目安にします。" },
+      { text: "胸部CTで原因が分かるまでは、穿刺をせずに酸素投与で経過をみる", fx: { rec: -5 }, why: "診断にも症状の緩和にも、穿刺が必要です。CTとあわせて進めます。" },
+      { text: "まず利尿薬を使い、胸水が減るかどうかを見てから穿刺を考える", fx: { rec: -5 }, why: "片側の大量胸水で、心不全を示す所見もありません。利尿薬では減らない可能性が高い胸水です。" }
+    ],
+    explanation: "一度の排液は1.5 L未満を目安にし、咳や胸の圧迫感が出たら中止します。1.5 L未満の排液では、再膨張性肺水腫は基本的に起こらないとされています。"
+  },
+  {
+    id: "fluid-dx", category: "胸水の性状", timeLimit: 45,
+    case: "穿刺で1,000 mL排液し、息切れは楽になった。",
+    fluid: { look: "血性", tone: "#B23A48", alpha: .75, labs: [["総蛋白", "5.0 g/dL（血清 7.0）"], ["LDH", "540 IU/L（血清 230）"], ["糖", "68 mg/dL"], ["ADA", "24 U/L"], ["細胞分画", "リンパ球 58%"], ["CEA", "120 ng/mL"], ["細胞診", "腺癌細胞あり"]] },
+    question: "解釈として最も適切なのは？",
+    options: [
+      { text: "滲出性で、肺腺癌による癌性胸水と考え、セルブロックで遺伝子検査を進める", correct: true, why: "Lightの基準で滲出性、CEAが高く、細胞診で腺癌細胞が見つかっています。" },
+      { text: "ADAが20 U/Lを超えているので、まず結核性胸膜炎を除外してから考える", why: "結核性胸膜炎を疑う目安はADA 40 U/L以上です。細胞診で腺癌細胞が見つかっています。" },
+      { text: "血性の胸水なので、まず血胸を考えて胸水のヘマトクリットを確かめる", why: "血性に見える胸水の多くはヘマトクリットが数%で、悪性胸水でよく見られます。外傷や抗凝固薬もありません。" },
+      { text: "細胞診が陽性でも確定ではないので、必ず胸腔鏡下の胸膜生検をしてから診断する", why: "細胞診で腺癌細胞が見つかり、臨床像とも合っています。セルブロックで免疫染色や遺伝子検査も行えます。" }
+    ],
+    explanation: "胸水の細胞診で悪性細胞が見つかれば、癌性胸水と診断できます。セルブロックを作れば、治療に必要な遺伝子検査やPD-L1の評価も行えます。"
+  },
+  {
+    id: "drain-ind", category: "ドレーン適応", timeLimit: 40,
+    case: "Day 1。前日に1,000 mL排液したが、今朝のX線で胸水は再び増えている。PSは1で、本人は「また苦しくなるのはつらい」と話す。",
+    question: "今後の方針として最も適切なのは？",
+    options: [
+      { text: "再貯留が早い癌性胸水で、癒着術を目指せるため、胸腔ドレーンを留置する", correct: true, why: "全身状態が保たれ、症状の改善と再貯留の予防が見込めます。" },
+      { text: "ドレーンは負担が大きいので、胸水がたまるたびに穿刺だけを毎日くり返す", why: "毎日の穿刺は、気胸や感染の機会を増やします。再貯留が早いなら、ドレーンで排液し癒着術につなげます。" },
+      { text: "予後が限られる病気なので、ドレーンも穿刺も行わずに酸素投与だけで過ごす", fx: { rec: -10 }, why: "PSは保たれており、排液で息切れは楽になりました。症状を和らげる治療の価値は大きいです。" },
+      { text: "肺が膨らむかを確かめる前に、ドレーン留置と同時に癒着剤も注入する", fx: { safe: -10 }, why: "癒着術の前提は、排液後に肺が全拡張していることです。確かめずに注入しても成功しにくくなります。" }
+    ],
+    explanation: "癌性胸水が症状の原因で、排液で症状が改善し、肺の再拡張が期待できる場合は、胸腔ドレナージと胸膜癒着術を考えます。"
+  },
+  {
+    id: "drain-site", category: "ドレーン留置", timeLimit: 40,
+    question: "胸腔ドレーンの留置として最も適切なのは？",
+    options: [
+      { text: "エコーで確認し、安全三角からダブルルーメンのドレーンを入れる", correct: true, fx: { safe: 5 }, why: "安全三角は、大きな血管や神経、臓器を傷つけにくい位置です。" },
+      { text: "胸水がいちばん多くたまっていて確実に入る、背側の低い肋間からドレーンを入れる", fx: { safe: -10 }, why: "低い位置ほど横隔膜や腹部臓器を傷つける危険が高まります。安全三角から入れます。" },
+      { text: "胸水が多くて確実に入るので、エコーで確かめずに挿入してよい", fx: { safe: -10 }, why: "穿刺位置はエコーで確認します。肺や横隔膜の位置は、思ったより高いことがあります。" },
+      { text: "肋骨のすぐ下縁に沿って針を進め、肋間の血管の近くを通す", fx: { safe: -15 }, why: "肋間動静脈と神経は肋骨の下縁を走ります。肋骨の上縁に沿って進めます。" }
+    ],
+    explanation: "安全三角は、腋窩、大胸筋の外縁、広背筋の外縁、乳頭の高さで囲まれた領域です。ドレーンを入れている間は、鎮痛薬の定時指示も出しておきます。"
+  },
+  {
+    id: "drain-rate", category: "排液管理", timeLimit: 40,
+    case: "Day 1。ドレーンを留置した直後、淡血性の胸水が勢いよく出てくる。",
+    question: "最初の排液の管理として最も適切なのは？",
+    options: [
+      { text: "1〜1.5 Lで一度止め、症状を見ながら時間をおいて残りを抜く", correct: true, fx: { safe: 5 }, why: "排液の量と速さを調節して、再膨張性肺水腫を防ぎます。" },
+      { text: "本人がつらそうなので、止めずに出るだけ一気に全部抜く", fx: { safe: -10, flag: "drainAll" }, why: "一度に大量に抜くと、再膨張性肺水腫を起こすことがあります。" },
+      { text: "肺を早く膨らませるため、最初から−20 cmH₂Oの強い陰圧で吸引する", fx: { safe: -10, flag: "drainAll" }, why: "最初から強い陰圧をかける必要はありません。まずは水封で排液します。" },
+      { text: "抜きすぎを防ぐため、翌日まで24時間クランプしておく", fx: { rec: -5 }, why: "長くクランプすると、息切れがとれず、ドレーンも詰まりやすくなります。" }
+    ],
+    explanation: "大量胸水の排液では、1回の量を区切り、症状を見ながら時間をおいて進めます。咳き込みや胸の圧迫感は、中止のサインです。"
+  },
+  {
+    id: "drain-check", category: "ドレーン管理", timeLimit: 40,
+    case: "Day 2。ドレーンバッグを確認した。水封室の水面は呼吸に合わせて上下しているが、泡は出ていない。",
+    visual: "drain:ok",
+    question: "このドレーンの状態として最も適切な解釈は？",
+    options: [
+      { text: "呼吸性移動があり、ドレーンは開通している。エアリークはない", correct: true, why: "水面の上下（呼吸性移動）は、ドレーンが胸腔とつながっている証拠です。" },
+      { text: "水面が呼吸に合わせて揺れているのは、空気が漏れているサインである", why: "空気の漏れ（エアリーク）は、水封室に泡が出ることで分かります。水面の上下は呼吸性移動です。" },
+      { text: "水面が上下するのは、ドレーンの先端が胸腔の外にずれているサインである", why: "先端が胸腔外にずれると、呼吸性移動はむしろ消えます。" },
+      { text: "排液が多すぎるので、ドレーンは閉塞しかけていると考える", why: "650 mL/日の排液と呼吸性移動があり、閉塞の所見はありません。" }
+    ],
+    explanation: "ドレーンの観察では、呼吸性移動、エアリーク、排液の量と性状、刺入部の状態を毎日確認します。"
+  },
+  {
+    id: "drain-stop", category: "ドレーン管理", timeLimit: 40,
+    case: "Day 3。昨夜から排液が急に減り、水封室の水面も動かなくなった。息切れはなく、SpO₂も変わらない。",
+    visual: "drain:still",
+    question: "まず行うこととして最も適切なのは？",
+    options: [
+      { text: "屈曲や閉塞を確かめ、胸部X線で肺の拡張と胸水の残りを見る", correct: true, why: "呼吸性移動が消える原因には、閉塞や屈曲と、肺の全拡張の両方があります。" },
+      { text: "呼吸性移動が消えたので肺が膨らみきったと判断し、すぐにドレーンを抜く", fx: { safe: -10 }, why: "閉塞や屈曲でも、呼吸性移動は消えます。X線で確かめてから判断します。" },
+      { text: "閉塞と決めて、ドレーンに生理食塩水を勢いよく注入して開通させる", fx: { safe: -5 }, why: "原因を確かめずに勢いよく注入すると、感染や痛みの原因になります。まず屈曲や位置を確認します。" },
+      { text: "息切れがないので、そのまま数日経過をみる", fx: { rec: -5 }, why: "閉塞したまま放置すると、胸水がたまり直し、癒着術にも進めません。" }
+    ],
+    explanation: "排液の急な減少と呼吸性移動の消失は、ドレーンのトラブルと肺の全拡張のどちらでも起こります。確認の順番は、管の外から、そして画像です。"
+  },
+  {
+    id: "drain-care", category: "ドレーン管理",
+    question: "ドレーン留置中の管理として最も適切なのは？",
+    options: [
+      { text: "バッグは常に胸より低く保ち、歩くときも原則クランプしない", correct: true, fx: { safe: 5 }, why: "胸より低い位置に置くことで、排液の逆流を防ぎます。" },
+      { text: "トイレに歩くときは、逆流を防ぐため必ずクランプしてから移動してもらう", why: "バッグを胸より低く保てば、逆流は防げます。クランプしたまま忘れると、胸水や空気がたまる原因になります。" },
+      { text: "排液の量を見やすいように、バッグはベッドの上に置いておく", fx: { safe: -10, flag: "bagHigh" }, why: "胸と同じ高さや上に置くと、排液が胸腔へ逆流します。" },
+      { text: "吸引が効いていれば、水封室の水が減っていても問題はない", fx: { safe: -10 }, why: "水封室の水がなくなると、空気が胸腔へ逆流するおそれがあります。水位を毎日確認します。" }
+    ],
+    explanation: "ドレーンの事故抜去や接続外れに備え、固定の確認と、外れたときの対応を病棟で共有しておきます。"
+  },
+  {
+    id: "pleurodesis-ind", category: "胸膜癒着術", timeLimit: 45,
+    case: "Day 4。排液は120 mL/日。胸部X線で左肺は全拡張している。呼吸性移動あり、エアリークなし。PS 1。ステロイドは使っていない。",
+    visual: "cxr:expanded",
+    question: "胸膜癒着術について最も適切な判断は？",
+    options: [
+      { text: "肺が全拡張し、効果も見込めるので、タルクで胸膜癒着術を行う", correct: true, why: "全拡張した肺と、保たれた全身状態がそろっています。" },
+      { text: "排液が0 mLになるまで待ってから、癒着術を行う", fx: { rec: -5 }, why: "癌性胸水は少しずつ出続けます。待っていると、ドレーンの留置期間が長くなるだけです。" },
+      { text: "排液が少なくなったので、癒着術はせずにドレーンを抜く", fx: { rec: -10 }, why: "癌性胸水は、抜去後に再びたまることが多い胸水です。再貯留を防ぐために癒着術を行います。" },
+      { text: "炎症による痛みを抑えるため、ステロイドを併用してから癒着術を行う", fx: { rec: -5, flag: "steroidUse" }, why: "ステロイドを使っていると、癒着術の成功率が下がります。" }
+    ],
+    explanation: "胸膜癒着術は、排液後に肺が全拡張していることが前提です。全拡張していなければ、成功率は大きく下がります。"
+  },
+  {
+    id: "talc", category: "胸膜癒着術", timeLimit: 45,
+    question: "ユニタルクによる胸膜癒着術の手順として最も適切なのは？",
+    options: [
+      { text: "4 gを生食50 mLに懸濁して注入し、50 mLで流して2〜4時間クランプ", correct: true, fx: { safe: 5 }, why: "タルクを胸腔内にとどめ、胸膜に広げるための手順です。" },
+      { text: "4 gを生理食塩水50 mLに懸濁して注入し、すぐにクランプを開けて持続吸引を始める", why: "すぐに開放すると、タルクが胸膜に広がる前に排出されてしまいます。" },
+      { text: "確実に癒着させるため、8 gを一度に注入する", fx: { safe: -15 }, why: "量を増やすと、急性肺障害（ARDS）などの重い副作用の危険が高まります。" },
+      { text: "注入前にリドカインを入れると癒着しなくなるので、局所麻酔は使わない", why: "リドカインを同時に入れると、痛みが軽くなるとされます。癒着の妨げにはなりません。" }
+    ],
+    explanation: "注入後は体位変換を行い、クランプを開放したら持続吸引（−15〜−20 cmH₂O程度）を行うという意見が多くあります。ただし、クランプ時間や体位変換には、はっきりしたエビデンスはありません。"
+  },
+  {
+    id: "post-talc", category: "癒着術後", timeLimit: 40,
+    case: "Day 6。癒着術の翌日に38.0℃の発熱と胸の痛み。CRP 11.5 mg/dL。SpO₂は95%（室内気）で保たれ、呼吸数も変わらない。",
+    visual: "chart:3",
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "癒着術による反応として鎮痛薬で対処し、悪化があれば別の原因も考える", correct: true, why: "発熱と痛みは、ほとんどの癒着術で起こる反応です。" },
+      { text: "ドレーンからの感染が始まったと考え、血液培養を採ってすぐに広域抗菌薬を始める", fx: { safe: -5 }, why: "癒着術の直後の発熱はよくある反応です。全身状態が保たれていれば、まず経過をみます。" },
+      { text: "炎症を抑えるため、ステロイドを使って熱と痛みを下げる", fx: { rec: -10, flag: "steroidUse" }, why: "炎症こそ癒着の仕組みです。ステロイドは癒着を妨げます。" },
+      { text: "強い炎症は癒着術の失敗を示すので、すぐに2回目を行う", why: "術後のCRPが高いほど、成功率が高いという報告があります。" }
+    ],
+    explanation: "癒着術後の発熱、痛み、CRPの上昇は、胸膜に炎症が起きている証拠です。ただし、高齢者などでは、タルクによる急性肺障害にも注意します。"
+  },
+  {
+    id: "success", category: "効果判定", timeLimit: 40,
+    case: "Day 8。排液は2日続けて80 mL/日。胸部X線で胸水の再貯留はなく、肺は拡張している。",
+    visual: "chart:3",
+    question: "判断として最も適切なのは？",
+    options: [
+      { text: "癒着術は成功と判断し、ドレーンを抜去する", correct: true, why: "排液が1日100〜150 mL以下になれば、成功と判断します。" },
+      { text: "念のため、排液が0 mLになるまでドレーンを残す", fx: { safe: -5 }, why: "ドレーン自体が少量の排液を生みます。長く残すと、感染の機会が増えます。" },
+      { text: "排液が100 mL/日を下回ったので、失敗と考えて2回目の癒着術を行う", why: "排液が少ないことは、成功のサインです。250 mL/日を超えて続く場合に2回目を考えます。" },
+      { text: "抜去の前に24時間クランプし、夜間も続けて様子をみる", why: "クランプテストを行う場合も、すぐ開放できる時間帯に行い、人手の少ない夜をまたがないようにします。" }
+    ],
+    explanation: "抜去後は、胸部X線で気胸や胸水の再貯留がないことを確認します。"
+  },
+  {
+    id: "next", category: "今後の治療", timeLimit: 40,
+    case: "セルブロックの結果、EGFR遺伝子変異（エクソン19欠失）陽性と分かった。",
+    question: "今後の治療として最も適切なのは？",
+    options: [
+      { text: "オシメルチニブを始め、息切れの変化にも注意してもらう", correct: true, why: "EGFR遺伝子変異陽性の進行肺癌では、EGFRチロシンキナーゼ阻害薬が一次治療です。" },
+      { text: "癒着術が成功したので、薬物療法は胸水が再びたまってから考える", fx: { rec: -10 }, why: "癒着術は胸水を抑える治療で、癌そのものの治療ではありません。" },
+      { text: "PD-L1が高ければ、EGFR陽性でも免疫チェックポイント阻害薬の単剤を優先する", fx: { safe: -10 }, why: "EGFR遺伝子変異陽性では、免疫チェックポイント阻害薬の効果は限られ、先に使うとその後のTKIで間質性肺炎が増えるとされます。" },
+      { text: "胸水がなくなったので、外来での画像の経過観察は必要ない", why: "治療の効果判定と再発の確認のため、定期的な画像検査が必要です。" }
+    ],
+    explanation: "胸水のセルブロックからも、治療を決めるための遺伝子検査ができます。癒着術で症状を和らげ、薬物療法で病気そのものを治療します。"
+  },
+
+  /* ----- 入院中の出来事で使う問題 ----- */
+  {
+    id: "ev-rpe", category: "合併症", timeLimit: 40,
+    case: "排液を始めて1時間で1,800 mL出たころから、激しい咳と泡沫状の痰が出てきた。SpO₂は95%から86%に低下。左肺に coarse crackles。",
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "再膨張性肺水腫として排液を止め、酸素で呼吸を支える", correct: true, why: "急な肺の再膨張による肺水腫です。まず排液を止めます。" },
+      { text: "胸水がまだ残っているのが原因なので、陰圧をかけて残りを早く抜ききる", fx: { rec: -15 }, why: "排液を続けると、肺水腫がさらに悪化します。" },
+      { text: "肺炎の合併と考え、まず広域抗菌薬を始める", fx: { safe: -5 }, why: "排液の直後に起きた咳と泡沫痰、低酸素は、再膨張性肺水腫の典型です。" },
+      { text: "泡沫痰が出るので、心不全と考えて利尿薬を大量に使う", why: "主な原因は再膨張した肺の血管透過性の亢進です。まず排液を止め、酸素で支えます。" }
+    ],
+    explanation: "再膨張性肺水腫は、長く虚脱していた肺が急に膨らんだときに起こります。多くは数日で改善しますが、重症化することもあります。"
+  },
+  {
+    id: "ev-rpe-plan", category: "合併症",
+    case: "クランプと酸素投与で、翌朝には症状が落ち着いた。胸水はまだ残っている。",
+    question: "今後の排液について最も適切なのは？",
+    options: [
+      { text: "症状を見ながら、時間をおいて少しずつ排液を再開する", correct: true, why: "1回の量と速さを区切って、再発を防ぎます。" },
+      { text: "再び起きるのが怖いので、ドレーンを抜いて胸水はそのままにする", fx: { rec: -10 }, why: "胸水が残ると、息切れも続き、癒着術にも進めません。" },
+      { text: "次は陰圧をかけて、短い時間で一気に抜く", fx: { safe: -15 }, why: "急な排液は、再膨張性肺水腫の原因そのものです。" },
+      { text: "胸水が自然に吸収されるまで、ドレーンをクランプしたままにする", fx: { rec: -5 }, why: "癌性胸水は自然には吸収されにくく、クランプしたままではドレーンも詰まります。" }
+    ],
+    explanation: "一度の排液は1.5 L未満を目安に、咳や胸の圧迫感が出たら中止します。"
+  },
+  {
+    id: "ev-out", category: "合併症", timeLimit: 40,
+    case: "トイレに行こうとして、ドレーンが点滴台に引っかかり、刺入部から抜けてしまった。息切れの悪化はない。",
+    question: "まず行うべきことは？",
+    options: [
+      { text: "刺入部をすぐに被覆し、胸部X線で気胸と胸水を確認する", correct: true, why: "まず刺入部から空気が入るのを防ぎ、画像で状態を確かめます。" },
+      { text: "抜けたドレーンを、清潔な手袋をつけて刺入部から押し戻し、固定し直す", fx: { safe: -20 }, why: "一度外に出たドレーンは汚染されています。押し戻すと感染の原因になります。" },
+      { text: "息切れがないので、刺入部はそのままにして翌朝まで様子をみる", fx: { safe: -10 }, why: "刺入部から空気が入ると気胸になることがあります。すぐに被覆します。" },
+      { text: "まず新しいドレーンをすぐに挿入し直してから、X線を撮る", why: "再挿入が必要かどうかは、X線で胸水と気胸の状態を見てから判断します。" }
+    ],
+    explanation: "事故抜去を防ぐため、固定の方法、移動時の管の取り回し、点滴台やベッド柵への引っかかりに注意します。"
+  },
+  {
+    id: "ev-sce", category: "合併症", timeLimit: 40,
+    case: "刺入部の周りから胸にかけて、握雪感が広がってきた。水封室には泡が続けて出ている。",
+    visual: "drain:leak",
+    question: "まず確認することとして最も適切なのは？",
+    options: [
+      { text: "ドレーンの側孔が胸腔の外に出ていないかを確かめる", correct: true, why: "側孔が皮下に出ると、空気が皮下に漏れ出て皮下気腫になります。" },
+      { text: "皮下の空気を胸腔側へ引き戻すため、吸引圧を上限まで上げる", fx: { safe: -10 }, why: "側孔が胸腔外にあれば、吸引を強めても解決しません。まず位置を確かめます。" },
+      { text: "皮下気腫が出たら、すぐにドレーンを抜去する", fx: { safe: -10 }, why: "エアリークが続いている状態で抜くと、気胸が進むおそれがあります。" },
+      { text: "皮下気腫は自然に吸収されるので、確認せずに様子をみる", why: "原因を確かめずに放置すると、気腫が広がり続けることがあります。" }
+    ],
+    explanation: "ドレーンの入っている長さ（目盛り）を毎日記録しておくと、抜けかけていることに早く気づけます。"
+  },
+  {
+    id: "ev-ards", category: "合併症", timeLimit: 45,
+    case: "癒着術の翌日、38.6℃の発熱に加えて、SpO₂が室内気で88%に低下し、呼吸数も28/分に増えた。胸部X線で両側にすりガラス影が出ている。",
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "タルクによる急性肺障害を考え、酸素と全身管理を行いつつ他の原因も調べる", correct: true, why: "癒着術後の両側性の陰影と低酸素は、通常の反応とは違います。" },
+      { text: "癒着術後の発熱はよくある反応なので、鎮痛薬だけで経過をみる", fx: { rec: -15 }, why: "発熱だけでなく、低酸素と両側の陰影が出ています。通常の反応ではありません。" },
+      { text: "癒着がうまくいっていない証拠なので、すぐに2回目のタルクを注入する", fx: { safe: -15 }, why: "急性肺障害が疑われる状態で、追加の注入は危険です。" },
+      { text: "胸水が増えたせいと考え、利尿薬だけで様子をみる", why: "両側のすりガラス影と低酸素は、胸水の増加では説明できません。" }
+    ],
+    explanation: "タルクによる急性肺障害はまれですが、高齢者などで起こりやすいとされます。癒着術後の呼吸状態は、慎重に観察します。"
+  },
+  {
+    id: "ev-recur", category: "合併症", timeLimit: 40,
+    case: "癒着術から3日たっても、排液が300 mL/日前後で続いている。肺は拡張している。",
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "癒着が不十分と考え、2回目の胸膜癒着術を検討する", correct: true, why: "排液が1日250 mLを超えて続く場合は、2回目の癒着術を考えます。" },
+      { text: "排液がある限り癒着は失敗なので、ドレーンを抜いて穿刺でしのぐ", fx: { rec: -5 }, why: "肺は拡張しており、2回目の癒着術で改善が見込めます。" },
+      { text: "陰圧を最大にして、排液を早く終わらせる", fx: { safe: -5 }, why: "陰圧を強めても、胸水の産生そのものは減りません。" },
+      { text: "ステロイドを使って胸膜の炎症を抑え、胸水を減らす", fx: { rec: -10, flag: "steroidUse" }, why: "ステロイドは癒着を妨げます。" }
+    ],
+    explanation: "癒着術の効果は、排液量で判定します。1日100〜150 mL以下で成功、250 mLを超えて続けば、2回目を考えます。"
+  }
+];
+
+/* =========================================================
+   ストーリーの台本
+   ========================================================= */
+const STORY = [
+  { day: "Day 0", place: "呼吸器内科外来", title: "白い左胸", scenes: [
+    { t: "talk", lines: [
+      ["narr", "外来の診察室。藤田さんは、肩で息をしながら椅子に座った。"],
+      ["pt", "1か月くらい前から、坂道で息が切れるようになって……。最近は、着替えるだけで苦しいんです。"],
+      ["kikawa", "胸部X線が出ている。まずは画像から読もう。今日から藤田さんの主治医は君だ。"]
+    ]},
+    { t: "round", day: "r0" },
+    { t: "q", id: "cxr-shift", react: { ok: "その通り。縦隔の位置は、排液したときの肺の膨らみを予想する手がかりになる。", ng: "縦隔がどちらに動いているかで、肺を押しているのか、引っぱられているのかが分かるんだ。" }},
+    { t: "talk", lines: [["kikawa", "では、最初の一手だ。診断と症状、どちらも大事だよ。"]] },
+    { t: "q", id: "tap-first", react: { ok: "いい判断だ。一度の穿刺で、診断と症状の両方に手を打てた。", ng: "全部抜けば楽になる、とは限らない。抜きすぎには代償がある。" }},
+    { t: "talk", lines: [
+      ["pt", "……あ、息がすごく楽になりました。"],
+      ["tech", "先生、胸水の細胞診、結果が出ました。"]
+    ]},
+    { t: "q", id: "fluid-dx", react: { ok: "そう。胸水一本から、治療を決める情報まで取れるんだ。", ng: "数字の目安と、細胞診の結果を、もう一度並べて見てごらん。" }}
+  ]},
+  { day: "Day 1", place: "病棟", title: "ドレーンを入れる", scenes: [
+    { t: "talk", lines: [
+      ["hayase", "先生、今朝のX線で、胸水がもう戻ってきています。藤田さん、また少し苦しそうです。"],
+      ["pt", "抜いてもらったのに、またたまるんですね……。"]
+    ]},
+    { t: "q", id: "drain-ind", react: { ok: "その通り。ドレーンは、癒着術への入り口でもある。", ng: "繰り返したまる胸水だ。その先の治療まで見すえて考えよう。" }},
+    { t: "talk", lines: [["kikawa", "では、どこから、どんなドレーンを入れる？"]] },
+    { t: "q", id: "drain-site", react: { ok: "いい。エコーと安全三角、それに肋骨の上縁。基本を守れば事故は防げる。", ng: "ドレーン留置は、場所を一つ間違えるだけで大きな合併症になる。" }},
+    { t: "talk", lines: [["hayase", "ドレーン、入りました。血性の胸水がどんどん出てきます。"]] },
+    { t: "q", id: "drain-rate", react: { ok: "そう。速さと量を、こちらがコントロールするんだ。", ng: "出るだけ出す、は危ない。区切ることを覚えよう。" }},
+    { t: "event", slot: "s1", label: "Day 1　夜" }
+  ]},
+  { day: "Day 2〜3", place: "病棟", title: "ドレーンを見る", scenes: [
+    { t: "talk", lines: [
+      ["narr", "翌朝。藤田さんは「よく眠れました」と笑った。"],
+      ["kikawa", "毎朝の回診で、ドレーンバッグを必ず見る習慣をつけよう。"]
+    ]},
+    { t: "round", day: "r2" },
+    { t: "q", id: "drain-check", react: { ok: "完璧だ。揺れる水面と、泡。二つを見分けられたね。", ng: "水面の上下と、泡の違いを覚えておこう。意味がまったく違うんだ。" }},
+    { t: "talk", lines: [
+      ["narr", "Day 3の朝。"],
+      ["hayase", "先生、夜から急に排液が減っています。水封室の水面も動きません。"]
+    ]},
+    { t: "q", id: "drain-stop", react: { ok: "その順番でいい。管の外を見て、それから画像だ。", ng: "動かない水面には、二つの理由がある。決めつけずに確かめよう。" }},
+    { t: "talk", lines: [
+      ["narr", "ドレーンはベッド柵の下で折れ曲がっていた。直すと、排液はまた流れ始めた。"],
+      ["kikawa", "病棟のみんなで、ドレーンの扱い方をそろえておこう。"]
+    ]},
+    { t: "q", id: "drain-care", react: { ok: "その通り。高さと、クランプの扱い。小さなことが事故を防ぐ。", ng: "バッグの高さひとつで、排液は逆流してしまうんだ。" }},
+    { t: "event", slot: "s2", label: "Day 3　午後" }
+  ]},
+  { day: "Day 4〜5", place: "病棟", title: "胸膜をくっつける", scenes: [
+    { t: "talk", lines: [
+      ["pt", "息がずいぶん楽になりました。このまま管を抜いてもらえるんですか？"],
+      ["kikawa", "X線を見て、次の一手を決めよう。"]
+    ]},
+    { t: "round", day: "r4" },
+    { t: "q", id: "pleurodesis-ind", react: { ok: "その通り。膨らんだ肺は、癒着術のスタートラインだ。", ng: "癌性胸水は、そのまま抜くとまたたまる。条件がそろった今が好機だ。" }},
+    { t: "talk", lines: [["kikawa", "明日、癒着術をしよう。ユニタルクの手順を、確認しておいて。"]] },
+    { t: "q", id: "talc", react: { ok: "完璧だ。量と、とどめておく時間。どちらも大事だ。", ng: "注入したタルクが、胸膜に広がる時間が必要なんだ。" }},
+    { t: "talk", lines: [["narr", "Day 5。ユニタルクを注入し、ドレーンをクランプした。体位を変えながら、藤田さんは静かに時間を過ごした。"]] }
+  ]},
+  { day: "Day 6〜8", place: "病棟", title: "熱と痛みのあとで", scenes: [
+    { t: "talk", lines: [
+      ["hayase", "先生、藤田さん、昨夜38.0℃まで上がって、胸が痛いとおっしゃっています。"]
+    ]},
+    { t: "round", day: "r6" },
+    { t: "q", id: "post-talc", react: { ok: "そう。この熱と痛みは、くっつき始めている証拠でもある。", ng: "炎症こそ、癒着の仕組みだ。抑えすぎてはいけない。" }},
+    { t: "event", slot: "s3", label: "Day 7" },
+    { t: "talk", lines: [["narr", "Day 8。排液は、2日続けて80 mL/日まで減っていた。"]] },
+    { t: "q", id: "success", react: { ok: "その通り。管は、役目を終えたら早めに抜こう。", ng: "排液の目安を思い出そう。少ないのは、良いサインだ。" }}
+  ]},
+  { day: "Day {退院日}", place: "病棟", title: "胸に水のない日", scenes: [
+    { t: "talk", lines: [
+      ["narr", "入院{退院日}日目。ドレーンの抜けた胸を、藤田さんは何度もさすった。"],
+      ["tech", "先生、セルブロックの遺伝子検査、結果が出ました。"]
+    ]},
+    { t: "round", day: "r10" },
+    { t: "q", id: "next", react: { ok: "そう。胸水を抑えた今、病気そのものと向き合う番だ。", ng: "癒着術は症状の治療だ。病気そのものの治療を忘れずに。" }},
+    { t: "talk", lines: [["pt", "息が楽になって、家で料理もできそうです。先生、ありがとうございました。"]] }
+  ]}
+];
+
+/* エンディング（上から順に条件を確認） */
+const EPILOGUE = { day: "エピローグ", place: "医局", title: "10日間を終えて" };
+const hadEvent = (g, id) => g.events.some(e => e.id === id);
+const evMiss = g => g.events.reduce((n, e) => n + e.total - e.right, 0);
+const ENDINGS = [
+  { name: "抜きすぎた夜", when: g => g.flags.drainAll && hadEvent(g, "rpe"), lines: [
+    ["narr", g => `藤田さんは回復し、Day ${BASE_DAY + g.delay}に退院した。だが、あの夜の肺水腫は、防げたかもしれなかった。`],
+    ["kikawa", "排液は、量と速さをこちらが決めるものだ。患者さんがつらそうなときほど、区切る勇気がいる。"],
+    ["kikawa", "1.5 L。この数字を、手が覚えるまで復習しよう。"]
+  ]},
+  { name: "長引いた入院", when: g => g.events.length > 0 && (g.rec < 75 || evMiss(g) >= 2), lines: [
+    ["narr", g => `藤田さんの退院は、Day ${BASE_DAY + g.delay}までずれ込んだ。`],
+    ["kikawa", "胸水はおさまった。ただ、ドレーンまわりの出来事への対応に迷いがあった。"],
+    ["kikawa", "管が1本入っているだけで、起こりうることはたくさんある。そこを復習しよう。"]
+  ]},
+  { name: "想定外を乗り越えて", when: g => g.events.length > 0 && g.rec >= 75 && g.safe >= 75, lines: [
+    ["narr", g => g.delay > 0 ? `予定より${g.delay}日遅れたDay ${BASE_DAY + g.delay}、藤田さんは軽い足取りで病院を出た。` : `予定どおりDay ${BASE_DAY}に、藤田さんは軽い足取りで病院を出た。`],
+    ["kikawa", "ドレーンのトラブルにも、落ち着いて対応できていた。"],
+    ["kikawa", "処置は、入れて終わりじゃない。抜くまでの毎日の管理が、患者さんを守るんだ。"]
+  ]},
+  { name: "胸に水のない日", when: g => g.rec >= 75 && g.safe >= 75, lines: [
+    ["narr", `Day ${BASE_DAY}の午後、藤田さんは娘さんと一緒に帰っていった。`],
+    ["kikawa", "よく診た。診断、ドレーン、癒着術。どの段階でも、手順を一つずつ確かめていた。"],
+    ["kikawa", "次は外来で、肺癌そのものの治療だ。ここからも、君が主治医だよ。"]
+  ]},
+  { name: "危うい場面", when: g => g.safe < 75, lines: [
+    ["narr", "藤田さんは無事に退院した。"],
+    ["kikawa", "胸水はおさまった。ただ、処置や管理で、ヒヤリとする選択がいくつかあった。"],
+    ["kikawa", "胸腔ドレーンは、慣れたころに事故が起きる。基本をもう一度確かめよう。"]
+  ]},
+  { name: "退院、そして復習へ", when: () => true, lines: [
+    ["narr", "藤田さんは無事に退院した。"],
+    ["kikawa", "おつかれさま。迷った場面もあったが、最後まで藤田さんの息切れに向き合っていた。"],
+    ["kikawa", "間違えた問題を復習して、次の患者さんに活かそう。"]
+  ]}
+];
+
+/* =========================================================
+   入院中の出来事
+   ========================================================= */
+const MAX_EVENTS = 2;
+const EVENTS = [
+  { id: "rpe", name: "再膨張性肺水腫", window: ["s1"],
+    prob: g => g.flags.drainAll ? 0.7 : 0.08,
+    probNote: "基本8%。一気に排液する選択をしていた場合は70%",
+    variants: [
+      { id: "rpe", name: "再膨張性肺水腫", weight: () => 1, delay: 2, title: "止まらない咳", place: "病棟",
+        scenes: [
+          { t: "talk", lines: [
+            ["hayase", "先生！ 藤田さん、急に激しく咳き込んで、ピンク色の泡のような痰が出ています。SpO₂ 86%です！"],
+            ["me", "排液は……1時間で1,800 mL？"]
+          ]},
+          { t: "q", id: "ev-rpe", react: { ok: "よく止めた。まず排液を止める。それが最初の治療だ。", ng: "急に膨らんだ肺が、水びたしになっているんだ。原因を止めよう。" }},
+          { t: "q", id: "ev-rpe-plan", react: { ok: "そう。今度は、区切りながらゆっくりと。", ng: "怖がって止めすぎても、急いで抜いてもいけない。" }}
+        ]}
+    ]},
+  { id: "tube", name: "ドレーンのトラブル（事故抜去・皮下気腫）", window: ["s2"],
+    prob: g => g.flags.bagHigh ? 0.35 : 0.15,
+    probNote: "基本15%。ドレーン管理を誤った場合は35%。起きた場合、事故抜去か皮下気腫のどちらか",
+    variants: [
+      { id: "tube-out", name: "ドレーンの事故抜去", weight: () => 0.5, delay: 2, title: "抜けた管", place: "病棟",
+        scenes: [
+          { t: "talk", lines: [
+            ["hayase", "先生、すみません！ トイレに行くときに、ドレーンが点滴台に引っかかって抜けてしまいました。"],
+            ["pt", "急に引っぱられて……。息は大丈夫です。"]
+          ]},
+          { t: "q", id: "ev-out", react: { ok: "その通り。ふさいで、確かめる。慌てないことが大切だ。", ng: "抜けた管は戻さない。まず刺入部を守ろう。" }},
+          { t: "talk", lines: [["narr", "X線で、少量の気胸と胸水が見つかった。新しいドレーンを入れ直すことになった。"]] }
+        ]},
+      { id: "tube-sce", name: "皮下気腫", weight: () => 0.5, delay: 1, title: "雪を握る感触", place: "病棟",
+        scenes: [
+          { t: "talk", lines: [
+            ["pt", "先生、胸の皮膚がパチパチする感じがするんです。"],
+            ["me", "刺入部のまわりに、握雪感が広がっている……。"]
+          ]},
+          { t: "q", id: "ev-sce", react: { ok: "いい判断だ。ドレーンの目盛り、毎日記録しよう。", ng: "空気がどこから皮下に出ているのか、考えてみよう。" }}
+        ]}
+    ]},
+  { id: "ards", name: "タルクによる急性肺障害", window: ["s3"],
+    prob: () => 0.06,
+    probNote: "6%",
+    variants: [
+      { id: "ards", name: "タルクによる急性肺障害", weight: () => 1, delay: 4, title: "下がる酸素", place: "病棟",
+        scenes: [
+          { t: "talk", lines: [
+            ["hayase", "先生、藤田さんのSpO₂が88%まで下がっています。呼吸も速くなってきました。"],
+            ["me", "両側にすりガラス影が出ている……。"]
+          ]},
+          { t: "q", id: "ev-ards", react: { ok: "その通り。いつもの熱とは違う。そう気づけたのが大きい。", ng: "発熱だけなら反応だが、低酸素と両側の陰影は別物だ。" }}
+        ]}
+    ]},
+  { id: "recur", name: "癒着術後も続く排液", window: ["s3"],
+    prob: g => g.flags.steroidUse ? 0.6 : 0.15,
+    probNote: "基本15%。ステロイドを使った場合は60%",
+    variants: [
+      { id: "recur", name: "癒着不十分による排液の持続", weight: () => 1, delay: 3, title: "減らない排液", place: "病棟",
+        scenes: [
+          { t: "talk", lines: [
+            ["hayase", "先生、癒着術から3日たちますが、排液がまだ300 mLくらい出ています。"]
+          ]},
+          { t: "q", id: "ev-recur", react: { ok: "そう。2回目で、多くはくっつく。", ng: "排液量の目安を思い出そう。250 mLを超えて続くなら？" }},
+          { t: "talk", lines: [["narr", "2回目の癒着術を行い、排液は少しずつ減っていった。"]] }
+        ]}
+    ]}
+];
+
+const RANKS = [[0,"医学生"],[400,"初期研修医"],[900,"専攻医"],[1500,"呼吸器専門医"],[2200,"喘息エキスパート"],[3000,"伝説の指導医"]];
+
+/* ゲームの設定 */
+const REC_START = 40, SAFE_START = 80;   // 評価の初期値
+const REC_UP = 5, REC_DOWN = 5;          // fx がない問題での回復の増減
+const BASE = 100, SPEED_MAX = 50;        // 基本点、スピードボーナスの最大
+const COMBO_STEP = 0.25, COMBO_MAX = 2.0;
+const TYPE_MS = 26;
+
+/* =========================================================
+   ここから下はゲームの動作（通常は変更不要）
+   ========================================================= */
+const KEYS = ["a","b","c","d","e"];
+const BEST_KEY = META.best, MUTE_KEY = "resp-challenge-muted", EV_KEY = META.ev;
+const SLOTS = ["s1", "s2", "s3"];
+const QMAP = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+const $ = s => document.querySelector(s);
+const app = $("#app"), hud = $("#hud");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+const PAIR = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+let muted = store.get(MUTE_KEY) === "1";
+let G = null;
+
+const clamp = v => Math.max(0, Math.min(100, v));
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rankIndex(score){ let r = 0; RANKS.forEach(([t], i) => { if (score >= t) r = i; }); return r; }
+function correctText(q){ return q.options.find(o => o.correct).text; }
+function multOf(c){ return Math.min(1 + (c - 1) * COMBO_STEP, COMBO_MAX); }
+function multLabel(m){ return m.toFixed(2).replace(/0$/, ""); }
+function motifHTML(){ return `<svg class="motif" viewBox="0 0 150 20" aria-hidden="true">${[12,44,76,108,140].map((x, i) => `<g class="${i % 2 ? "s" : "v"}" transform="translate(${x} 10)">${PAIR}</g>`).join("")}</svg>`; }
+function toTop(){ window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }
+const signed = n => (n > 0 ? "+" : "−") + Math.abs(n);
+function fill(t){ return G ? String(t).replace(/\{退院日\}/g, BASE_DAY + G.delay) : String(t); }
+function loadPicks(){ try { const v = JSON.parse(store.get(EV_KEY)); if (Array.isArray(v)) return v; } catch(e){} return []; }
+function pickWeighted(list, g){
+  const ws = list.map(v => Math.max(0, v.weight(g))), sum = ws.reduce((a, b) => a + b, 0);
+  let r = Math.random() * sum;
+  for (let i = 0; i < list.length; i++){ r -= ws[i]; if (r <= 0) return list[i]; }
+  return list[list.length - 1];
+}
+
+/* ---------- 効果音 ---------- */
+let actx = null;
+function audio(){
+  if (!actx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; try { actx = new C(); } catch(e){ return null; } }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, start, dur, type = "triangle", vol = 0.15){
+  if (muted) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  correct(c){ const f = 660 * Math.pow(2, Math.min(c - 1, 7) / 12); tone(f, 0, .12); tone(f * 1.26, .08, .2); },
+  wrong(){ tone(190, 0, .22, "sawtooth", .07); tone(125, .12, .32, "sawtooth", .07); },
+  rank(){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .22)); },
+  clear(){ [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * .1, .26)); },
+  chapter(){ tone(262, 0, .9, "sine", .07); tone(392, .06, .9, "sine", .05); tone(523, .12, .9, "sine", .04); },
+  tap(){ tone(520, 0, .06, "sine", .06); },
+  alert(){ tone(880, 0, .16, "square", .05); tone(660, .18, .16, "square", .05); tone(880, .36, .16, "square", .05); }
+};
+function setMuteLabel(){
+  const b = $("#mute"); b.textContent = muted ? "🔇" : "🔊";
+  b.setAttribute("aria-label", muted ? "効果音をオンにする" : "効果音をオフにする");
+  const b2 = $("#mute2"); if (b2) b2.textContent = "効果音：" + (muted ? "オフ" : "オン");
+}
+function toggleMute(){ muted = !muted; store.set(MUTE_KEY, muted ? "1" : "0"); setMuteLabel(); if (!muted) SFX.tap(); }
+$("#mute").addEventListener("click", toggleMute);
+
+/* ---------- 演出 ---------- */
+function burst(x, y){
+  if (reduceMotion) return;
+  for (let i = 0; i < 16; i++){
+    const p = document.createElement("span");
+    p.className = "pt" + (i % 3 === 0 ? " pink" : "");
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 80;
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+    p.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+    p.style.setProperty("--r", Math.round(Math.random() * 360) + "deg");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+function floatText(text, x, y){
+  if (reduceMotion) return;
+  const f = document.createElement("span");
+  f.className = "float"; f.textContent = text;
+  f.style.left = x + "px"; f.style.top = (y - 10) + "px";
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 950);
+}
+function animateNumber(el, from, to, ms){
+  if (reduceMotion || ms <= 0){ el.textContent = to.toLocaleString(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const toastEl = $("#toast"); let toastQ = [], toastBusy = false;
+function toast(msg){ toastQ.push(msg); if (!toastBusy) nextToast(); }
+function nextToast(){
+  const msg = toastQ.shift(); if (!msg){ toastBusy = false; return; }
+  toastBusy = true; toastEl.textContent = msg; toastEl.className = "toast show"; SFX.rank();
+  setTimeout(() => { toastEl.className = "toast"; setTimeout(nextToast, 260); }, 1600);
+}
+
+/* ---------- ステータスバー ---------- */
+function renderMeters(dRec, dSafe){
+  [["rec", G.rec, dRec, META.rec], ["safe", G.safe, dSafe, META.safe]].forEach(([k, v, d, label]) => {
+    $("#f-" + k).style.width = v + "%";
+    const m = $("#m-" + k);
+    m.setAttribute("aria-label", `${label} ${v}`);
+    if (d && !reduceMotion){ m.classList.remove("up", "down"); void m.offsetWidth; m.classList.add(d > 0 ? "up" : "down"); }
+  });
+}
+
+/* ---------- 図表 ---------- */
+function vitalsHTML(v){
+  return `<div class="monitor">${v.map(([k, val, u]) => `<div class="vital"><span class="k">${k}</span><span class="v">${val}${u ? `<small>${u}</small>` : ""}</span></div>`).join("")}</div>`;
+}
+function labsHTML(l){ return `<dl class="labs">${l.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`; }
+
+function wave(x0, x1, y, amp){
+  const pts = [];
+  for (let x = x0; x <= x1; x += 2) pts.push(`${x},${(y + amp * Math.sin((x - x0) / 3.2)).toFixed(1)}`);
+  return `<polyline class="wz" points="${pts.join(" ")}" style="stroke-width:${(1 + amp / 4).toFixed(2)}"/>`;
+}
+/* 程度（Ⅰ〜Ⅲ度）の表示は、その所見を問う問題に答えるまで伏せておく */
+function auscLabel(key, reveal){
+  if (key === "none") return "副雑音なし";
+  return reveal ? `${AUSC[key].en}（Johnson分類）` : "連続性副雑音（wheezes）";
+}
+function auscHTML(key, reveal = false){
+  const a = AUSC[key];
+  const i0 = 74, i1 = 162, e0 = 170, e1 = 290;
+  const row = (y, label, insp, exp, forced) => `
+      <text class="rl" x="4" y="${y + 4}">${label}</text>
+      ${forced ? "" : `<rect class="ib" x="${i0}" y="${y}" width="${i1 - i0}" height="8" rx="4"/>`}
+      <rect class="eb" x="${e0}" y="${y}" width="${e1 - e0}" height="8" rx="4"/>
+      ${insp ? wave(i0 + 4, i1 - 4, y - 9, a.amp) : ""}
+      ${exp ? wave(e0 + 4, e1 - 4, y - 9, a.amp) : ""}`;
+  return `<figure class="ausc">
+    <figcaption><span class="site">聴診：両側の前胸部・背部</span><b class="ausc-label">${auscLabel(key, reveal)}</b><span>${a.ja}</span></figcaption>
+    <svg viewBox="0 0 300 108" role="img" aria-label="呼吸と wheezes のタイミング図。${a.ja}">
+      ${row(34, "安静呼吸", a.quiet.insp, a.quiet.exp, false)}
+      ${row(78, "強制呼出", false, a.forced, true)}
+      <text class="bl" x="${(i0 + i1) / 2}" y="104" text-anchor="middle">吸気</text>
+      <text class="bl" x="${(e0 + e1) / 2}" y="104" text-anchor="middle">呼気</text>
+      ${key === "none" ? `<text class="none" x="${(e0 + e1) / 2}" y="60" text-anchor="middle">副雑音なし</text>` : ""}
+    </svg>
+  </figure>`;
+}
+
+function chartHTML(upto){
+  const W = 160, H = 80, L = 12, R = 148, T = 8, B = 60;
+  const xmax = TREND.x[TREND.x.length - 1];
+  const xs = TREND.x.map(d => L + (R - L) * d / xmax);
+  const cards = TREND.series.map(s => {
+    const y = v => (B - (B - T) * (v - s.min) / (s.max - s.min)).toFixed(1);
+    const pts = s.vals.slice(0, upto + 1).map((v, i) => [xs[i].toFixed(1), y(v)]);
+    const ref = s.ref != null ? `<line class="ref" x1="${L}" x2="${R}" y1="${y(s.ref)}" y2="${y(s.ref)}"/>` : "";
+    return `<div class="spark"><p class="sk">${s.name}<span><b>${s.fmt(s.vals[upto])}</b>${s.unit}</span></p>
+      <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+        <line class="ax" x1="${L}" x2="${R}" y1="${B}" y2="${B}"/>${ref}
+        ${xs.map((x, i) => `<text class="xl${i > upto ? " fut" : ""}" x="${x.toFixed(1)}" y="${H - 6}" text-anchor="middle">${TREND.labels[i]}</text>`).join("")}
+        ${pts.length > 1 ? `<polyline class="ln" points="${pts.map(p => p.join(",")).join(" ")}"/>` : ""}
+        ${pts.map((p, i) => `<circle class="dt${i === upto ? " last" : ""}" cx="${p[0]}" cy="${p[1]}" r="${i === upto ? 3.6 : 2.6}"/>`).join("")}
+      </svg></div>`;
+  }).join("");
+  const desc = TREND.series.map(s => `${s.name} ${s.vals.slice(0, upto + 1).map(s.fmt).join("→")}${s.unit}`).join("、");
+  return `<div class="charts" role="img" aria-label="経過グラフ。${desc}">${cards}</div>${upto >= 1 ? `<p class="cnote">${TREND.note}</p>` : ""}`;
+}
+
+/* ---------- 胸水の試験管と検査値 ---------- */
+function fluidHTML(f){
+  const t = f.turbid || 0;
+  const dots = t ? Array.from({ length: 26 }, (_, i) => `<circle cx="${14 + ((i * 37) % 32)}" cy="${56 + ((i * 53) % 78)}" r="${1 + (i % 3) * .6}" fill="#fff" opacity="${(.25 + t * .6).toFixed(2)}"/>`).join("") : "";
+  return `<figure class="fluid">
+    <svg class="tube" viewBox="0 0 60 150" role="img" aria-label="試験管に入った胸水。外観は${f.look}">
+      <defs><clipPath id="tclip"><path d="M14 10 H46 V124 a16 16 0 0 1 -32 0 Z"/></clipPath></defs>
+      <g clip-path="url(#tclip)">
+        <rect x="0" y="0" width="60" height="150" class="tube-air"/>
+        <rect x="0" y="48" width="60" height="110" fill="${f.tone}" opacity="${f.alpha || .85}"/>
+        ${t ? `<rect x="0" y="48" width="60" height="110" fill="#fff" opacity="${(t * .35).toFixed(2)}"/>` : ""}
+        ${dots}
+        <rect x="0" y="48" width="60" height="3" fill="#fff" opacity=".45"/>
+        <rect x="18" y="14" width="4" height="104" rx="2" fill="#fff" opacity=".35"/>
+      </g>
+      <path class="glass" d="M14 10 H46 V124 a16 16 0 0 1 -32 0 Z"/>
+      <rect class="rim" x="10" y="5" width="40" height="7" rx="3.5"/>
+    </svg>
+    <div class="fl-body">
+      <p class="fl-look"><span>外観</span>${f.look}</p>
+      <table class="fl-tab"><tbody>${f.labs.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>
+    </div>
+  </figure>`;
+}
+/* ---------- 胸部X線の模式図 ---------- */
+const CXR = {
+  massive:  { fluid: 1, shift: -14, lung: 0, label: "左の大量胸水。縦隔は右へ偏位" },
+  partial:  { fluid: .45, shift: -4, lung: .6, label: "左の胸水は減り、肺が膨らみ始めている" },
+  expanded: { fluid: .08, shift: 0, lung: 1, label: "左肺は全拡張。肋骨横隔膜角に少量の胸水" },
+  post:     { fluid: .04, shift: 0, lung: 1, label: "胸水の再貯留なし。左の胸膜が軽く肥厚", thick: true }
+};
+function cxrHTML(key){
+  const c = CXR[key], s = c.shift, top = 158 - 124 * c.fluid, curve = c.fluid < .9 ? 18 : 0;
+  return `<figure class="cxr">
+    <svg viewBox="0 0 240 190" role="img" aria-label="胸部X線の模式図。${c.label}">
+      <defs><clipPath id="lhemi"><path d="M202 164 Q208 66 162 32 Q138 24 124 44 L122 164 Z"/></clipPath></defs>
+      <rect width="240" height="190" rx="10" fill="#101010"/>
+      <path d="M28 172 Q22 58 70 24 Q120 4 170 24 Q218 58 212 172 Z" fill="#3b3b3b"/>
+      <path d="M42 158 Q38 70 80 36 Q102 28 110 48 L112 152 Q78 168 42 158 Z" fill="#161616"/>
+      <path d="M198 158 Q202 70 160 36 Q138 28 130 48 L128 152 Q162 168 198 158 Z" fill="#161616" opacity="${(c.lung * .9 + .1).toFixed(2)}"/>
+      <g clip-path="url(#lhemi)"><path d="M118 ${top} Q160 ${top - curve * .6} 212 ${top - curve} L212 172 L118 172 Z" fill="#e6e6e6" opacity=".93"/></g>
+      ${c.thick ? `<path d="M198 154 Q204 92 166 44" stroke="#cfcfcf" stroke-width="3" fill="none" opacity=".75"/>` : ""}
+      <g transform="translate(${s} 0)">
+        <path d="M98 72 L142 72 Q158 112 152 152 Q120 166 94 152 Q90 112 98 72 Z" fill="#d6d6d6"/>
+        <rect x="114" y="12" width="12" height="64" rx="6" fill="#0b0b0b"/>
+      </g>
+      <path d="M42 158 Q76 140 110 152" stroke="#d8d8d8" stroke-width="2" fill="none"/>
+      <text x="224" y="22" fill="#fff" font-size="13" font-weight="700" text-anchor="end">L</text>
+    </svg>
+    <figcaption>胸部X線（模式図）：${c.label}</figcaption>
+  </figure>`;
+}
+
+/* ---------- 胸腔ドレーンバッグの図 ---------- */
+function drainHTML(key){
+  const d = DRAINS[key], lvl = Math.min(1, d.vol / 1000), fy = 132 - 98 * lvl;
+  const bub = d.leak === "continuous" ? [0, 1, 2, 3, 4, 5] : d.leak === "intermittent" ? [0, 2] : [];
+  const suction = d.suction !== "水封";
+  return `<figure class="drain">
+    <svg viewBox="0 0 300 172" role="img" aria-label="胸腔ドレーンバッグの模式図。排液 ${d.vol} mL/日、呼吸性移動${d.fluct ? "あり" : "なし"}、${d.leak === "none" ? "泡なし" : "泡が続く"}、${d.suction}">
+      <text x="70" y="17" class="hd" text-anchor="middle">排液室</text>
+      <text x="175" y="17" class="hd" text-anchor="middle">水封室</text>
+      <text x="255" y="17" class="hd" text-anchor="middle">吸引圧の調節</text>
+      <rect class="ch" x="10" y="24" width="120" height="110" rx="8"/>
+      <rect x="12" y="${fy.toFixed(1)}" width="116" height="${(132 - fy).toFixed(1)}" rx="6" fill="${d.color}" opacity=".85"/>
+      <rect class="ch" x="142" y="24" width="66" height="110" rx="8"/>
+      <rect class="water" x="144" y="96" width="62" height="36" rx="6"/>
+      ${d.fluct ? `<path class="arrow" d="M175 66 v24 M168 73 l7 -7 l7 7 M168 83 l7 7 l7 -7"/>` : `<path class="flat" d="M150 96 h50"/>`}
+      ${bub.map((b, i) => `<circle class="bub" cx="${158 + (i % 3) * 14}" cy="${122 - i * 9}" r="3.2"/>`).join("")}
+      <rect class="ch" x="220" y="24" width="70" height="110" rx="8"/>
+      ${suction ? `<rect class="water" x="222" y="70" width="66" height="62" rx="6"/>` : ""}
+      <text x="255" y="${suction ? 60 : 84}" class="sm" text-anchor="middle">${suction ? d.suction : "吸引なし"}</text>
+      <text x="70" y="152" class="sm" text-anchor="middle">${d.vol.toLocaleString()} mL/日</text>
+      <text x="175" y="152" class="sm" text-anchor="middle">${d.fluct ? "呼吸性移動あり" : "呼吸性移動なし"}</text>
+      <text x="175" y="166" class="sm" text-anchor="middle">${d.leak === "none" ? "泡なし" : "泡が続く"}</text>
+      <text x="255" y="152" class="sm" text-anchor="middle">${suction ? "持続吸引" : "水封"}</text>
+    </svg>
+    <figcaption>胸腔ドレーンバッグ（模式図）</figcaption>
+  </figure>`;
+}
+
+function visualHTML(v){
+  if (!v) return "";
+  if (v.startsWith("cxr:")) return cxrHTML(v.slice(4));
+  if (v.startsWith("drain:")) return drainHTML(v.slice(6));
+  const [k, arg] = v.split(":");
+  if (k === "ausc") return auscHTML(arg);
+  if (k === "chart") return chartHTML(+arg);
+  return "";
+}
+
+/* ---------- 会話 ---------- */
+function talkHTML(who, text, extra = ""){
+  if (who === "narr") return `<p class="narr">${text}</p>`;
+  const c = CAST[who];
+  return `<div class="talk${who === "me" ? " me" : ""}" style="--c:${c.color}">
+    <span class="avatar" aria-hidden="true">${c.mark}</span>
+    <div class="bubble"><p class="who">${c.name}${c.role ? `<small>${c.role}</small>` : ""}${extra}</p><p class="say">${text}</p></div>
+  </div>`;
+}
+let typing = null;
+function typeInto(el, text){
+  if (reduceMotion){ el.textContent = text; return; }
+  let i = 0; el.textContent = "";
+  const id = setInterval(() => {
+    i++; el.textContent = text.slice(0, i);
+    if (i >= text.length){ clearInterval(id); typing = null; }
+  }, TYPE_MS);
+  typing = { finish(){ clearInterval(id); el.textContent = text; typing = null; } };
+}
+
+/* ---------- タイトル画面 ---------- */
+function renderTitle(){
+  hud.hidden = true;
+  const best = +store.get(BEST_KEY) || 0;
+  const picks = loadPicks();
+  app.innerHTML = `<section class="title">
+    <h1>${META.h1}</h1>
+    ${motifHTML()}
+    <p class="sub">${META.sub}</p>
+    <ul class="rules">
+      ${META.rules.map(([ic, t]) => `<li><span class="ic">${ic}</span><span>${t}</span></li>`).join("")}
+      <li><span class="ic">×${COMBO_MAX.toFixed(1)}</span><span>連続正解でコンボ倍率、速く答えるほどスピードボーナス（最大+${SPEED_MAX}点）。</span></li>
+    </ul>
+    <p class="ranks">エンディングは「${META.rec}」と「${META.safe}」の評価、そして入院中の出来事で変わります。</p>
+    <div class="mode">
+      <h2>入院中の出来事</h2>
+      <p>正しい判断をしていても、入院中には思わぬ出来事が起こることがあります。何が起こるかは、始めてみるまで分かりません（1回の診療で最大${MAX_EVENTS}つ）。</p>
+      <label class="teach"><input type="checkbox" id="teach"><span>指導用：起こす出来事を選ぶ</span></label>
+      <div id="teachbox" hidden>
+        <ul class="evlist">
+          ${EVENTS.map(e => `<li><label><input type="checkbox" value="${e.id}"${picks.includes(e.id) ? " checked" : ""}><span>${e.name}<small>${e.probNote}</small></span></label></li>`).join("")}
+        </ul>
+        <p class="cnote">選んだ出来事が必ず起こります。何も選ばなければ、出来事は起こりません。</p>
+      </div>
+    </div>
+    ${best ? `<p class="best" style="margin-top:16px">自己ベスト <b>${best.toLocaleString()}</b> 点</p>` : ""}
+    <button class="primary" id="start" type="button">診療を始める</button>
+    <button class="ghost" id="mute2" type="button"></button>
+  </section>`;
+  $("#teach").addEventListener("change", e => { $("#teachbox").hidden = !e.target.checked; });
+  setMuteLabel();
+  $("#mute2").addEventListener("click", toggleMute);
+  $("#start").addEventListener("click", () => {
+    audio(); SFX.tap();
+    const chosen = [...app.querySelectorAll('#teachbox input:checked')].map(i => i.value);
+    store.set(EV_KEY, JSON.stringify(chosen));
+    newGame($("#teach").checked ? { mode: "forced", picks: chosen } : { mode: "random", picks: [] });
+  });
+}
+
+/* ---------- 進行 ---------- */
+function buildSeq(){
+  const seq = [];
+  STORY.forEach(ch => { seq.push({ t: "chapter", ch }); ch.scenes.forEach(s => seq.push(s)); });
+  seq.push({ t: "ending" });
+  return seq;
+}
+function active(s){ return !s.cond || G.flags[s.cond]; }
+function qTotal(){ return G.seq.filter(s => s.t === "q" && active(s)).length; }
+function peekNext(){ for (let i = G.pos + 1; i < G.seq.length; i++){ if (active(G.seq[i])) return G.seq[i]; } return null; }
+function labelFor(next){ return !next ? "結果を見る" : next.t === "q" ? "判断する" : next.t === "round" ? "回診する" : "次へ"; }
+function lineText(t){ return typeof t === "function" ? t(G) : fill(t); }
+
+function newGame(ev){
+  ev = ev || { mode: "random", picks: [] };
+  G = { seq: buildSeq(), pos: 0, qi: 0, flags: {}, rec: REC_START, safe: SAFE_START,
+        score: 0, combo: 0, maxCombo: 0, correct: 0, missed: [], answered: false,
+        t0: 0, raf: 0, limit: 30, bonus: SPEED_MAX, rankIdx: 0, ending: null,
+        evMode: ev.mode, setting: ev, forced: {}, events: [], delay: 0, revealed: {} };
+  if (ev.mode === "forced"){
+    const count = Object.fromEntries(SLOTS.map(sl => [sl, 0]));
+    EVENTS.filter(e => ev.picks.includes(e.id)).forEach(e => {
+      const sl = e.window.reduce((a, b) => count[b] < count[a] ? b : a);
+      count[sl]++; (G.forced[sl] = G.forced[sl] || []).push(e);
+    });
+  }
+  hud.hidden = false;
+  G.log = []; G.startedAt = Date.now();
+  $("#score").textContent = "0";
+  renderMeters(0, 0); setMuteLabel();
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function renderStep(){
+  const s = G.seq[G.pos];
+  if (!s) return renderResult();
+  if (!active(s)){ G.pos++; return renderStep(); }
+  if (s.t === "chapter") return renderChapter(s.ch);
+  if (s.t === "talk") return renderTalk(s);
+  if (s.t === "round") return renderRound(s);
+  if (s.t === "q") return renderQ(s);
+  if (s.t === "event"){
+    const fired = rollEvents(s.slot);
+    const steps = [];
+    fired.forEach(e => {
+      const v = pickWeighted(e.variants, G);
+      const rec = { id: e.id, name: e.name, variant: v.name, when: s.label, delay: v.delay, total: 0, right: 0 };
+      G.events.push(rec); G.delay += v.delay;
+      if (v.onStart) v.onStart(G);
+      steps.push({ t: "chapter", ch: { day: s.label, place: v.place, title: v.title, alert: true } });
+      v.scenes.forEach(sc => steps.push(sc.t === "q" ? { ...sc, ev: rec } : sc));
+    });
+    G.seq.splice(G.pos, 1, ...steps);
+    return renderStep();
+  }
+  if (s.t === "ending"){
+    const e = ENDINGS.find(x => x.when(G));
+    G.ending = e.name;
+    G.seq.splice(G.pos, 1, { t: "chapter", ch: EPILOGUE }, { t: "talk", lines: e.lines });
+    return renderStep();
+  }
+}
+function advance(){ G.pos++; renderStep(); toTop(); }
+
+function rollEvents(slot){
+  if (G.evMode === "none") return [];
+  if (G.evMode === "forced") return G.forced[slot] || [];
+  if (G.events.length >= MAX_EVENTS) return [];
+  const pool = shuffle(EVENTS.filter(e => e.window.includes(slot) && !G.events.some(x => x.id === e.id)));
+  // prob は入院全体での確率。起こりうる時点の数で割り振る
+  for (const e of pool){ const per = 1 - Math.pow(1 - Math.min(0.99, e.prob(G)), 1 / e.window.length); if (Math.random() < per) return [e]; }
+  return [];
+}
+
+function renderChapter(ch){
+  app.innerHTML = `<section class="chapter${ch.alert ? " alert" : ""}">
+    ${ch.alert ? `<p class="alert-tag">予期せぬ出来事</p>` : ""}
+    <p class="day">${fill(ch.day)}</p>
+    <h2>${fill(ch.title)}</h2>
+    <p class="place">${ch.place}</p>
+    ${motifHTML()}
+    <button class="primary" id="go" type="button">はじめる</button>
+  </section>`;
+  ch.alert ? SFX.alert() : SFX.chapter();
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderTalk(step){
+  const finalLabel = labelFor(peekNext());
+  app.innerHTML = `<section class="scene" id="scene"><div class="log" id="log" aria-live="polite"></div><button class="primary" id="adv" type="button">次へ</button></section>`;
+  let n = 0;
+  const btn = $("#adv"), log = $("#log");
+  const show = () => {
+    const [who, raw] = step.lines[n++];
+    const text = lineText(raw);
+    log.insertAdjacentHTML("beforeend", talkHTML(who, ""));
+    const el = log.lastElementChild;
+    typeInto(who === "narr" ? el : el.querySelector(".say"), text);
+    if (n >= step.lines.length) btn.textContent = finalLabel;
+    setTimeout(() => btn.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 30);
+  };
+  $("#scene").addEventListener("click", () => {
+    if (typing){ typing.finish(); return; }
+    if (n < step.lines.length){ show(); return; }
+    SFX.tap(); advance();
+  });
+  show();
+}
+
+function renderRound(step){
+  const R = ROUNDS[step.day];
+  app.innerHTML = `<section class="round">
+    <h2 class="rlabel">${fill(R.label)}</h2>
+    ${vitalsHTML(R.vitals)}
+    ${labsHTML(R.labs)}
+    ${R.ausc ? auscHTML(R.ausc, !!G.revealed[R.ausc]) : ""}
+    ${R.cxr ? cxrHTML(R.cxr) : ""}
+    ${R.drain ? drainHTML(R.drain) : ""}
+    <h3 class="rh">経過</h3>
+    ${chartHTML(R.chart)}
+    ${R.notes.length ? `<ul class="notes">${R.notes.map(n => `<li>${n}</li>`).join("")}</ul>` : ""}
+    <button class="primary" id="go" type="button">${labelFor(peekNext())}</button>
+  </section>`;
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderQ(step){
+  const q = QMAP[step.id];
+  const idx = q.options.map((_, i) => i);
+  const order = q.fixedOrder ? idx : shuffle(idx);
+  G.limit = q.timeLimit || 30;
+  app.innerHTML = `<section class="q" id="qcard" aria-labelledby="qtext">
+    <div class="qtop"><span class="qno">問 ${G.qi + 1} / ${qTotal()}</span><span class="chip">${q.category}</span><span class="bonus" id="bonus">ボーナス +${SPEED_MAX}</span></div>
+    <div class="gauge" aria-hidden="true"><div class="gauge-fill" id="gauge"></div></div>
+    ${q.case ? `<p class="story">${fill(q.case)}</p>` : ""}
+    ${q.vitals ? vitalsHTML(q.vitals) : ""}
+    ${q.fluid ? fluidHTML(q.fluid) : ""}${visualHTML(q.visual)}
+    <h2 class="qtext" id="qtext">${q.question}</h2>
+    <ul class="opts">${order.map((oi, k) => `<li><button class="opt" type="button" data-oi="${oi}"><span class="key" aria-hidden="true">${KEYS[k]}</span><span class="txt">${q.options[oi].text}</span></button></li>`).join("")}</ul>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  app.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(step, +b.dataset.oi, b)));
+  startTimer();
+}
+
+function startTimer(){
+  G.t0 = performance.now(); G.bonus = SPEED_MAX;
+  const fill = $("#gauge"), lab = $("#bonus");
+  const tick = now => {
+    if (G.answered) return;
+    const frac = Math.max(0, 1 - (now - G.t0) / 1000 / G.limit);
+    fill.style.transform = `scaleX(${frac})`;
+    fill.classList.toggle("low", frac < 0.3);
+    const b = Math.round(SPEED_MAX * frac);
+    if (b !== G.bonus){ G.bonus = b; lab.textContent = b > 0 ? `ボーナス +${b}` : "ボーナス終了"; }
+    if (frac > 0) G.raf = requestAnimationFrame(tick);
+  };
+  G.raf = requestAnimationFrame(tick);
+}
+
+function answer(step, oi, btn){
+  if (G.answered) return;
+  G.answered = true; cancelAnimationFrame(G.raf);
+  const q = QMAP[step.id];
+  const chosen = q.options[oi], ok = !!chosen.correct, fx = chosen.fx || {};
+  const bonus = Math.round(SPEED_MAX * Math.max(0, 1 - (performance.now() - G.t0) / 1000 / G.limit));
+  (G.log = G.log || []).push({ qid: q.id, category: q.category, question: q.question, ok, chosen: chosen.text, seconds: Math.round((performance.now() - G.t0) / 100) / 10 });
+
+  app.querySelectorAll(".opt").forEach(b => {
+    const o = q.options[+b.dataset.oi]; b.disabled = true;
+    if (o.correct){ b.classList.add("is-correct"); b.insertAdjacentHTML("beforeend", '<span class="tag">正解</span>'); }
+    else if (b === btn){ b.classList.add("is-wrong"); b.insertAdjacentHTML("beforeend", '<span class="tag">あなたの回答</span>'); }
+    else b.classList.add("is-dim");
+  });
+
+  if (q.visual && q.visual.startsWith("ausc:")){
+    const key = q.visual.split(":")[1];
+    G.revealed[key] = true;
+    const lab = app.querySelector(".ausc-label");
+    if (lab) lab.textContent = auscLabel(key, true);
+  }
+  if (step.ev){ step.ev.total++; if (ok) step.ev.right++; else { step.ev.delay++; G.delay++; } }
+  const dRec = fx.rec !== undefined ? fx.rec : (ok ? REC_UP : -REC_DOWN);
+  const dSafe = fx.safe || 0;
+  if (fx.flag) [].concat(fx.flag).forEach(f => { G.flags[f] = true; });
+  G.rec = clamp(G.rec + dRec); G.safe = clamp(G.safe + dSafe);
+  renderMeters(dRec, dSafe);
+
+  const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2;
+  let head = "";
+  if (ok){
+    G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++;
+    const mult = multOf(G.combo), gained = Math.round((BASE + bonus) * mult), prev = G.score;
+    G.score += gained;
+    animateNumber($("#score"), prev, G.score, 500);
+    burst(cx, r.top + r.height / 2); floatText(`+${gained}`, cx, r.top); SFX.correct(G.combo);
+    const ri = rankIndex(G.score);
+    if (ri > G.rankIdx){ G.rankIdx = ri; setTimeout(() => toast(`ランクアップ！ ${RANKS[ri][1]}`), 380); }
+    const multTxt = mult > 1 ? ` ×${multLabel(mult)}` : "";
+    head = `<p class="fb-head ok"><span>${G.combo >= 2 ? `正解！ ${G.combo}連続` : "正解！"}</span><span>+${gained}点</span><span class="calc">（基本${BASE} + スピード${bonus}）${multTxt}</span></p>`;
+  } else {
+    G.combo = 0; G.missed.push({ q, chosen: oi });
+    SFX.wrong();
+    const card = $("#qcard");
+    if (!reduceMotion){ card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+    head = `<p class="fb-head ng"><span>不正解</span></p>`;
+  }
+
+  const tags = [];
+  if (dRec) tags.push(`<span class="dtag ${dRec > 0 ? "ok" : "ng"}">${META.rec} ${signed(dRec)}</span>`);
+  if (dSafe) tags.push(`<span class="dtag ${dSafe > 0 ? "ok" : "ng"}">${META.safe} ${signed(dSafe)}</span>`);
+  if (step.ev && !ok) tags.push(`<span class="dtag ng">入院 +1日</span>`);
+  const react = step.react ? talkHTML(step.who || META.lead, ok ? step.react.ok : step.react.ng, tags.join("")) : "";
+
+  const fb = $("#fb");
+  fb.innerHTML = `${head}
+    ${react}
+    <p>${chosen.why}</p>
+    ${ok ? "" : `<p class="right">正解：${correctText(q)}</p>`}
+    <div class="explain"><h3>解説</h3><p>${q.explanation}</p></div>
+    <button class="primary" id="next" type="button">次へ</button>`;
+  fb.classList.add("show");
+  $("#next").addEventListener("click", () => { SFX.tap(); G.qi++; G.answered = false; advance(); });
+  setTimeout(() => fb.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 60);
+}
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  hud.hidden = true;
+  const best = +store.get(BEST_KEY) || 0;
+  const isBest = G.score > best;
+  if (isBest) store.set(BEST_KEY, String(G.score));
+  const ri = rankIndex(G.score), next = RANKS[ri + 1];
+  const review = G.missed.length
+    ? G.missed.map(({ q, chosen }) => `<details class="review"><summary><span class="chip">${q.category}</span><span>${q.question}</span></summary>
+        <div class="body">${q.case ? `<p>${q.case}</p>` : ""}<p>あなたの回答：${q.options[chosen].text}</p><p class="right">正解：${correctText(q)}</p><p>${q.explanation}</p></div></details>`).join("")
+    : `<p class="empty-note">間違えた問題はありません。</p>`;
+  app.innerHTML = `<section class="result">
+    <p class="verdict ok">診療終了</p>
+    <p class="ending">エンディング「${G.ending}」</p>
+    <p class="final"><span class="big" id="final">0</span><span class="of">点</span></p>
+    ${isBest ? `<p class="newbest">自己ベスト更新</p>` : ""}
+    <p class="rank">ランク<b>${RANKS[ri][1]}</b></p>
+    ${next ? `<p class="nextrank">「${next[1]}」まであと${(next[0] - G.score).toLocaleString()}点</p>` : ""}
+    <dl class="stats four">
+      <div><dt>正解</dt><dd>${G.correct} / ${G.qi}</dd></div>
+      <div><dt>最大コンボ</dt><dd>${G.maxCombo}</dd></div>
+      <div><dt>${META.rec}</dt><dd>${G.rec}</dd></div>
+      <div><dt>${META.safe}</dt><dd>${G.safe}</dd></div>
+      <div><dt>退院</dt><dd>Day ${BASE_DAY + G.delay}</dd></div>
+      <div><dt>入院中の出来事</dt><dd>${G.events.length}件</dd></div>
+    </dl>
+    <h2>入院中の出来事</h2>
+    ${G.events.length ? `<ul class="evlog">${G.events.map(e => `<li><b>${e.when}：${e.variant}</b><span>${e.total}問中${e.right}問正解、入院 +${e.delay}日</span></li>`).join("")}</ul>` : `<p class="empty-note">${G.evMode === "forced" ? "指導用の設定で、出来事は起こしませんでした。" : "今回は大きな出来事は起きませんでした。"}</p>`}
+    <p class="nextrank" style="margin-top:8px">自己ベスト ${Math.max(best, G.score).toLocaleString()}点</p>
+    <div id="fb-mount"></div>
+    <h2>間違えた問題の復習</h2>
+    ${review}
+    <button class="primary" id="again" type="button">もう一度診療する</button>
+    <button class="ghost" id="home" type="button">タイトルに戻る</button>
+  </section>`;
+  animateNumber($("#final"), 0, G.score, 900);
+  if (window.Feedback) Feedback.mount($("#fb-mount"), {
+    caseId: META.id, caseTitle: META.title,
+    mode: G.evMode === "forced" ? "指導用（出来事を指定）" : "通常",
+    score: G.score, correct: G.correct, total: G.qi, maxCombo: G.maxCombo,
+    meters: `${META.rec} ${G.rec} / ${META.safe} ${G.safe}`,
+    ending: G.ending,
+    events: G.events.map(e => `${e.when}：${e.variant}（${e.right}/${e.total}）`).join("、"),
+    discharge: `Day ${BASE_DAY + G.delay}`,
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+    answers: G.log || []
+  });
+  SFX.clear();
+  $("#again").addEventListener("click", () => { SFX.tap(); newGame(G.setting); });
+  $("#home").addEventListener("click", () => { SFX.tap(); renderTitle(); window.scrollTo(0, 0); });
+}
+
+setMuteLabel();
+renderTitle();
+</script>
+<script src="feedback.js"></script>
+</body>
+</html>

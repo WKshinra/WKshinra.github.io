@@ -12,7 +12,7 @@
   --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
   --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
   --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
-  --violet:#4A2C82; --violet-soft:#ECE6F7; --safranin:#C0396B;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --on-violet:#FFFFFF; --safranin:#C0396B;
   color-scheme:light;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -21,32 +21,65 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
-    --violet:#B9A2F0; --violet-soft:#2F2747; --safranin:#F08AAE;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
-  --violet:#B9A2F0; --violet-soft:#2F2747; --safranin:#F08AAE;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
 .wrap{max-width:640px;margin:0 auto;padding:40px 20px 32px}
 h1{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8.5vw,2.8rem);line-height:1.3;margin:0}
 .motif{display:block;width:150px;height:auto;margin:16px 0 18px}
 .motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
-.lead{color:var(--muted);margin:0 0 28px}
-.cases{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.lead{color:var(--muted);margin:0 0 24px}
+
+/* 種類の選択 */
+.pick h2{font-size:1rem;margin:0 0 12px}
+.kinds{display:grid;gap:12px}
+@media (min-width:560px){.kinds{grid-template-columns:1fr 1fr}}
+.kindbtn{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:18px 18px 16px;cursor:pointer;transition:border-color .15s,background-color .15s}
+.kindbtn:hover{border-color:var(--violet)}
+.kindbtn:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.kindbtn .ttl{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.kindbtn b{font-family:var(--serif);font-weight:600;font-size:1.5rem;line-height:1.3}
+.kindbtn .count{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.kindbtn p{margin:6px 0 0;color:var(--muted);font-size:.92rem}
+.kindbtn .eg{display:block;margin-top:10px;font-size:.82rem;color:var(--violet);font-weight:700}
+
+/* 一覧 */
+.listhead{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.back{font:inherit;font-size:.88rem;color:var(--violet);background:none;border:0;padding:6px 0;cursor:pointer;font-weight:700}
+.back:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.seg{display:flex;margin-left:auto;border:1.5px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:5px 14px;border:0;background:var(--surface);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--violet);color:var(--on-violet);font-weight:700}
+.seg button:focus-visible{outline:3px solid var(--violet);outline-offset:-3px}
+.kindtitle{font-family:var(--serif);font-weight:600;font-size:1.6rem;margin:0 0 4px}
+.kinddesc{color:var(--muted);margin:0 0 14px;font-size:.92rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.chip{font:inherit;font-size:.82rem;padding:4px 12px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--violet);color:var(--violet);font-weight:700;background:var(--violet-soft)}
+.chip:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.cases{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--line)}
 .cases li{border-bottom:1px solid var(--line)}
-.cases a{display:block;padding:20px 12px 20px 4px;color:inherit;text-decoration:none;border-radius:6px}
+.cases a{display:block;padding:18px 12px 18px 4px;color:inherit;text-decoration:none;border-radius:6px}
 .cases a:hover{background:var(--violet-soft)}
 .cases a:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
-.kind{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6}
-.cases h2{font-family:var(--serif);font-weight:600;font-size:1.45rem;line-height:1.4;margin:8px 0 4px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6}
+.tag.new{color:var(--on-violet);background:var(--safranin);border-color:var(--safranin)}
+.cases h3{font-family:var(--serif);font-weight:600;font-size:1.4rem;line-height:1.4;margin:8px 0 4px}
 .cases p{margin:0}
 .meta{color:var(--muted);font-size:.85rem;margin-top:6px !important}
+.empty{color:var(--muted);padding:18px 0}
+
 .notes{margin:28px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.85rem;line-height:1.7}
 .notes li{margin:0 0 6px}
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
@@ -62,40 +95,23 @@ h1{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8.5vw,2.8rem);l
     <g class="s" transform="translate(108 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
     <g class="v" transform="translate(140 10)"><path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/></g>
   </svg>
-  <p class="lead">医学生と初期研修医のための、ゲーム形式の症例演習です。好きな症例を選んで始めてください。</p>
+  <p class="lead">医学生と初期研修医のための、ゲーム形式の症例演習です。</p>
 
-  <ul class="cases">
-    <li><a href="respiratory_challenge.html">
-      <span class="kind">クイズ</span>
-      <h2>呼吸器感染症チャレンジ</h2>
-      <p>市中肺炎、非定型肺炎、結核、誤嚥性肺炎などを13問で。研修医の5日間をたどるストーリーモードと、ライフ制のチャレンジモードがあります。</p>
-      <p class="meta">全13問、10〜15分</p>
-    </a></li>
-    <li><a href="pneumococcal_course.html">
-      <span class="kind">入院経過</span>
-      <h2>肺炎球菌肺炎 入院の7日間</h2>
-      <p>70歳男性の主治医として、初期治療、72時間目の効果判定、感受性に基づく抗菌薬の見直し、退院前の評価までを経験します。</p>
-      <p class="meta">全13問＋入院中の出来事、20〜30分</p>
-    </a></li>
-    <li><a href="asthma_course.html">
-      <span class="kind">入院経過</span>
-      <h2>気管支喘息発作 入院の5日間</h2>
-      <p>深夜の救急外来に来た52歳女性の発作を、PEFと wheezes の変化を追いながら退院まで診ます。</p>
-      <p class="meta">全14問＋入院中の出来事、20〜30分</p>
-    </a></li>
-    <li><a href="lungcancer_course.html">
-      <span class="kind">入院経過</span>
-      <h2>肺腺癌 化学療法 入院の14日間</h2>
-      <p>66歳男性の初回化学療法。治療選択と前処置から、骨髄抑制の底、退院後の生活の準備までを経験します。</p>
-      <p class="meta">全14問＋入院中の出来事、25〜35分</p>
-    </a></li>
-    <li><a href="ipf_ae_course.html">
-      <span class="kind">入院経過</span>
-      <h2>特発性肺線維症 急性増悪 入院の21日間</h2>
-      <p>外来で治療中の74歳男性が急に悪化。鑑別、本人と家族との話し合い、ステロイド治療、在宅酸素の準備までを診ます。</p>
-      <p class="meta">全14問＋入院中の出来事、25〜35分</p>
-    </a></li>
-  </ul>
+  <section class="pick" id="pick" aria-labelledby="pick-title">
+    <h2 id="pick-title">どちらで学びますか？</h2>
+    <div class="kinds" id="kinds"></div>
+  </section>
+
+  <section id="list" hidden aria-labelledby="kind-title">
+    <div class="listhead">
+      <button class="back" id="back" type="button">‹ 種類を選び直す</button>
+      <div class="seg" id="seg" role="group" aria-label="種類の切り替え"></div>
+    </div>
+    <h2 class="kindtitle" id="kind-title"></h2>
+    <p class="kinddesc" id="kind-desc"></p>
+    <div class="chips" id="chips" role="group" aria-label="分野で絞り込む"></div>
+    <ul class="cases" id="cases"></ul>
+  </section>
 
   <ul class="notes">
     <li>すべて学習用の架空症例です。実際の診療では、最新のガイドラインと施設の方針を確認してください。</li>
@@ -103,5 +119,116 @@ h1{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8.5vw,2.8rem);l
     <li>効果音が出ます。音を出したくない場合は、各症例の画面で効果音をオフにできます。</li>
   </ul>
 </main>
+
+<script>
+/* =========================================================
+   種類と症例の一覧
+   新しい症例を追加するときは、CASES に1行（{ } ひとつ）足してください。
+   type：KINDS のキー（"quiz" または "course"）
+   field：分野。同じ名前の症例がまとまって絞り込めるようになります
+   isNew：true にすると「新着」の印が付きます
+   ========================================================= */
+const KINDS = {
+  quiz:   { name: "クイズ形式", short: "クイズ", desc: "短い問題を次々に解いて、知識を確かめます。ストーリーモードとチャレンジモードがあります。" },
+  course: { name: "入院経過", short: "入院経過", desc: "一人の患者さんを、入院から退院まで主治医として診ていきます。入院中の出来事がランダムに起こります。" }
+};
+
+const CASES = [
+  { type: "quiz", href: "respiratory_challenge.html", field: "感染症", title: "呼吸器感染症チャレンジ",
+    desc: "市中肺炎、非定型肺炎、結核、誤嚥性肺炎などを13問で。研修医の5日間をたどるストーリーモードと、ライフ制のチャレンジモードがあります。",
+    meta: "全13問、10〜15分" },
+  { type: "quiz", href: "pleural_quiz.html", field: "胸膜", title: "胸水を見抜け!!!", isNew: true,
+    desc: "漏出性か滲出性かの見分け方から、結核性、膿胸、癌性、血胸、乳び胸、中皮腫まで。胸水の色と検査値から正体を見抜く14問です。",
+    meta: "全14問、15〜20分" },
+  { type: "course", href: "pneumococcal_course.html", field: "感染症", title: "肺炎球菌肺炎 入院の7日間",
+    desc: "70歳男性の主治医として、初期治療、72時間目の効果判定、感受性に基づく抗菌薬の見直し、退院前の評価までを経験します。",
+    meta: "全13問＋入院中の出来事、20〜30分" },
+  { type: "course", href: "asthma_course.html", field: "気道", title: "気管支喘息発作 入院の5日間",
+    desc: "深夜の救急外来に来た52歳女性の発作を、PEFと wheezes の変化を追いながら退院まで診ます。",
+    meta: "全14問＋入院中の出来事、20〜30分" },
+  { type: "course", href: "lungcancer_course.html", field: "腫瘍", title: "肺腺癌 化学療法 入院の14日間",
+    desc: "66歳男性の初回化学療法。治療選択と前処置から、骨髄抑制の底、退院後の生活の準備までを経験します。",
+    meta: "全14問＋入院中の出来事、25〜35分" },
+  { type: "course", href: "ipf_ae_course.html", field: "間質性肺疾患", title: "特発性肺線維症 急性増悪 入院の21日間",
+    desc: "外来で治療中の74歳男性が急に悪化。鑑別、本人と家族との話し合い、ステロイド治療、在宅酸素の準備までを診ます。",
+    meta: "全14問＋入院中の出来事、25〜35分" },
+  { type: "course", href: "mpe_course.html", field: "胸膜", title: "癌性胸水 入院の10日間", isNew: true,
+    desc: "68歳女性の左の大量胸水。胸水の性状と細胞診、胸腔ドレーンの留置と管理、ユニタルクによる胸膜癒着術までを経験します。",
+    meta: "全14問＋入院中の出来事、25〜35分" }
+];
+
+/* =========================================================
+   ここから下は画面の動作（通常は変更不要）
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const LAST = "toppage-last-kind";
+let field = "すべて";
+const ss = {
+  get(){ try { return sessionStorage.getItem(LAST); } catch(e){ return null; } },
+  set(v){ try { v ? sessionStorage.setItem(LAST, v) : sessionStorage.removeItem(LAST); } catch(e){} }
+};
+
+function renderPick(){
+  $("#kinds").innerHTML = Object.entries(KINDS).map(([k, v]) => {
+    const list = CASES.filter(c => c.type === k);
+    const eg = list.slice(0, 3).map(c => c.title).join("、");
+    return `<button class="kindbtn" type="button" data-kind="${k}">
+      <span class="ttl"><b>${v.name}</b><span class="count">${list.length}本</span></span>
+      <p>${v.desc}</p>
+      ${eg ? `<span class="eg">${eg}${list.length > 3 ? " など" : ""}</span>` : ""}
+    </button>`;
+  }).join("");
+  document.querySelectorAll(".kindbtn").forEach(b => b.addEventListener("click", () => { location.hash = b.dataset.kind; }));
+}
+
+function renderList(kind){
+  const k = KINDS[kind];
+  $("#kind-title").textContent = k.name;
+  $("#kind-desc").textContent = k.desc;
+  $("#seg").innerHTML = Object.entries(KINDS).map(([key, v]) =>
+    `<button type="button" data-kind="${key}" aria-pressed="${key === kind}">${v.short}</button>`).join("");
+  document.querySelectorAll("#seg button").forEach(b => b.addEventListener("click", () => { field = "すべて"; location.hash = b.dataset.kind; }));
+
+  const list = CASES.filter(c => c.type === kind);
+  const fields = [...new Set(list.map(c => c.field))];
+  if (!fields.includes(field)) field = "すべて";
+  $("#chips").hidden = fields.length < 2;
+  $("#chips").innerHTML = ["すべて", ...fields].map(f =>
+    `<button class="chip" type="button" data-field="${f}" aria-pressed="${f === field}">${f}</button>`).join("");
+  document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { field = b.dataset.field; renderList(kind); }));
+
+  const shown = list.filter(c => field === "すべて" || c.field === field);
+  $("#cases").innerHTML = shown.length ? shown.map(c => `<li><a href="${c.href}">
+      <span class="tags"><span class="tag">${c.field}</span>${c.isNew ? `<span class="tag new">新着</span>` : ""}</span>
+      <h3>${c.title}</h3>
+      <p>${c.desc}</p>
+      <p class="meta">${c.meta}</p>
+    </a></li>`).join("") : `<li class="empty">この分野の症例は準備中です。</li>`;
+}
+
+function route(){
+  const h = location.hash.replace("#", "");
+  if (KINDS[h]){
+    ss.set(h);
+    $("#pick").hidden = true; $("#list").hidden = false;
+    renderList(h);
+  } else {
+    $("#list").hidden = true; $("#pick").hidden = false;
+    renderPick();
+  }
+}
+
+$("#back").addEventListener("click", () => {
+  ss.set(null);
+  history.pushState(null, "", location.pathname);
+  route();
+  window.scrollTo(0, 0);
+});
+window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+
+// 症例から「一覧に戻る」で戻ったときは、同じタブで最後に選んだ種類を表示する
+if (!location.hash && KINDS[ss.get()]) history.replaceState(null, "", "#" + ss.get());
+route();
+</script>
 </body>
 </html>

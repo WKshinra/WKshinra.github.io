@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>胸水を見抜け!!!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --on-violet:#FFFFFF; --safranin:#C0396B;
+  --ok:#1E7A55; --ok-soft:#E3F3EA; --ng:#B23A2E; --ng-soft:#FBE7E4;
+  --eyepiece:#1D1A24;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+    --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+    --eyepiece:#0F0D15;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+  --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+  --eyepiece:#0F0D15;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{touch-action:manipulation}
+.wrap{max-width:680px;margin:0 auto;padding:18px 18px 32px}
+
+/* ステータスバー */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.hud-in{max-width:680px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.lives{display:flex;gap:4px}
+.heart{width:26px;height:26px;color:var(--safranin);display:block}
+.heart svg{width:100%;height:100%;display:block;fill:currentColor}
+.heart.empty{color:var(--muted);opacity:.5}
+.heart.empty svg{fill:none;stroke:currentColor;stroke-width:1.8}
+.heart.lost{animation:lose .55s ease-out}
+.heart.gain{animation:pop .5s ease-out}
+@keyframes lose{0%{transform:scale(1.3);opacity:1}45%{transform:scale(.6) rotate(-14deg)}100%{transform:none}}
+.trust{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+.tbar{width:58px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.tfill{display:block;height:100%;width:30%;background:var(--violet);transition:width .5s ease-out}
+.tnum{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.7em}
+.trust.up .tbar{animation:glow .7s ease-out}
+.trust.down{animation:shake .4s}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 7px transparent}}
+.scorebox{margin-left:auto;display:flex;align-items:center;gap:8px}
+.combo{font-size:.75rem;font-weight:700;color:var(--on-violet);background:var(--violet);padding:2px 9px;border-radius:999px;white-space:nowrap;visibility:hidden}
+.combo.on{visibility:visible}
+.combo.pop{animation:pop .4s ease-out}
+.score{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;min-width:3em;text-align:right}
+.pts{font-size:.8rem;color:var(--muted);margin-left:-4px}
+.mute{flex:none;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem;cursor:pointer;display:grid;place-items:center}
+.mute:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.2)}100%{transform:none}}
+
+/* タイトル */
+.title{padding-top:24px}
+.title h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1.3;margin:0}
+.motif{display:block;width:150px;height:auto;margin:14px 0 16px}
+.motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
+.title .sub{color:var(--muted);margin:0 0 8px}
+.mode{border-top:1px solid var(--line);padding:18px 0 4px}
+.mode h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:0}
+.mode p{margin:4px 0 0}
+.mode .best{color:var(--muted);font-size:.88rem;margin-top:8px}
+.mode .best b{color:var(--ink);font-variant-numeric:tabular-nums}
+.common{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:.88rem;color:var(--muted)}
+.common p{margin:0 0 6px}
+
+/* ストーリー */
+.chapter{min-height:58vh;display:flex;flex-direction:column;justify-content:center;padding:16px 2px}
+.chapter .day{color:var(--muted);margin:0;font-size:.95rem}
+.chapter h2{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,10vw,3rem);line-height:1.3;margin:6px 0 6px;animation:settle 1.1s ease-out both}
+@keyframes settle{from{opacity:0;letter-spacing:.35em;filter:blur(3px)}to{opacity:1;letter-spacing:.02em;filter:none}}
+.chapter .place{color:var(--violet);font-weight:700;margin:0}
+.chapter .motif{margin:18px 0 0}
+.scene{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.log{display:grid;gap:14px}
+.talk{display:flex;gap:10px;align-items:flex-start;animation:rise .3s ease-out}
+.talk.me{flex-direction:row-reverse}
+.avatar{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid var(--c);color:var(--c);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:1.2rem;background:var(--surface)}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:7px 14px 9px;max-width:calc(100% - 54px)}
+.talk.me .bubble{border-radius:14px 4px 14px 14px;background:var(--violet-soft)}
+.who{font-size:.78rem;font-weight:700;color:var(--c);margin:0}
+.who small{font-weight:500;color:var(--muted);margin-left:6px}
+.say{margin:2px 0 0;min-height:1.75em}
+.narr{font-family:var(--serif);font-weight:600;color:var(--muted);margin:2px;line-height:1.95;animation:rise .4s ease-out}
+.dtag{font-size:.72rem;font-weight:700;margin-left:8px}
+.dtag.ok{color:var(--ok)} .dtag.ng{color:var(--ng)}
+.fb .talk{margin:10px 0 12px}
+
+/* 問題 */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.q.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.qtop{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.qno{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6;flex:none}
+.bonus{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.gauge{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:8px 0 14px}
+.gauge-fill{height:100%;background:var(--violet);transform-origin:left center}
+.gauge-fill.low{background:var(--safranin)}
+.story{font-family:var(--serif);font-weight:600;font-size:clamp(1.08rem,4vw,1.28rem);line-height:1.85;margin:0 0 12px}
+.monitor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.vital{background:var(--surface);padding:6px 10px 8px;display:flex;flex-direction:column}
+.vital .k{font-size:.74rem;color:var(--muted)}
+.vital .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
+.vital .v small{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:3px}
+@media (min-width:600px){.monitor{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.qtext{font-size:1.1rem;line-height:1.6;margin:0}
+.scope{background:var(--eyepiece);border-radius:16px;padding:16px 14px 10px;margin:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.scope svg{width:100%;max-width:280px;height:auto;display:block}
+.scope figcaption{color:#CFC8DA;font-size:.78rem}
+.opts{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;font:inherit;line-height:1.6;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;min-height:52px;transition:border-color .15s,background-color .15s}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt .key{flex:none;width:1.75em;height:1.75em;margin-top:.05em;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.85rem;font-weight:700;color:var(--muted)}
+.opt .txt{flex:1}
+.opt .tag{flex:none;font-size:.75rem;font-weight:700;align-self:center}
+.opt.is-correct{border-color:var(--ok);background:var(--ok-soft)}
+.opt.is-correct .key{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.is-correct .tag{color:var(--ok)}
+.opt.is-wrong{border-color:var(--ng);background:var(--ng-soft)}
+.opt.is-wrong .key{background:var(--ng);border-color:var(--ng);color:var(--surface)}
+.opt.is-wrong .tag{color:var(--ng)}
+.opt.is-dim{opacity:.5}
+
+/* 回答後 */
+.fb.show{margin-top:18px;animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-weight:700;font-size:1.15rem;margin:0 0 4px}
+.fb-head.ok{color:var(--ok)}
+.fb-head.ng{color:var(--ng)}
+.calc{font-size:.8rem;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fb > p{margin:0 0 8px}
+.right{color:var(--ok);font-weight:700}
+.over{color:var(--ng);font-weight:700}
+.explain{border-left:3px solid var(--violet);padding:2px 0 2px 14px;margin-top:14px}
+.explain h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
+.explain p{margin:0}
+
+.primary{display:block;margin-top:20px;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--violet);color:var(--on-violet);font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.ghost{display:block;margin-top:10px;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer}
+.mode .primary,.mode .ghost{margin-top:12px}
+.primary:focus-visible,.ghost:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
+
+/* 結果 */
+.verdict{font-weight:700;font-size:1.05rem;margin:20px 0 0}
+.verdict.ok{color:var(--ok)} .verdict.ng{color:var(--ng)}
+.ending{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin:2px 0 0}
+.final{display:flex;align-items:baseline;gap:8px;margin:2px 0 6px}
+.final .big{font-family:var(--serif);font-size:3.6rem;line-height:1.1;color:var(--violet);font-variant-numeric:tabular-nums}
+.final .of{font-weight:700}
+.newbest{display:inline-block;background:var(--safranin);color:var(--on-violet);font-weight:700;font-size:.85rem;padding:2px 12px;border-radius:999px;margin:0 0 6px;animation:pop .5s ease-out}
+.rank{margin:6px 0 0}
+.rank b{font-family:var(--serif);font-size:1.45rem;font-weight:600;margin-left:6px}
+.nextrank{color:var(--muted);font-size:.9rem;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0 0}
+.stats.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats div{background:var(--surface);padding:8px 12px}
+.stats dt{font-size:.76rem;color:var(--muted)}
+.stats dd{margin:0;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.result h2{font-size:1rem;margin:26px 0 4px}
+.review{border-bottom:1px solid var(--line);padding:10px 0}
+.review summary{cursor:pointer;display:flex;gap:8px;align-items:flex-start;list-style:none;font-weight:500}
+.review summary::-webkit-details-marker{display:none}
+.review summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.review .body{padding:8px 0 0;font-size:.95rem}
+.review .body p{margin:0 0 6px}
+.empty-note{color:var(--muted);margin:4px 0 0}
+
+/* 演出 */
+.pt{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:8px 0 0 var(--violet);pointer-events:none;z-index:50;animation:fly .75s cubic-bezier(.2,.7,.3,1) forwards}
+.pt.pink{background:var(--safranin);box-shadow:8px 0 0 var(--safranin)}
+@keyframes fly{from{transform:translate(-50%,-50%) rotate(0deg);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
+.float{position:fixed;font-weight:700;font-size:1.2rem;color:var(--ok);pointer-events:none;z-index:40;transform:translate(-50%,0);animation:floatup .9s ease-out forwards;font-variant-numeric:tabular-nums}
+@keyframes floatup{to{transform:translate(-50%,-52px);opacity:0}}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translate(-50%,-10px);opacity:0;pointer-events:none;z-index:30;background:var(--violet);color:var(--on-violet);font-weight:700;padding:10px 20px;border-radius:999px;white-space:nowrap;transition:opacity .25s,transform .25s}
+.toast.heal{background:var(--ok)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.note{max-width:680px;margin:0 auto;padding:0 18px 28px;color:var(--muted);font-size:.8rem;line-height:1.6}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+
+/* 胸水の試験管と検査値 */
+.fluid{display:flex;gap:14px;align-items:flex-start;margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
+.tube{flex:none;width:52px;height:auto}
+.tube .glass{fill:none;stroke:var(--muted);stroke-width:1.6}
+.tube .rim{fill:var(--line);stroke:var(--muted);stroke-width:1}
+.tube .tube-air{fill:var(--bg)}
+.fl-body{flex:1;min-width:0}
+.fl-look{margin:0 0 6px;font-weight:700}
+.fl-look span{display:inline-block;font-size:.72rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px}
+.fl-tab{width:100%;border-collapse:collapse;font-size:.88rem;line-height:1.45}
+.fl-tab th{font-weight:500;color:var(--muted);text-align:left;padding:4px 8px 4px 0;white-space:nowrap;vertical-align:top}
+.fl-tab td{padding:4px 0;font-variant-numeric:tabular-nums}
+.fl-tab tr+tr th,.fl-tab tr+tr td{border-top:1px solid var(--line)}
+.keypts{margin-top:12px;background:var(--violet-soft);border-radius:10px;padding:10px 14px}
+.keypts h3{font-size:.9rem;color:var(--violet);margin:0 0 4px}
+.keypts ul{margin:0;padding-left:1.2em;font-size:.92rem}
+.keypts li{margin:3px 0}
+.review .keypts{margin-top:8px}
+</style>
+</head>
+<body>
+<header class="hud" id="hud" hidden>
+  <div class="hud-in">
+    <div class="lives" id="lives" role="img" aria-label="ライフ"></div>
+    <div class="trust" id="trust" role="img" aria-label="指導医の信頼"><span>信頼</span><span class="tbar"><span class="tfill" id="tfill"></span></span><span class="tnum" id="tnum">30</span></div>
+    <div class="scorebox">
+      <span class="combo" id="combo"></span>
+      <span class="score" id="score">0</span><span class="pts">点</span>
+    </div>
+    <button class="mute" id="mute" type="button"></button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="note"><a href="./" style="color:var(--violet);font-weight:700">症例の一覧に戻る</a><br>学習用の架空症例です。実際の診療では最新のガイドラインと施設の方針を確認してください。</footer>
+
+<script>
+/* =========================================================
+   問題データ（両モード共通）
+   1問ずつ { } で囲んで追加できます。
+   id：問題の名前（ストーリーから呼び出すときに使う）
+   category：分野名／case：症例文／vitals：バイタルの表
+   visual："gram" でグラム染色模式図を表示
+   options：選択肢。正解に correct: true、why に選んだときの説明
+   fixedOrder：true なら選択肢を並べ替えない
+   timeLimit：スピードボーナスの秒数（省略時30秒）
+   ========================================================= */
+const QUESTIONS = [
+  {
+    id: "light", category: "漏出か滲出か", timeLimit: 45,
+    case: "78歳女性。右胸水。初めての胸腔穿刺。血清LDHの基準値上限は222 IU/L。",
+    fluid: { look: "淡黄色・透明", tone: "#F4E3A1", alpha: .75, labs: [["総蛋白", "2.1 g/dL（血清 6.8）"], ["LDH", "95 IU/L（血清 210）"], ["糖", "110 mg/dL"], ["細胞数", "420 /μL"]] },
+    question: "Lightの基準で判定すると？",
+    options: [
+      { text: "漏出性。3つの項目をどれも満たさない", correct: true, why: "総蛋白比0.31、LDH比0.45、胸水LDH 95は基準値上限の2/3（約148）未満で、どれも満たしません。" },
+      { text: "滲出性。胸水LDHが血清LDHの基準値上限の2/3を超える", why: "222の2/3はおよそ148です。胸水LDH 95はこれを下回ります。" },
+      { text: "滲出性。胸水の総蛋白が2 g/dLを超えている", why: "Lightの基準は、総蛋白の絶対値ではなく、血清との比（0.5超）で判断します。" },
+      { text: "判定できない。胸水と血清のアルブミンが必要", why: "Lightの基準は総蛋白とLDHで判定します。アルブミンは利尿薬使用時などの補助に使います。" }
+    ],
+    explanation: "Lightの基準は滲出性胸水を取りこぼさないように作られており、感度は高い一方で特異度は低めです。数値だけでなく、臨床経過と合わせて判断します。",
+    keypoints: ["胸水/血清の総蛋白比 ＞ 0.5", "胸水/血清のLDH比 ＞ 0.6", "胸水LDH ＞ 血清LDH基準値上限の2/3（およそ160 IU/L）", "1つでも満たせば滲出性、1つも満たさなければ漏出性"]
+  },
+  {
+    id: "diuretic", category: "漏出か滲出か", timeLimit: 45,
+    case: "心不全で入院した82歳男性。フロセミドを3日間使った後に、両側胸水を穿刺した。Lightの基準ではLDH比0.64で滲出性と判定された。血清NT-proBNP 4,800 pg/mL。",
+    fluid: { look: "淡黄色・透明", tone: "#F4E3A1", alpha: .75, labs: [["アルブミン", "1.8 g/dL（血清 3.4）"], ["総蛋白", "3.0 g/dL（血清 6.4）"], ["LDH", "140 IU/L（血清 220）"]] },
+    question: "解釈として最も適切なのは？",
+    options: [
+      { text: "アルブミン差が1.2 g/dL以上あり、心不全による胸水と考えてよい", correct: true, why: "アルブミン差は1.6 g/dLです。利尿薬で胸水が濃縮され、滲出性に見えていると考えます。" },
+      { text: "Lightの基準で滲出性なので、悪性腫瘍や結核の精査を優先して進める", why: "利尿薬を使っていると、漏出性胸水が滲出性と判定されることがあります。補正の指標を確認します。" },
+      { text: "利尿薬の影響を除くため、利尿薬を1週間中止してから穿刺をやり直す", fx: { safe: -5 }, why: "心不全の治療を止める必要はありません。アルブミンや総蛋白の差で判断できます。" },
+      { text: "NT-proBNPは胸水中で測らないと、心不全によるものかは判断できない", why: "血清のNT-proBNPでも十分に参考になります。陰性なら心原性はまず否定的です。" }
+    ],
+    explanation: "利尿薬で水分が引くと、胸水の蛋白やLDHが濃縮され、滲出性と誤って判定されることがあります。",
+    keypoints: ["利尿薬使用中は、漏出性胸水が滲出性と判定されることがある", "血清−胸水のアルブミン差 ≧ 1.2 g/dL、または総蛋白差 ≧ 3.1 g/dL なら心不全による胸水と考えてよい", "血清NT-proBNPが陰性なら、心原性はまず否定的", "漏出性胸水の8割以上、両側胸水の半数以上は心不全による"]
+  },
+  {
+    id: "first-tap", category: "検査", timeLimit: 40,
+    case: "原因不明の右胸水（中等量）。これから初めて胸腔穿刺を行う。",
+    question: "提出する検査として最も適切なのは？",
+    options: [
+      { text: "生化学（pHを含む）、細胞分画、塗抹・培養、細胞診を一度に出す", correct: true, fx: { safe: 5 }, why: "初回の穿刺で必要な検査をそろえると、穿刺の回数を減らせます。" },
+      { text: "まず生化学だけを出し、滲出性と分かってから細胞診と培養を追加する", why: "追加のために再び穿刺が必要になり、患者さんの負担と合併症のリスクが増えます。" },
+      { text: "pHは試験紙で手早く測る。局所麻酔のリドカインが少し混ざっても、値は変わらない", why: "pHは血液ガス分析器で測ります。リドカインが混ざるとpHは低く出ます。" },
+      { text: "細胞診は少量で十分なので、胸水は5 mLほど提出すれば足りる", why: "セルブロックを作って免疫染色や遺伝子検査を行うには、100 mL以上あると安心です。" }
+    ],
+    explanation: "未診断の胸水では、生化学、微生物、細胞の3つを初回にそろえて提出します。少量の胸水を無理に穿刺しないことも大切です。",
+    keypoints: ["初回は「生化学（pH、糖、LDH、ADA、総蛋白、アルブミン）」「塗抹・培養（一般菌、抗酸菌）」「細胞診と細胞分画」をそろえる", "pHは血液ガス分析器で測る。リドカインが混ざると低く出る", "培養は血液培養ボトルに入れると感度が上がる", "セルブロックには100 mL以上あると安心"]
+  },
+  {
+    id: "tb", category: "結核性", timeLimit: 45,
+    case: "42歳男性。3週間続く微熱と右胸痛。右胸水。胸部CTで肺野に明らかな病変はない。",
+    fluid: { look: "黄色（麦わら色）・やや混濁", tone: "#E7C25E", alpha: .85, turbid: .2, labs: [["総蛋白", "5.6 g/dL"], ["LDH", "410 IU/L"], ["糖", "82 mg/dL"], ["ADA", "72 U/L"], ["細胞分画", "リンパ球 88%"], ["中皮細胞", "ほとんどなし"], ["抗酸菌塗抹", "陰性"]] },
+    question: "最も適切な判断は？",
+    options: [
+      { text: "結核性胸膜炎を強く疑い、抗酸菌培養や核酸増幅検査に加えて胸膜生検も考える", correct: true, why: "リンパ球優位でADAが高く、総蛋白も4 g/dLを超える典型的な所見です。確定には胸膜生検が有用です。" },
+      { text: "胸水の抗酸菌塗抹が陰性なので、結核性胸膜炎はまず否定的と考えてよい", fx: { safe: -10 }, why: "結核性胸膜炎の胸水塗抹の感度は1割未満です。陰性でも否定できません。" },
+      { text: "ADAが40 U/Lを超えるので、ほかの病気は考えずに結核性胸膜炎と確定する", why: "ADAは悪性リンパ腫、リウマチ性胸水、膿胸などでも上がります。可能な限り病理や培養で確かめます。" },
+      { text: "リンパ球優位なので、まず悪性リンパ腫を考えてPET-CTを先に行う", why: "鑑別には挙がりますが、この所見では結核性胸膜炎を最も強く疑います。" }
+    ],
+    explanation: "結核性胸膜炎の胸水は、リンパ球優位、ADA高値、総蛋白4 g/dL超が典型です。胸水から菌が見つかることは少なく、胸膜生検の組織と培養が診断に役立ちます。",
+    keypoints: ["リンパ球優位＋ADA ≧ 40 U/L で結核性胸膜炎を疑う", "総蛋白は基本的に4.0 g/dLを超える。中皮細胞は少ないことが多い", "胸水の抗酸菌塗抹の感度は6〜7%と低い", "高齢者はIGRAが陽性になりやすく、過剰診断に注意"]
+  },
+  {
+    id: "ada-neut", category: "ADAの読み方", timeLimit: 45,
+    case: "68歳男性。右下葉肺炎の治療中に胸水が増えてきた。",
+    fluid: { look: "黄白色・混濁", tone: "#E9D9A6", alpha: .95, turbid: .45, labs: [["ADA", "96 U/L"], ["細胞分画", "好中球 90%"], ["pH", "7.02"], ["糖", "18 mg/dL"], ["LDH", "3,200 IU/L"], ["Gram染色", "グラム陽性球菌（連鎖状）"]] },
+    question: "ADAの高値をどう解釈する？",
+    options: [
+      { text: "好中球優位の高ADAで、膿胸や複雑性肺炎随伴性胸水を考える", correct: true, why: "ADAは好中球の多い膿胸でも上がります。pH、糖、LDH、Gram染色も膿胸を示しています。" },
+      { text: "ADAが高いので結核性胸膜炎を考え、抗結核薬を始めて経過をみる", fx: { safe: -10 }, why: "細胞分画が好中球優位で、LDHも非常に高い状況です。結核よりも膿胸を考えます。" },
+      { text: "ADAが高すぎるので検査の誤差と考え、数日後に再検してから判断する", fx: { rec: -10 }, why: "膿胸を疑う所見がそろっています。待たずにドレナージを考えます。" },
+      { text: "高ADAは悪性リンパ腫に特徴的なので、細胞診と骨髄検査の結果を待つ", why: "細菌が見えており、好中球優位です。感染症として対応します。" }
+    ],
+    explanation: "ADAは、細胞分画とセットで読みます。ADAが高くても、好中球優位やLDHが非常に高い場合は、結核以外の原因を考えます。",
+    keypoints: ["ADA高値＋リンパ球優位：結核性胸膜炎、リウマチ性胸水、悪性リンパ腫など", "ADA高値＋好中球優位：膿胸、肺炎随伴性胸水", "ADA高値でも胸水LDHが非常に高い場合は、結核以外を考える", "数値は単独ではなく、細胞分画・LDH・総蛋白と組み合わせて判断する"]
+  },
+  {
+    id: "drain", category: "肺炎随伴性", timeLimit: 45,
+    case: "肺炎の治療3日目。胸水が増えてきたため穿刺した。膿ではない。",
+    fluid: { look: "黄色・やや混濁（膿ではない）", tone: "#E8CF7A", alpha: .9, turbid: .25, labs: [["pH", "7.12"], ["糖", "52 mg/dL"], ["LDH", "1,150 IU/L"], ["Gram染色", "陰性"], ["培養", "結果待ち"]] },
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "複雑性肺炎随伴性胸水の所見があり、胸腔ドレナージを行う", correct: true, why: "膿でなくGram染色が陰性でも、pHやLDHがドレナージの必要性を示しています。" },
+      { text: "膿ではなくGram染色も陰性なので、まずは抗菌薬だけでしばらく様子をみる", fx: { rec: -10 }, why: "pH 7.12、LDH 1,150は複雑性肺炎随伴性胸水の所見です。抗菌薬だけでは治りにくくなります。" },
+      { text: "pHは7.0未満でなければ問題がないので、ドレナージは必要ない", fx: { rec: -10 }, why: "ドレナージの目安はpH 7.2未満です。7.0〜7.2も複雑性肺炎随伴性胸水に含まれます。" },
+      { text: "ドレナージでは治らないので、すぐに胸腔鏡で外科的に掻爬する", why: "まずは胸腔ドレナージと抗菌薬で治療します。改善しない場合に早めの外科治療を考えます。" }
+    ],
+    explanation: "「胸水は日没までほうっておくな」という格言があります。肺炎随伴性胸水は、画像だけでは複雑性かどうか分からないため、穿刺して判断します。",
+    keypoints: ["胸腔ドレナージの目安：Gram染色・培養陽性、pH ＜ 7.2、LDH ＞ 1,000 IU/L、糖 ＜ 40 mg/dL、被包化、膿", "膿胸は画像だけでは診断できない。穿刺して確かめる", "pH測定時のリドカイン混入に注意"]
+  },
+  {
+    id: "empyema", category: "膿胸", timeLimit: 45,
+    case: "70歳男性。抜歯の2週間後から発熱。CTで多房化した右胸水。穿刺で悪臭のある膿が引けた。",
+    fluid: { look: "クリーム色・膿性・悪臭あり", tone: "#D8BB6A", alpha: 1, turbid: .5, labs: [["性状", "膿"], ["Gram染色", "多種類の菌（嫌気性菌を疑う）"], ["培養", "結果待ち"]] },
+    question: "治療として最も適切なのは？",
+    options: [
+      { text: "ドレナージと嫌気性菌を含む抗菌薬。多房化には線維素溶解療法や外科相談", correct: true, why: "膿胸の治療の柱はドレナージと抗菌薬です。多房化していると、ドレーン1本では排液しきれないことがあります。" },
+      { text: "膿を十分に出しきるため、細いドレーンは使わず、必ず太いドレーンを入れて排液する", why: "ドレーンの太さで治療成績は大きく変わらないとされます。患者さんの負担も考えて選びます。" },
+      { text: "ドレーンを入れたら、抗菌薬は1週間で終了して経過をみる", fx: { rec: -10 }, why: "膿胸の抗菌薬は、胸水の減少と経過を見ながら3〜4週間ほど続けることが多いです。" },
+      { text: "抗菌薬は胸腔内に直接入れ、全身への投与は行わない", fx: { rec: -10 }, why: "抗菌薬は全身投与が基本です。胸腔内への投与に十分な根拠はありません。" }
+    ],
+    explanation: "市中発症の膿胸では、口腔内の連鎖球菌や肺炎球菌、嫌気性菌が多く、スルバクタム・アンピシリンなどを使います。改善が乏しい場合は、早めに外科（胸腔鏡下掻爬など）に相談します。",
+    keypoints: ["市中発症：口腔内連鎖球菌、肺炎球菌、嫌気性菌が多い。院内発症：黄色ブドウ球菌、グラム陰性桿菌", "抗菌薬は3〜4週間続けることが多い", "多房化には線維素溶解療法、改善がなければ早期に外科相談", "RAPIDスコアで重症度（3か月死亡率）を評価する"]
+  },
+  {
+    id: "malignant", category: "癌性", timeLimit: 45,
+    case: "72歳女性。左胸水。CTで左上葉に腫瘤がある。",
+    fluid: { look: "血性", tone: "#B23A48", alpha: .8, labs: [["総蛋白", "4.8 g/dL"], ["LDH", "620 IU/L"], ["糖", "74 mg/dL"], ["ADA", "22 U/L"], ["細胞分画", "リンパ球 62%"], ["CEA", "88 ng/mL"], ["細胞診", "腺癌細胞あり"]] },
+    question: "次の対応として最も適切なのは？",
+    options: [
+      { text: "癌性胸水と診断し、セルブロックで遺伝子検査やPD-L1も調べて治療を決める", correct: true, why: "胸水の細胞から、治療選択に必要な情報まで得られることがあります。" },
+      { text: "細胞診だけでは不確かなので、必ず胸腔鏡で胸膜生検をしてから診断する", why: "腺癌細胞が見つかり、臨床像とも合っています。セルブロックで免疫染色や遺伝子検査ができれば、生検は必須ではありません。" },
+      { text: "血性の胸水なので血胸と考え、まず出血源と止血の評価を行う", why: "血性に見える胸水の多くは、ヘマトクリットが数%しかありません。悪性胸水でよく見られます。" },
+      { text: "CYFRA21-1も測定し、血清の基準値3.3 ng/mLを超えていれば悪性と判断する", why: "血清の基準値は胸水には使えません。「上昇している」と誤って判断しないよう注意します。" }
+    ],
+    explanation: "癌性胸水が分かったら、原発巣の治療とあわせて、胸水による症状をどう抑えるかを考えます。",
+    keypoints: ["CEA上昇（5〜10 ng/mL超）は悪性胸水を示唆。中皮腫では上がりにくい", "CYFRA21-1に血清の基準値は使えない", "セルブロックで免疫染色や遺伝子検査ができる（100 mL以上あると安心）", "血性に見えても、血胸とは限らない"]
+  },
+  {
+    id: "pleurodesis", category: "胸膜癒着術",
+    case: "癌性胸水で呼吸困難を繰り返している。胸腔ドレナージ後の胸部X線で、肺が十分に膨らまない。",
+    question: "胸膜癒着術について最も適切なのは？",
+    options: [
+      { text: "肺が拡張しないと癒着しにくいので、繰り返しの排液など別の方法を考える", correct: true, why: "癒着術は、膨らんだ肺の胸膜と胸壁の胸膜をくっつける治療です。" },
+      { text: "タルクは癒着の力が強いので、肺が十分に膨らんでいなくても癒着させることができる", why: "どの薬剤でも、肺が拡張していなければ成功率は低くなります。" },
+      { text: "炎症を抑えて痛みを減らすため、ステロイドを併用すると成功率が上がる", why: "ステロイド使用中は、癒着術の成功率が下がります。" },
+      { text: "癒着術後に発熱や痛みが出たら合併症なので、すぐに治療を中止する", why: "発熱と痛みは、ほとんどの癒着術で起こる反応です。鎮痛薬で管理します。" }
+    ],
+    explanation: "胸膜癒着術の前には、ドレナージ後に胸部X線で肺の拡張を必ず確認します。",
+    keypoints: ["前提：ドレナージ後に肺が全拡張していること", "発熱と疼痛はほぼ必発。NSAIDsなどで管理する", "ステロイド使用中は成功率が下がる", "持続するエアリークにはタルクが有効。高齢者ではタルクによるARDSに注意"]
+  },
+  {
+    id: "hemothorax", category: "血胸", timeLimit: 45,
+    case: "抗凝固薬を内服中の82歳男性。転倒の後から右胸痛と息切れ。右胸水。血液のHtは34%。",
+    fluid: { look: "暗赤色", tone: "#6E1423", alpha: .95, labs: [["胸水Ht", "24%（血液 34%）"], ["性状", "凝血塊が混じる"]] },
+    question: "判断と対応として最も適切なのは？",
+    options: [
+      { text: "胸水Htが血液の50%以上で血胸。排液量と循環を見て止血を判断する", correct: true, why: "胸水Ht 24%は血液Ht 34%の70%で、血胸の基準を満たします。" },
+      { text: "血性の胸水はすべて血胸なので、Htは測らずにすぐドレナージを行う", why: "血性に見える胸水の多くは血胸ではありません。Htで確かめます。" },
+      { text: "胸水のHtが5%を超えていれば、血液のHtにかかわらず血胸と診断してよい", why: "血胸の目安は、胸水Htが血液Htの50%以上です。数%でも胸水は赤く見えます。" },
+      { text: "血胸は自然に吸収されることが多いので、穿刺だけで経過をみる", fx: { rec: -10 }, why: "中等量以上の血胸では、ドレナージで排液し、出血が続いていないかを確かめます。" }
+    ],
+    explanation: "血胸では、排液の量と速さ、循環動態から、外科的止血が必要かを判断します。抗凝固薬の中和や休薬も検討します。",
+    keypoints: ["血胸：胸水Ht ≧ 血液Htの50%", "胸水はHtが数%でも赤く見える（悪性、肺塞栓など）", "大量の排液や出血の持続があれば外科的止血を考える", "胸腔内に残った血液は、凝固血胸や膿胸の原因になる"]
+  },
+  {
+    id: "chylo", category: "乳び胸", timeLimit: 40,
+    case: "55歳男性。左胸水が数週間で増えてきた。",
+    fluid: { look: "乳白色・混濁（遠心後も上清が白い）", tone: "#F3EFE6", alpha: 1, turbid: .3, labs: [["トリグリセリド", "420 mg/dL"], ["コレステロール", "80 mg/dL"], ["細胞分画", "リンパ球 82%"], ["Gram染色", "陰性"]] },
+    question: "最も考えられる診断と次の一手は？",
+    options: [
+      { text: "トリグリセリド高値の乳び胸。悪性リンパ腫などの原因を探す", correct: true, why: "乳び胸の多くは悪性腫瘍、特に悪性リンパ腫によるものです。外傷や術後も原因になります。" },
+      { text: "白く濁っているので膿胸と考え、胸腔ドレナージと抗菌薬を始める", why: "膿は遠心すると上清が透明になりますが、乳び胸では上清も白いままです。菌も見えません。" },
+      { text: "白く濁っていて細胞も少ないので、長く続いた胸水にできる偽性乳び胸（コレステロール胸水）と考える", why: "偽性乳び胸はコレステロールが250 mg/dLを超えます。この胸水はトリグリセリドが高く、コレステロールは低めです。" },
+      { text: "トリグリセリドの高値は食事の影響なので、絶食にして再検する", why: "胸水のトリグリセリドは、食事による一時的な変化ではありません。" }
+    ],
+    explanation: "白い胸水を見たら、まず遠心して上清を確認し、トリグリセリドとコレステロールを測ります。",
+    keypoints: ["乳び胸：トリグリセリド ＞ 110 mg/dL（50 mg/dL以下なら否定的）", "乳び胸の約7割は悪性（多くは悪性リンパ腫）、1割強は外傷性", "偽性乳び胸：コレステロール ＞ 250 mg/dL。長期経過の胸水", "膿は遠心すると上清が透明、乳びは上清も白い"]
+  },
+  {
+    id: "ra", category: "リウマチ性", timeLimit: 45,
+    case: "関節リウマチで治療中の65歳男性。右胸水。発熱はない。",
+    fluid: { look: "黄緑色・やや混濁", tone: "#D9CF7E", alpha: .9, turbid: .25, labs: [["糖", "12 mg/dL"], ["pH", "7.08"], ["LDH", "1,350 IU/L"], ["細胞分画", "リンパ球 78%"], ["Gram染色・培養", "陰性"], ["補体（C3/C4）", "低値"], ["RF", "血清より高値"]] },
+    question: "最も考えられるのは？",
+    options: [
+      { text: "リウマチ性胸水（補体低値とRF高値）", correct: true, why: "糖とpHが低くLDHが高い胸水で、補体の低値とRFの高値があれば、リウマチ性胸水らしいと考えます。" },
+      { text: "膿胸（糖とpHが著しく低く、LDHが高いため）", why: "糖、pH、LDHは膿胸に似ていますが、無菌でリンパ球優位、発熱もありません。" },
+      { text: "結核性胸膜炎（リンパ球優位の胸水のため）", why: "鑑別には挙がりますが、糖がここまで低く、補体が低くRFが高い所見はリウマチ性胸水に合います。" },
+      { text: "悪性胸水（LDHが高く、細胞分画がリンパ球優位のため）", why: "否定はできませんが、まずは補体やRFの所見からリウマチ性胸水を考えます。" }
+    ],
+    explanation: "糖が著しく低い胸水では、膿胸とリウマチ性胸水を必ず考えます。生物学的製剤などを使っている場合は、結核や薬剤性も鑑別に入れます。",
+    keypoints: ["糖が著しく低い胸水：膿胸、リウマチ性胸水（悪性、結核でも低下）", "リウマチ性胸水はpHと糖が低く、LDHが高い", "補体の低値とRFの高値が参考になる", "免疫抑制治療中は、結核や薬剤性胸水も鑑別する"]
+  },
+  {
+    id: "amylase", category: "まれな胸水", timeLimit: 40,
+    case: "大酒家の50歳男性。左胸水。腹痛は軽い。嘔吐や胸痛はない。",
+    fluid: { look: "褐色・やや混濁", tone: "#B98A4E", alpha: .85, turbid: .2, labs: [["アミラーゼ", "4,800 IU/L（膵型が優位）"], ["総蛋白", "4.2 g/dL"], ["LDH", "520 IU/L"]] },
+    question: "最も考えられる原因と次の一手は？",
+    options: [
+      { text: "膵性胸水（膵胸腔瘻など）を考え、膵臓の画像検査を行う", correct: true, why: "膵型アミラーゼが著しく高い胸水は、膵臓からの漏出を示します。" },
+      { text: "アミラーゼが高いので食道破裂を考え、すぐに緊急手術を手配する", why: "食道破裂では唾液型のアミラーゼが上がり、嘔吐の後の激しい胸痛を伴います。この患者さんとは合いません。" },
+      { text: "アミラーゼの高値は血液の混入なので、穿刺をやり直して再検する", why: "血液の混入で、ここまで高い値にはなりません。" },
+      { text: "胸水のアミラーゼに診断的な意味はないので、ほかの検査を優先する", why: "アミラーゼの上昇とその型は、膵性胸水や食道破裂の手がかりになります。" }
+    ],
+    explanation: "胸水のアミラーゼが高いときは、膵型か唾液型かで考える病気が変わります。",
+    keypoints: ["膵型アミラーゼ上昇：急性膵炎、慢性膵炎、膵胸腔瘻（1,000 IU/Lを超えることも多い）", "唾液型アミラーゼ上昇：食道破裂、悪性胸水", "食道破裂は嘔吐後の激しい胸痛、縦隔気腫、左胸水が手がかり", "急性膵炎の約3人に1人に胸水が見られる"]
+  },
+  {
+    id: "meso", category: "中皮腫", timeLimit: 45,
+    case: "70歳男性。若い頃に造船所で働いていた。右胸水と胸膜の肥厚。",
+    fluid: { look: "淡黄色・やや粘稠", tone: "#EFD98E", alpha: .85, labs: [["ヒアルロン酸", "15万 ng/mL"], ["CEA", "0.8 ng/mL"], ["細胞分画", "リンパ球優位"], ["細胞診", "異型細胞あり（中皮由来を疑う）"]] },
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "中皮腫を疑って胸膜生検を行い、労災などの制度も伝える", correct: true, why: "ヒアルロン酸の高値と石綿曝露歴から中皮腫を疑い、組織で確かめます。" },
+      { text: "CEAが低いので悪性腫瘍は否定的と考え、経過観察とする", why: "中皮腫ではCEAが上がりにくいのが特徴です。CEAが低いことは、むしろ中皮腫に合います。" },
+      { text: "細胞診で異型細胞があるので、生検をせずに中皮腫と確定する", why: "中皮腫の確定には、複数の免疫染色を行う組織診断が必要です。肉腫型は細胞診で見つかりにくいこともあります。" },
+      { text: "石綿の曝露から40年以上たっているので、石綿との関係はないと説明する", why: "中皮腫は、曝露から20〜40年以上たってから起こることが多い病気です。" }
+    ],
+    explanation: "中皮腫と診断されたら、労災保険や石綿健康被害救済制度を利用できることを必ず伝えます。詳しい職歴の聴取が欠かせません。",
+    keypoints: ["胸水ヒアルロン酸 ＞ 10万 ng/mL で中皮腫を考える（3万以下は考えにくい）", "中皮腫ではCEAが上がりにくい", "確定には胸膜生検（複数の免疫染色）", "労災保険・石綿健康被害救済制度の情報を伝える"]
+  }
+];
+
+
+
+/* =========================================================
+   ストーリーの台本
+   登場人物（CAST）と、章ごとの場面（STORY）を書き換えると
+   物語を自由に作り直せます。
+   場面の種類：
+   { t: "talk", lines: [[話す人, せりふ], ...] }  会話（"narr" は地の文）
+   { t: "q", id: 問題のid, react: { ok: 正解時, ng: 不正解時 } }  出題
+   ========================================================= */
+const CAST = {
+  mika:   { name: "ミカ先生", role: "呼吸器内科 指導医", mark: "ミ", color: "var(--violet)" },
+  hayase: { name: "早瀬さん", role: "外来看護師", mark: "早", color: "var(--ok)" },
+  me:     { name: "あなた", role: "初期研修医", mark: "研", color: "var(--muted)" },
+  pt:     { name: "患者さん", role: "", mark: "患", color: "var(--safranin)" }
+};
+
+const STORY = [
+  { day: "第1章", place: "胸水外来　午前", title: "黄色い水の正体", scenes: [
+    { t: "talk", lines: [
+      ["narr", "今日は一日、ミカ先生の胸水外来につくことになった。処置台には、採ったばかりの胸水の試験管が並んでいる。"],
+      ["mika", "ようこそ、胸水外来へ！ 今日はいろんな色の胸水に会えるよ。まずは基本中の基本からいこう！"],
+      ["hayase", "最初の方の結果が出ました。血清の値も一緒にどうぞ。"]
+    ]},
+    { t: "q", id: "light", react: { ok: "ナイス！ 計算、ちゃんと合ってたね。", ng: "おしい！ 2/3の計算、もう一回やってみて。222の2/3は？" }},
+    { t: "talk", lines: [["mika", "じゃあ次。今度はちょっと意地悪な症例だよ。利尿薬を使ったあとの胸水！"]] },
+    { t: "q", id: "diuretic", react: { ok: "そのとおり！ 基準が滲出性って言っても、鵜呑みにしないのが大事。", ng: "利尿薬で水が抜けると、胸水が濃くなっちゃうんだ。補正の目安を思い出して！" }},
+    { t: "talk", lines: [["mika", "次の患者さんは、これから初めて穿刺するよ。何を出す？ 一回で決めよう！"]] },
+    { t: "q", id: "first-tap", react: { ok: "完璧！ 一回の穿刺で全部そろえるのが優しさだよ。", ng: "出し忘れると、もう一回刺すことになっちゃう。初回で一式そろえよう！" }}
+  ]},
+  { day: "第2章", place: "胸水外来　昼前", title: "リンパ球の胸水", scenes: [
+    { t: "talk", lines: [
+      ["pt", "3週間くらい、微熱と右の胸の痛みが続いていて……。"],
+      ["mika", "麦わら色の胸水だね。細胞分画とADAに注目してみて！"]
+    ]},
+    { t: "q", id: "tb", react: { ok: "いいね！ 塗抹が陰性でも、あきらめないのがコツ。", ng: "結核性胸膜炎の胸水は、菌がほとんど見つからないの。塗抹陰性で安心しちゃダメ！" }},
+    { t: "talk", lines: [["mika", "ADAが高い胸水、もう一本あるよ。今度は分画が違うんだ。"]] },
+    { t: "q", id: "ada-neut", react: { ok: "正解！ ADAは分画とセットで読む。これ、本当に大事。", ng: "ADAだけ見てると間違えちゃう。好中球かリンパ球か、が分かれ道だよ。" }}
+  ]},
+  { day: "第3章", place: "病棟　午後", title: "濁った胸水", scenes: [
+    { t: "talk", lines: [
+      ["hayase", "先生、病棟から相談です。肺炎の方の胸水が増えてきたそうです。"],
+      ["mika", "濁ってきたね……。「胸水は日没までほうっておくな」だよ！"]
+    ]},
+    { t: "q", id: "drain", react: { ok: "その通り！ 膿じゃなくても、数字がドレナージを求めてる。", ng: "膿じゃないから大丈夫、は危ないんだ。pHとLDHをもう一度見て！" }},
+    { t: "talk", lines: [
+      ["narr", "隣の部屋から、独特のにおいが漂ってきた。"],
+      ["mika", "これは……膿胸だね。治療の組み立て、いってみよう！"]
+    ]},
+    { t: "q", id: "empyema", react: { ok: "ばっちり！ 膿胸は長期戦。抗菌薬の期間も覚えておこう。", ng: "膿胸は、ドレナージと抗菌薬の二本柱。期間も短すぎちゃダメだよ。" }}
+  ]},
+  { day: "第4章", place: "胸水外来　夕方", title: "赤い胸水", scenes: [
+    { t: "talk", lines: [
+      ["mika", "ここからは赤い胸水シリーズ！ 赤いからって、全部同じじゃないよ。"]
+    ]},
+    { t: "q", id: "malignant", react: { ok: "完璧！ 胸水からも、治療に必要な情報が取れるんだよ。", ng: "その判断、落とし穴があるよ。CYFRAの基準値と、血性の意味を思い出して。" }},
+    { t: "talk", lines: [["hayase", "先生、癌性胸水の方が、癒着術を希望されています。でも、肺がまだ膨らんでいなくて……。"]] },
+    { t: "q", id: "pleurodesis", react: { ok: "そう！ 肺が膨らんでいることが、癒着術のスタートラインなんだ。", ng: "くっつける相手（肺）が離れていたら、くっつかないよね。" }},
+    { t: "talk", lines: [
+      ["hayase", "救急外来から連絡です。転んだ後に胸が痛い方で、抗凝固薬を飲んでいるそうです。"],
+      ["mika", "今度の赤は……本物の血かも。確かめ方、分かる？"]
+    ]},
+    { t: "q", id: "hemothorax", react: { ok: "正解！ 赤く見えるかじゃなくて、Htで決めるんだよ。", ng: "胸水はHtが数%でも真っ赤に見えるの。血液のHtと比べてみて。" }}
+  ]},
+  { day: "第5章", place: "胸水外来　最後の診察", title: "白い胸水と、まれな胸水", scenes: [
+    { t: "talk", lines: [
+      ["mika", "いよいよラスト！ 珍しい胸水が続くよ。まずは、真っ白な一本。"]
+    ]},
+    { t: "q", id: "chylo", react: { ok: "ナイス！ 白い胸水は、遠心と脂質で見分けよう。", ng: "白いから膿、とは限らないの。遠心したらどうなるかな？" }},
+    { t: "talk", lines: [["mika", "次はリウマチの患者さん。糖の値、見てびっくりしないでね！"]] },
+    { t: "q", id: "ra", react: { ok: "その通り！ 糖がすごく低い胸水の鑑別、ばっちりだね。", ng: "糖が低いと膿胸を考えたくなるよね。でも、菌も熱もないよ。" }},
+    { t: "talk", lines: [["mika", "アミラーゼが高い胸水。どっちの型か、が勝負だよ！"]] },
+    { t: "q", id: "amylase", react: { ok: "いいね！ 型で考えるのがポイントだよ。", ng: "食道破裂なら唾液型。それに、嘔吐や激しい胸痛があるはずなんだ。" }},
+    { t: "talk", lines: [
+      ["pt", "昔、造船所で働いていました。最近、胸に水がたまって……。"],
+      ["mika", "最後の一本。職歴まで含めて、しっかり向き合おう。"]
+    ]},
+    { t: "q", id: "meso", react: { ok: "完璧！ 診断だけじゃなく、制度のことまで伝えられたら一人前だよ。", ng: "CEAが低いのは、むしろ中皮腫らしさなんだ。それに、制度のことも伝えよう。" }}
+  ]}
+];
+
+/* エンディング（最終的な信頼度で分岐） */
+const EPILOGUE = { day: "エピローグ", place: "医局", title: "胸水外来を終えて" };
+const ENDINGS = [
+  { min: 80, name: "胸水マスター", lines: [
+    ["mika", "おつかれさま！ 今日の胸水、ほとんど見抜けてたね。すごいよ！"],
+    ["mika", "色と数字と、患者さんの話。三つを組み合わせて考えられるのが、本当の胸水読みだよ。"],
+    ["narr", "処置台の試験管は、夕日を受けて一本ずつ違う色に光っていた。"]
+  ]},
+  { min: 40, name: "見習い卒業", lines: [
+    ["mika", "おつかれさま！ 迷った問題もあったけど、ちゃんと考えて答えてたね。"],
+    ["mika", "キーポイントを見返したら、次はもっと見抜けるよ。また来てね！"]
+  ]},
+  { min: 0, name: "もう一度、胸水外来へ", lines: [
+    ["mika", "おつかれさま！ 今日はちょっと手ごわかったね。"],
+    ["mika", "でも大丈夫。間違えた問題とキーポイントが、いちばんの教科書だよ。もう一回挑戦しよう！"]
+  ]}
+];
+
+/* ランク（必要な得点, 名前） */
+const RANKS = [[0,"胸水ビギナー"],[400,"穿刺見習い"],[900,"Light基準の使い手"],[1500,"ADAの読み手"],[2200,"胸膜の番人"],[3000,"胸水を倒す者"]];
+
+/* ゲームの設定 */
+const LIVES_MAX = 3;     // チャレンジモードのライフ
+const HEAL_EVERY = 5;    // 何連続正解でライフ回復するか
+const TRUST_START = 30;  // ストーリーモードの信頼度（最初）
+const TRUST_UP = 6;      // 正解で上がる信頼度
+const TRUST_DOWN = 8;    // 不正解で下がる信頼度
+const BASE = 100;        // 1問正解の基本点
+const SPEED_MAX = 50;    // スピードボーナスの最大点
+const COMBO_STEP = 0.25; // 連続正解1回ごとに増える倍率
+const COMBO_MAX = 2.0;   // 倍率の上限
+const TYPE_MS = 26;      // せりふの文字送りの速さ（ミリ秒）
+
+/* =========================================================
+   ここから下はゲームの動作（通常は変更不要）
+   ========================================================= */
+const KEYS = ["a","b","c","d","e"];
+const BEST = { challenge: "pleural-challenge-best", story: "pleural-story-best" };
+const MUTE_KEY = "resp-challenge-muted";
+const QMAP = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+const $ = s => document.querySelector(s);
+const app = $("#app"), hud = $("#hud");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.2-4.4-9.3-8.9C1.2 8.3 3.2 4.5 6.8 4.5c2.1 0 3.7 1.2 5.2 3 1.5-1.8 3.1-3 5.2-3 3.6 0 5.6 3.8 4.1 7.1-2.1 4.5-9.3 8.9-9.3 8.9z"/></svg>';
+const PAIR = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+let muted = store.get(MUTE_KEY) === "1";
+let G = null;
+
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rankIndex(score){ let r = 0; RANKS.forEach(([t], i) => { if (score >= t) r = i; }); return r; }
+function correctText(q){ return q.options.find(o => o.correct).text; }
+function multOf(c){ return Math.min(1 + (c - 1) * COMBO_STEP, COMBO_MAX); }
+function multLabel(m){ return m.toFixed(2).replace(/0$/, ""); }
+function motifHTML(){ return `<svg class="motif" viewBox="0 0 150 20" aria-hidden="true">${[12,44,76,108,140].map((x, i) => `<g class="${i % 2 ? "s" : "v"}" transform="translate(${x} 10)">${PAIR}</g>`).join("")}</svg>`; }
+function toTop(){ window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }
+
+/* ---------- 効果音（Web Audioで合成） ---------- */
+let actx = null;
+function audio(){
+  if (!actx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; try { actx = new C(); } catch(e){ return null; } }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, start, dur, type = "triangle", vol = 0.15){
+  if (muted) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  correct(c){ const f = 660 * Math.pow(2, Math.min(c - 1, 7) / 12); tone(f, 0, .12); tone(f * 1.26, .08, .2); },
+  wrong(){ tone(190, 0, .22, "sawtooth", .07); tone(125, .12, .32, "sawtooth", .07); },
+  rank(){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .22)); },
+  heal(){ tone(880, 0, .1, "sine", .12); tone(1175, .08, .22, "sine", .12); },
+  over(){ [392, 330, 262].forEach((f, i) => tone(f, i * .18, .32, "triangle", .12)); },
+  clear(){ [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * .1, .26)); },
+  chapter(){ tone(262, 0, .9, "sine", .07); tone(392, .06, .9, "sine", .05); tone(523, .12, .9, "sine", .04); },
+  tap(){ tone(520, 0, .06, "sine", .06); }
+};
+function setMuteLabel(){
+  const b = $("#mute"); b.textContent = muted ? "🔇" : "🔊";
+  b.setAttribute("aria-label", muted ? "効果音をオンにする" : "効果音をオフにする");
+  const b2 = $("#mute2"); if (b2) b2.textContent = "効果音：" + (muted ? "オフ" : "オン");
+}
+function toggleMute(){ muted = !muted; store.set(MUTE_KEY, muted ? "1" : "0"); setMuteLabel(); if (!muted) SFX.tap(); }
+$("#mute").addEventListener("click", toggleMute);
+
+/* ---------- 演出 ---------- */
+function burst(x, y){
+  if (reduceMotion) return;
+  for (let i = 0; i < 16; i++){
+    const p = document.createElement("span");
+    p.className = "pt" + (i % 3 === 0 ? " pink" : "");
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 80;
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+    p.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+    p.style.setProperty("--r", Math.round(Math.random() * 360) + "deg");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+function floatText(text, x, y){
+  if (reduceMotion) return;
+  const f = document.createElement("span");
+  f.className = "float"; f.textContent = text;
+  f.style.left = x + "px"; f.style.top = (y - 10) + "px";
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 950);
+}
+function animateNumber(el, from, to, ms){
+  if (reduceMotion || ms <= 0){ el.textContent = to.toLocaleString(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const toastEl = $("#toast"); let toastQ = [], toastBusy = false;
+function toast(kind, msg){ toastQ.push([kind, msg]); if (!toastBusy) nextToast(); }
+function nextToast(){
+  const t = toastQ.shift(); if (!t){ toastBusy = false; return; }
+  toastBusy = true; const [kind, msg] = t;
+  toastEl.textContent = msg; toastEl.className = "toast show " + kind;
+  kind === "rank" ? SFX.rank() : SFX.heal();
+  setTimeout(() => { toastEl.className = "toast " + kind; setTimeout(nextToast, 260); }, 1600);
+}
+
+/* ---------- ステータスバー ---------- */
+function renderLives(anim){
+  const el = $("#lives");
+  el.innerHTML = Array.from({ length: LIVES_MAX }, (_, i) => `<span class="heart${i < G.lives ? "" : " empty"}">${HEART}</span>`).join("");
+  if (anim === "lost" && el.children[G.lives]) el.children[G.lives].classList.add("lost");
+  if (anim === "gain" && el.children[G.lives - 1]) el.children[G.lives - 1].classList.add("gain");
+  el.setAttribute("aria-label", `ライフ 残り${G.lives}`);
+}
+function renderTrust(delta){
+  const el = $("#trust");
+  $("#tfill").style.width = G.trust + "%";
+  $("#tnum").textContent = G.trust;
+  el.setAttribute("aria-label", `指導医の信頼 ${G.trust}`);
+  if (delta && !reduceMotion){ el.classList.remove("up", "down"); void el.offsetWidth; el.classList.add(delta > 0 ? "up" : "down"); }
+}
+function renderCombo(popIt){
+  const el = $("#combo");
+  if (G.combo >= 2){
+    el.textContent = `${G.combo}連続`;
+    el.classList.add("on");
+    if (popIt && !reduceMotion){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  } else { el.classList.remove("on", "pop"); el.textContent = ""; }
+}
+
+/* ---------- 会話 ---------- */
+function talkHTML(who, text, extra = ""){
+  if (who === "narr") return `<p class="narr">${text}</p>`;
+  const c = CAST[who];
+  return `<div class="talk${who === "me" ? " me" : ""}" style="--c:${c.color}">
+    <span class="avatar" aria-hidden="true">${c.mark}</span>
+    <div class="bubble"><p class="who">${c.name}${c.role ? `<small>${c.role}</small>` : ""}${extra}</p><p class="say">${text}</p></div>
+  </div>`;
+}
+let typing = null;
+function typeInto(el, text){
+  if (reduceMotion){ el.textContent = text; return; }
+  let i = 0; el.textContent = "";
+  const id = setInterval(() => {
+    i++; el.textContent = text.slice(0, i);
+    if (i >= text.length){ clearInterval(id); typing = null; }
+  }, TYPE_MS);
+  typing = { finish(){ clearInterval(id); el.textContent = text; typing = null; } };
+}
+
+/* ---------- グラム染色の模式図 ---------- */
+function gramHTML(){
+  const neut = [[90,100,1],[185,80,-1],[240,120,1],[160,140,1],[210,180,1],[110,200,1],[60,170,-1]];
+  const free = [[140,55,20],[42,132,-30],[135,108,60],[235,80,10],[250,165,-45],[170,215,30],[70,225,80],
+                [200,245,-15],[120,250,40],[200,128,-60],[105,150,15],[255,210,50],[45,90,25]];
+  const inside = [[3,-13,14,35],[5,13,13,-20],[4,-15,12,70]];
+  const coccus = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+  const nc = "#B03C72";
+  const cells = neut.map(([x, y, f]) => {
+    const lobes = [[-10,-5],[1,6],[11,-5]].map(([lx, ly]) => [lx, ly * f]);
+    const path = `M${lobes[0][0]} ${lobes[0][1]}L${lobes[1][0]} ${lobes[1][1]}L${lobes[2][0]} ${lobes[2][1]}`;
+    return `<g transform="translate(${x} ${y})"><circle r="28" fill="#F4C5D5" stroke="#E3A2BB" stroke-width="1.2"/><path d="${path}" stroke="${nc}" stroke-width="3" fill="none" stroke-linecap="round"/>${lobes.map(([lx, ly]) => `<circle cx="${lx}" cy="${ly}" r="7.5" fill="${nc}"/>`).join("")}</g>`;
+  }).join("");
+  const pairs = free.map(([x, y, a]) => `<g transform="translate(${x} ${y}) rotate(${a}) scale(.75)"><ellipse rx="14" ry="8" fill="#fff" opacity=".75"/><g fill="#3B1E6B">${coccus}</g></g>`).join("");
+  const eaten = inside.map(([n, dx, dy, a]) => `<g transform="translate(${neut[n][0] + dx} ${neut[n][1] + dy}) rotate(${a}) scale(.6)"><g fill="#3B1E6B">${coccus}</g></g>`).join("");
+  return `<figure class="scope">
+    <svg viewBox="0 0 300 300" role="img" aria-labelledby="gram-title">
+      <title id="gram-title">喀痰グラム染色の模式図。多数の好中球と、周囲に透明帯を伴う紫色の双球菌が見られ、一部は好中球に取り込まれている。</title>
+      <defs><radialGradient id="fld" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#FDF3F6"/><stop offset="1" stop-color="#E9C1D1"/></radialGradient><clipPath id="clp"><circle cx="150" cy="150" r="140"/></clipPath></defs>
+      <g clip-path="url(#clp)">
+        <rect width="300" height="300" fill="url(#fld)"/>
+        <path d="M0 150C70 125 120 175 180 152S260 128 300 160" stroke="#E6B1C5" stroke-width="10" fill="none" opacity=".45"/>
+        <path d="M30 250C90 230 150 262 210 238S280 220 300 232" stroke="#E6B1C5" stroke-width="7" fill="none" opacity=".35"/>
+        <path d="M20 60C80 72 140 40 200 58S270 70 300 50" stroke="#E6B1C5" stroke-width="6" fill="none" opacity=".35"/>
+        ${cells}${eaten}${pairs}
+      </g>
+      <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
+    </svg>
+    <figcaption>喀痰グラム染色（模式図、×1000）</figcaption>
+  </figure>`;
+}
+
+
+
+/* ---------- 胸水の試験管と検査値 ---------- */
+function fluidHTML(f){
+  const t = f.turbid || 0;
+  const dots = t ? Array.from({ length: 26 }, (_, i) => `<circle cx="${14 + ((i * 37) % 32)}" cy="${56 + ((i * 53) % 78)}" r="${1 + (i % 3) * .6}" fill="#fff" opacity="${(.25 + t * .6).toFixed(2)}"/>`).join("") : "";
+  return `<figure class="fluid">
+    <svg class="tube" viewBox="0 0 60 150" role="img" aria-label="試験管に入った胸水。外観は${f.look}">
+      <defs><clipPath id="tclip"><path d="M14 10 H46 V124 a16 16 0 0 1 -32 0 Z"/></clipPath></defs>
+      <g clip-path="url(#tclip)">
+        <rect x="0" y="0" width="60" height="150" class="tube-air"/>
+        <rect x="0" y="48" width="60" height="110" fill="${f.tone}" opacity="${f.alpha || .85}"/>
+        ${t ? `<rect x="0" y="48" width="60" height="110" fill="#fff" opacity="${(t * .35).toFixed(2)}"/>` : ""}
+        ${dots}
+        <rect x="0" y="48" width="60" height="3" fill="#fff" opacity=".45"/>
+        <rect x="18" y="14" width="4" height="104" rx="2" fill="#fff" opacity=".35"/>
+      </g>
+      <path class="glass" d="M14 10 H46 V124 a16 16 0 0 1 -32 0 Z"/>
+      <rect class="rim" x="10" y="5" width="40" height="7" rx="3.5"/>
+    </svg>
+    <div class="fl-body">
+      <p class="fl-look"><span>外観</span>${f.look}</p>
+      <table class="fl-tab"><tbody>${f.labs.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>
+    </div>
+  </figure>`;
+}
+function keyHTML(q){
+  if (!q.keypoints) return "";
+  return `<div class="keypts"><h3>キーポイント</h3><ul>${q.keypoints.map(k => `<li>${k}</li>`).join("")}</ul></div>`;
+}
+
+/* ---------- タイトル画面 ---------- */
+function renderTitle(){
+  hud.hidden = true;
+  const bs = +store.get(BEST.story) || 0, bc = +store.get(BEST.challenge) || 0;
+  app.innerHTML = `<section class="title">
+    <h1>胸水を<br>見抜け!!!</h1>
+    ${motifHTML()}
+    <p class="sub">全${QUESTIONS.length}問。漏出性か滲出性かの見分け方から、結核性、膿胸、癌性、血胸、乳び胸まで。胸水の色と検査値から、その正体を見抜きます。</p>
+    <div class="mode">
+      <h2>ストーリーモード</h2>
+      <p>ミカ先生の胸水外来で、一日に出会う胸水を5つの章で見抜いていきます。章が進むごとに胸水の色が変わります。結末は信頼度で変わります。</p>
+      ${bs ? `<p class="best">自己ベスト <b>${bs.toLocaleString()}</b> 点</p>` : ""}
+      <button class="primary" id="go-story" type="button">ストーリーを始める</button>
+    </div>
+    <div class="mode">
+      <h2>チャレンジモード</h2>
+      <p>ランダムに出題。ライフは${LIVES_MAX}つで、${HEAL_EVERY}連続正解で1つ回復します。</p>
+      ${bc ? `<p class="best">自己ベスト <b>${bc.toLocaleString()}</b> 点</p>` : ""}
+      <button class="ghost" id="go-challenge" type="button">チャレンジを始める</button>
+    </div>
+    <div class="common">
+      <p>どちらのモードも、連続正解でコンボ倍率が上がり（最大×${COMBO_MAX.toFixed(1)}）、速く答えるほどスピードボーナス（最大+${SPEED_MAX}点）が付きます。</p>
+      <p>ランク：${RANKS.map(r => r[1]).join(" ＞ ")}</p>
+    </div>
+    <button class="ghost" id="mute2" type="button"></button>
+  </section>`;
+  setMuteLabel();
+  $("#mute2").addEventListener("click", toggleMute);
+  $("#go-story").addEventListener("click", () => { audio(); SFX.tap(); newGame("story"); });
+  $("#go-challenge").addEventListener("click", () => { audio(); SFX.tap(); newGame("challenge"); });
+}
+
+/* ---------- 進行 ---------- */
+function buildStory(){
+  const seq = [];
+  STORY.forEach(ch => { seq.push({ t: "chapter", ch }); ch.scenes.forEach(s => seq.push(s)); });
+  seq.push({ t: "ending" });
+  return seq;
+}
+
+function newGame(mode){
+  const story = mode === "story";
+  const seq = story ? buildStory() : shuffle(QUESTIONS.map(q => q.id)).map(id => ({ t: "q", id }));
+  G = { mode, seq, pos: 0, qi: 0, qTotal: seq.filter(s => s.t === "q").length,
+        lives: LIVES_MAX, trust: TRUST_START, score: 0, combo: 0, maxCombo: 0, correct: 0, missed: [],
+        answered: false, t0: 0, raf: 0, limit: 30, bonus: SPEED_MAX, rankIdx: 0, ending: null };
+  hud.hidden = false;
+  G.log = []; G.startedAt = Date.now();
+  $("#lives").hidden = story; $("#trust").hidden = !story;
+  $("#score").textContent = "0";
+  renderLives(); renderTrust(0); renderCombo(false); setMuteLabel();
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function renderStep(){
+  const s = G.seq[G.pos];
+  if (!s) return renderResult();
+  if (s.t === "chapter") return renderChapter(s.ch);
+  if (s.t === "talk") return renderTalk(s);
+  if (s.t === "q") return renderQ(s);
+  if (s.t === "ending"){
+    const e = ENDINGS.find(x => G.trust >= x.min);
+    G.ending = e.name;
+    G.seq.splice(G.pos, 1, { t: "chapter", ch: EPILOGUE }, { t: "talk", lines: e.lines });
+    return renderStep();
+  }
+}
+function advance(){ G.pos++; renderStep(); toTop(); }
+
+function renderChapter(ch){
+  app.innerHTML = `<section class="chapter">
+    <p class="day">${ch.day}</p>
+    <h2>${ch.title}</h2>
+    <p class="place">${ch.place}</p>
+    ${motifHTML()}
+    <button class="primary" id="go" type="button">はじめる</button>
+  </section>`;
+  SFX.chapter();
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderTalk(step){
+  const nextStep = G.seq[G.pos + 1];
+  const finalLabel = !nextStep ? "結果を見る" : nextStep.t === "q" ? "診察する" : "次へ";
+  app.innerHTML = `<section class="scene" id="scene"><div class="log" id="log" aria-live="polite"></div><button class="primary" id="adv" type="button">次へ</button></section>`;
+  let n = 0;
+  const btn = $("#adv"), log = $("#log");
+  const show = () => {
+    const [who, text] = step.lines[n++];
+    log.insertAdjacentHTML("beforeend", talkHTML(who, ""));
+    const el = log.lastElementChild;
+    typeInto(who === "narr" ? el : el.querySelector(".say"), text);
+    if (n >= step.lines.length) btn.textContent = finalLabel;
+    setTimeout(() => btn.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 30);
+  };
+  $("#scene").addEventListener("click", () => {
+    if (typing){ typing.finish(); return; }
+    if (n < step.lines.length){ show(); return; }
+    SFX.tap(); advance();
+  });
+  show();
+}
+
+function vitalsHTML(v){
+  return `<div class="monitor">${v.map(([k, val, u]) => `<div class="vital"><span class="k">${k}</span><span class="v">${val}${u ? `<small>${u}</small>` : ""}</span></div>`).join("")}</div>`;
+}
+
+function renderQ(step){
+  const q = QMAP[step.id];
+  const idx = q.options.map((_, i) => i);
+  const order = q.fixedOrder ? idx : shuffle(idx);
+  G.limit = q.timeLimit || 30;
+  app.innerHTML = `<section class="q" id="qcard" aria-labelledby="qtext">
+    <div class="qtop"><span class="qno">問 ${G.qi + 1} / ${G.qTotal}</span><span class="chip">${q.category}</span><span class="bonus" id="bonus">ボーナス +${SPEED_MAX}</span></div>
+    <div class="gauge" aria-hidden="true"><div class="gauge-fill" id="gauge"></div></div>
+    ${q.case ? `<p class="story">${q.case}</p>` : ""}
+    ${q.vitals ? vitalsHTML(q.vitals) : ""}
+    ${q.visual === "gram" ? gramHTML() : ""}${q.fluid ? fluidHTML(q.fluid) : ""}
+    <h2 class="qtext" id="qtext">${q.question}</h2>
+    <ul class="opts">${order.map((oi, k) => `<li><button class="opt" type="button" data-oi="${oi}"><span class="key" aria-hidden="true">${KEYS[k]}</span><span class="txt">${q.options[oi].text}</span></button></li>`).join("")}</ul>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  app.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(step, +b.dataset.oi, b)));
+  startTimer();
+}
+
+function startTimer(){
+  G.t0 = performance.now(); G.bonus = SPEED_MAX;
+  const fill = $("#gauge"), lab = $("#bonus");
+  const tick = now => {
+    if (G.answered) return;
+    const frac = Math.max(0, 1 - (now - G.t0) / 1000 / G.limit);
+    fill.style.transform = `scaleX(${frac})`;
+    fill.classList.toggle("low", frac < 0.3);
+    const b = Math.round(SPEED_MAX * frac);
+    if (b !== G.bonus){ G.bonus = b; lab.textContent = b > 0 ? `ボーナス +${b}` : "ボーナス終了"; }
+    if (frac > 0) G.raf = requestAnimationFrame(tick);
+  };
+  G.raf = requestAnimationFrame(tick);
+}
+
+function answer(step, oi, btn){
+  if (G.answered) return;
+  G.answered = true; cancelAnimationFrame(G.raf);
+  const story = G.mode === "story";
+  const q = QMAP[step.id];
+  const chosen = q.options[oi], ok = !!chosen.correct;
+  const bonus = Math.round(SPEED_MAX * Math.max(0, 1 - (performance.now() - G.t0) / 1000 / G.limit));
+  (G.log = G.log || []).push({ qid: q.id, category: q.category, question: q.question, ok, chosen: chosen.text, seconds: Math.round((performance.now() - G.t0) / 100) / 10 });
+
+  app.querySelectorAll(".opt").forEach(b => {
+    const o = q.options[+b.dataset.oi]; b.disabled = true;
+    if (o.correct){ b.classList.add("is-correct"); b.insertAdjacentHTML("beforeend", '<span class="tag">正解</span>'); }
+    else if (b === btn){ b.classList.add("is-wrong"); b.insertAdjacentHTML("beforeend", '<span class="tag">あなたの回答</span>'); }
+    else b.classList.add("is-dim");
+  });
+
+  const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let head = "", events = [];
+  if (ok){
+    G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++;
+    const mult = multOf(G.combo), gained = Math.round((BASE + bonus) * mult), prev = G.score;
+    G.score += gained;
+    animateNumber($("#score"), prev, G.score, 500);
+    burst(cx, cy); floatText(`+${gained}`, cx, r.top); SFX.correct(G.combo);
+    let healed = false;
+    if (story){ G.trust = Math.min(100, G.trust + TRUST_UP); renderTrust(1); }
+    else if (G.combo % HEAL_EVERY === 0 && G.lives < LIVES_MAX){ G.lives++; healed = true; events.push(["heal", `${G.combo}連続正解！ ライフ回復`]); }
+    const ri = rankIndex(G.score);
+    if (ri > G.rankIdx){ G.rankIdx = ri; events.push(["rank", `ランクアップ！ ${RANKS[ri][1]}`]); }
+    if (!story) renderLives(healed ? "gain" : null);
+    renderCombo(true);
+    const multTxt = mult > 1 ? ` ×${multLabel(mult)}` : "";
+    head = `<p class="fb-head ok"><span>${G.combo >= 2 ? `正解！ ${G.combo}連続` : "正解！"}</span><span>+${gained}点</span><span class="calc">（基本${BASE} + スピード${bonus}）${multTxt}</span></p>`;
+  } else {
+    G.combo = 0; G.missed.push({ q, chosen: oi });
+    SFX.wrong();
+    const card = $("#qcard");
+    if (!reduceMotion){ card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+    if (story){ G.trust = Math.max(0, G.trust - TRUST_DOWN); renderTrust(-1); }
+    else { G.lives--; renderLives("lost"); }
+    renderCombo(false);
+    head = `<p class="fb-head ng"><span>不正解</span></p>`;
+  }
+  if (events.length) setTimeout(() => events.forEach(([k, m]) => toast(k, m)), 380);
+
+  const react = story && step.react
+    ? talkHTML(step.who || "mika", ok ? step.react.ok : step.react.ng,
+        `<span class="dtag ${ok ? "ok" : "ng"}">信頼 ${ok ? "+" + TRUST_UP : "−" + TRUST_DOWN}</span>`)
+    : "";
+  const over = !story && G.lives <= 0;
+  const lastQ = G.qi === G.qTotal - 1;
+  const label = story ? "次へ" : (over || lastQ ? "結果を見る" : "次の問題へ");
+  const fb = $("#fb");
+  fb.innerHTML = `${head}
+    ${react}
+    <p>${chosen.why}</p>
+    ${ok ? "" : `<p class="right">正解：${correctText(q)}</p>`}
+    ${over ? `<p class="over">ライフがなくなりました</p>` : ""}
+    <div class="explain"><h3>解説</h3><p>${q.explanation}</p></div>
+    ${keyHTML(q)}
+    <button class="primary" id="next" type="button">${label}</button>`;
+  fb.classList.add("show");
+  $("#next").addEventListener("click", () => {
+    SFX.tap(); G.qi++; G.answered = false;
+    if (over){ renderResult(); toTop(); } else advance();
+  });
+  setTimeout(() => fb.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 60);
+}
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  hud.hidden = true;
+  const story = G.mode === "story";
+  const cleared = story || G.lives > 0;
+  const key = BEST[G.mode];
+  const best = +store.get(key) || 0;
+  const isBest = G.score > best;
+  if (isBest) store.set(key, String(G.score));
+  const ri = rankIndex(G.score), next = RANKS[ri + 1];
+  const review = G.missed.length
+    ? G.missed.map(({ q, chosen }) => `<details class="review"><summary><span class="chip">${q.category}</span><span>${q.question}</span></summary>
+        <div class="body">${q.case ? `<p>${q.case}</p>` : ""}<p>あなたの回答：${q.options[chosen].text}</p><p class="right">正解：${correctText(q)}</p><p>${q.explanation}</p>${keyHTML(q)}</div></details>`).join("")
+    : `<p class="empty-note">間違えた問題はありません。</p>`;
+  const verdict = story ? `<p class="verdict ok">ストーリー完了</p><p class="ending">エンディング「${G.ending}」</p>`
+                        : `<p class="verdict ${cleared ? "ok" : "ng"}">${cleared ? "全問クリア" : "ゲームオーバー"}</p>`;
+  app.innerHTML = `<section class="result">
+    ${verdict}
+    <p class="final"><span class="big" id="final">0</span><span class="of">点</span></p>
+    ${isBest ? `<p class="newbest">自己ベスト更新</p>` : ""}
+    <p class="rank">ランク<b>${RANKS[ri][1]}</b></p>
+    ${next ? `<p class="nextrank">「${next[1]}」まであと${(next[0] - G.score).toLocaleString()}点</p>` : ""}
+    <dl class="stats${story ? " four" : ""}">
+      <div><dt>正解</dt><dd>${G.correct} / ${G.qi}</dd></div>
+      <div><dt>最大コンボ</dt><dd>${G.maxCombo}</dd></div>
+      ${story ? `<div><dt>指導医の信頼</dt><dd>${G.trust}</dd></div>` : ""}
+      <div><dt>自己ベスト</dt><dd>${Math.max(best, G.score).toLocaleString()}</dd></div>
+    </dl>
+    <div id="fb-mount"></div>
+    <h2>間違えた問題の復習</h2>
+    ${review}
+    <button class="primary" id="again" type="button">もう一度挑戦</button>
+    <button class="ghost" id="home" type="button">タイトルに戻る</button>
+  </section>`;
+  animateNumber($("#final"), 0, G.score, 900);
+  if (window.Feedback) Feedback.mount($("#fb-mount"), {
+    caseId: "pleural-quiz", caseTitle: "胸水を見抜け!!!",
+    mode: story ? "ストーリー" : "チャレンジ",
+    score: G.score, correct: G.correct, total: G.qi, maxCombo: G.maxCombo,
+    meters: story ? `指導医の信頼 ${G.trust}` : `ライフ残り ${G.lives}`,
+    ending: story ? G.ending : (cleared ? "全問クリア" : "ゲームオーバー"),
+    events: "", discharge: "",
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+    answers: G.log || []
+  });
+  cleared ? SFX.clear() : SFX.over();
+  $("#again").addEventListener("click", () => { SFX.tap(); newGame(G.mode); });
+  $("#home").addEventListener("click", () => { SFX.tap(); renderTitle(); window.scrollTo(0, 0); });
+}
+
+setMuteLabel();
+renderTitle();
+</script>
+<script src="feedback.js"></script>
+</body>
+</html>
