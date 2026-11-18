@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>影の正体を絞り込め!!!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --on-violet:#FFFFFF; --safranin:#C0396B;
+  --ok:#1E7A55; --ok-soft:#E3F3EA; --ng:#B23A2E; --ng-soft:#FBE7E4;
+  --eyepiece:#1D1A24;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+    --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+    --eyepiece:#0F0D15;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+  --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+  --eyepiece:#0F0D15;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{touch-action:manipulation}
+.wrap{max-width:680px;margin:0 auto;padding:18px 18px 32px}
+
+/* ステータスバー */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.hud-in{max-width:680px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.lives{display:flex;gap:4px}
+.heart{width:26px;height:26px;color:var(--safranin);display:block}
+.heart svg{width:100%;height:100%;display:block;fill:currentColor}
+.heart.empty{color:var(--muted);opacity:.5}
+.heart.empty svg{fill:none;stroke:currentColor;stroke-width:1.8}
+.heart.lost{animation:lose .55s ease-out}
+.heart.gain{animation:pop .5s ease-out}
+@keyframes lose{0%{transform:scale(1.3);opacity:1}45%{transform:scale(.6) rotate(-14deg)}100%{transform:none}}
+.trust{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+.tbar{width:58px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.tfill{display:block;height:100%;width:30%;background:var(--violet);transition:width .5s ease-out}
+.tnum{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.7em}
+.trust.up .tbar{animation:glow .7s ease-out}
+.trust.down{animation:shake .4s}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 7px transparent}}
+.scorebox{margin-left:auto;display:flex;align-items:center;gap:8px}
+.combo{font-size:.75rem;font-weight:700;color:var(--on-violet);background:var(--violet);padding:2px 9px;border-radius:999px;white-space:nowrap;visibility:hidden}
+.combo.on{visibility:visible}
+.combo.pop{animation:pop .4s ease-out}
+.score{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;min-width:3em;text-align:right}
+.pts{font-size:.8rem;color:var(--muted);margin-left:-4px}
+.mute{flex:none;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem;cursor:pointer;display:grid;place-items:center}
+.mute:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.2)}100%{transform:none}}
+
+/* タイトル */
+.title{padding-top:24px}
+.title h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1.3;margin:0}
+.motif{display:block;width:150px;height:auto;margin:14px 0 16px}
+.motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
+.title .sub{color:var(--muted);margin:0 0 8px}
+.mode{border-top:1px solid var(--line);padding:18px 0 4px}
+.mode h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:0}
+.mode p{margin:4px 0 0}
+.mode .best{color:var(--muted);font-size:.88rem;margin-top:8px}
+.mode .best b{color:var(--ink);font-variant-numeric:tabular-nums}
+.common{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:.88rem;color:var(--muted)}
+.common p{margin:0 0 6px}
+
+/* ストーリー */
+.chapter{min-height:58vh;display:flex;flex-direction:column;justify-content:center;padding:16px 2px}
+.chapter .day{color:var(--muted);margin:0;font-size:.95rem}
+.chapter h2{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,10vw,3rem);line-height:1.3;margin:6px 0 6px;animation:settle 1.1s ease-out both}
+@keyframes settle{from{opacity:0;letter-spacing:.35em;filter:blur(3px)}to{opacity:1;letter-spacing:.02em;filter:none}}
+.chapter .place{color:var(--violet);font-weight:700;margin:0}
+.chapter .motif{margin:18px 0 0}
+.scene{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.log{display:grid;gap:14px}
+.talk{display:flex;gap:10px;align-items:flex-start;animation:rise .3s ease-out}
+.talk.me{flex-direction:row-reverse}
+.avatar{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid var(--c);color:var(--c);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:1.2rem;background:var(--surface)}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:7px 14px 9px;max-width:calc(100% - 54px)}
+.talk.me .bubble{border-radius:14px 4px 14px 14px;background:var(--violet-soft)}
+.who{font-size:.78rem;font-weight:700;color:var(--c);margin:0}
+.who small{font-weight:500;color:var(--muted);margin-left:6px}
+.say{margin:2px 0 0;min-height:1.75em}
+.narr{font-family:var(--serif);font-weight:600;color:var(--muted);margin:2px;line-height:1.95;animation:rise .4s ease-out}
+.dtag{font-size:.72rem;font-weight:700;margin-left:8px}
+.dtag.ok{color:var(--ok)} .dtag.ng{color:var(--ng)}
+.fb .talk{margin:10px 0 12px}
+
+/* 問題 */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.q.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.qtop{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.qno{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6;flex:none}
+.bonus{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.gauge{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:8px 0 14px}
+.gauge-fill{height:100%;background:var(--violet);transform-origin:left center}
+.gauge-fill.low{background:var(--safranin)}
+.story{font-family:var(--serif);font-weight:600;font-size:clamp(1.08rem,4vw,1.28rem);line-height:1.85;margin:0 0 12px}
+.monitor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.vital{background:var(--surface);padding:6px 10px 8px;display:flex;flex-direction:column}
+.vital .k{font-size:.74rem;color:var(--muted)}
+.vital .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
+.vital .v small{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:3px}
+@media (min-width:600px){.monitor{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.qtext{font-size:1.1rem;line-height:1.6;margin:0}
+.scope{background:var(--eyepiece);border-radius:16px;padding:16px 14px 10px;margin:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.scope svg{width:100%;max-width:280px;height:auto;display:block}
+.scope figcaption{color:#CFC8DA;font-size:.78rem}
+.opts{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;font:inherit;line-height:1.6;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;min-height:52px;transition:border-color .15s,background-color .15s}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt .key{flex:none;width:1.75em;height:1.75em;margin-top:.05em;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.85rem;font-weight:700;color:var(--muted)}
+.opt .txt{flex:1}
+.opt .tag{flex:none;font-size:.75rem;font-weight:700;align-self:center}
+.opt.is-correct{border-color:var(--ok);background:var(--ok-soft)}
+.opt.is-correct .key{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.is-correct .tag{color:var(--ok)}
+.opt.is-wrong{border-color:var(--ng);background:var(--ng-soft)}
+.opt.is-wrong .key{background:var(--ng);border-color:var(--ng);color:var(--surface)}
+.opt.is-wrong .tag{color:var(--ng)}
+.opt.is-dim{opacity:.5}
+
+/* 回答後 */
+.fb.show{margin-top:18px;animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-weight:700;font-size:1.15rem;margin:0 0 4px}
+.fb-head.ok{color:var(--ok)}
+.fb-head.ng{color:var(--ng)}
+.calc{font-size:.8rem;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fb > p{margin:0 0 8px}
+.right{color:var(--ok);font-weight:700}
+.over{color:var(--ng);font-weight:700}
+.explain{border-left:3px solid var(--violet);padding:2px 0 2px 14px;margin-top:14px}
+.explain h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
+.explain p{margin:0}
+
+.primary{display:block;margin-top:20px;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--violet);color:var(--on-violet);font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.ghost{display:block;margin-top:10px;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer}
+.mode .primary,.mode .ghost{margin-top:12px}
+.primary:focus-visible,.ghost:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
+
+/* 結果 */
+.verdict{font-weight:700;font-size:1.05rem;margin:20px 0 0}
+.verdict.ok{color:var(--ok)} .verdict.ng{color:var(--ng)}
+.ending{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin:2px 0 0}
+.final{display:flex;align-items:baseline;gap:8px;margin:2px 0 6px}
+.final .big{font-family:var(--serif);font-size:3.6rem;line-height:1.1;color:var(--violet);font-variant-numeric:tabular-nums}
+.final .of{font-weight:700}
+.newbest{display:inline-block;background:var(--safranin);color:var(--on-violet);font-weight:700;font-size:.85rem;padding:2px 12px;border-radius:999px;margin:0 0 6px;animation:pop .5s ease-out}
+.rank{margin:6px 0 0}
+.rank b{font-family:var(--serif);font-size:1.45rem;font-weight:600;margin-left:6px}
+.nextrank{color:var(--muted);font-size:.9rem;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0 0}
+.stats.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats div{background:var(--surface);padding:8px 12px}
+.stats dt{font-size:.76rem;color:var(--muted)}
+.stats dd{margin:0;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.result h2{font-size:1rem;margin:26px 0 4px}
+.review{border-bottom:1px solid var(--line);padding:10px 0}
+.review summary{cursor:pointer;display:flex;gap:8px;align-items:flex-start;list-style:none;font-weight:500}
+.review summary::-webkit-details-marker{display:none}
+.review summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.review .body{padding:8px 0 0;font-size:.95rem}
+.review .body p{margin:0 0 6px}
+.empty-note{color:var(--muted);margin:4px 0 0}
+
+/* 演出 */
+.pt{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:8px 0 0 var(--violet);pointer-events:none;z-index:50;animation:fly .75s cubic-bezier(.2,.7,.3,1) forwards}
+.pt.pink{background:var(--safranin);box-shadow:8px 0 0 var(--safranin)}
+@keyframes fly{from{transform:translate(-50%,-50%) rotate(0deg);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
+.float{position:fixed;font-weight:700;font-size:1.2rem;color:var(--ok);pointer-events:none;z-index:40;transform:translate(-50%,0);animation:floatup .9s ease-out forwards;font-variant-numeric:tabular-nums}
+@keyframes floatup{to{transform:translate(-50%,-52px);opacity:0}}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translate(-50%,-10px);opacity:0;pointer-events:none;z-index:30;background:var(--violet);color:var(--on-violet);font-weight:700;padding:10px 20px;border-radius:999px;white-space:nowrap;transition:opacity .25s,transform .25s}
+.toast.heal{background:var(--ok)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.note{max-width:680px;margin:0 auto;padding:0 18px 28px;color:var(--muted);font-size:.8rem;line-height:1.6}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+
+/* ===== この症例用の追加スタイル ===== */
+.alert-tag{display:inline-block;align-self:flex-start;font-size:.78rem;font-weight:700;color:var(--on-violet);background:var(--safranin);padding:2px 12px;border-radius:999px;margin:0 0 10px}
+.chapter.alert .place{color:var(--safranin)}
+.teach{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:.92rem;cursor:pointer}
+.teach input,.evlist input{accent-color:var(--violet);width:1.05em;height:1.05em;flex:none}
+.evlist label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.evlist input{margin-top:.4em}
+#teachbox{margin-top:8px}
+.evlist{list-style:none;margin:6px 0 0;padding:0 0 0 4px;border-left:2px solid var(--line)}
+.evlist label{padding:5px 0 5px 10px}
+.evlist small{display:block;color:var(--muted);font-size:.8rem}
+.evlog{list-style:none;margin:6px 0 0;padding:0}
+.evlog li{border-bottom:1px solid var(--line);padding:8px 0}
+.evlog b{display:block}
+.evlog span{color:var(--muted);font-size:.88rem}
+.labs{display:flex;flex-wrap:wrap;gap:2px 20px;margin:14px 0 4px;font-size:.95rem}
+.labs div{display:flex;gap:6px}
+.labs dt{color:var(--muted)}
+.labs dd{margin:0;font-variant-numeric:tabular-nums}
+.meters{display:flex;gap:10px}
+.meter{display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--muted)}
+.mbar{width:46px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.mfill{display:block;height:100%;width:50%;background:var(--ok);transition:width .5s ease-out}
+.mfill.safe{background:var(--violet)}
+.meter.up .mbar{animation:glow .7s ease-out}
+.meter.down{animation:shake .4s}
+
+.round{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.rlabel{font-family:var(--serif);font-weight:600;font-size:1.3rem;margin:0 0 12px}
+.round .labs{margin:0 0 14px}
+.rh{font-size:.9rem;color:var(--muted);margin:16px 0 8px}
+.notes{margin:12px 0 0;padding-left:1.2em;font-size:.95rem}
+.notes li{margin:2px 0}
+.q .labs{margin:-4px 0 14px}
+
+.ausc{margin:0 0 14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;background:var(--surface)}
+.ausc figcaption{display:flex;flex-direction:column;line-height:1.5}
+.ausc .site{font-size:.76rem;color:var(--muted)}
+.ausc figcaption b{font-size:.98rem}
+.ausc figcaption span:last-child{font-size:.85rem;color:var(--muted)}
+.ausc svg{display:block;width:100%;max-width:420px;height:auto;margin-top:4px}
+.ausc .ph{font-size:9px;fill:var(--muted)}
+.ausc .bl{font-size:10px;fill:var(--ink);font-weight:700}
+.ausc .none{font-size:11px;fill:var(--ok);font-weight:700}
+.ausc .div{stroke:var(--line);stroke-dasharray:2 3}
+.ausc .ib{fill:var(--violet-soft);stroke:var(--violet);stroke-width:1.2}
+.ausc .eb{fill:var(--line)}
+.ausc .ck{fill:var(--safranin)}
+.ausc .wz{stroke:var(--safranin);fill:none;stroke-linejoin:round;stroke-linecap:round}
+.ausc .rl{font-size:10px;fill:var(--muted)}
+
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.spark{border:1px solid var(--line);border-radius:10px;padding:6px 8px 2px;background:var(--surface)}
+.sk{display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:.74rem;color:var(--muted);margin:0}
+.sk b{font-size:1rem;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:2px}
+.spark svg{display:block;width:100%;height:auto}
+.spark .ax{stroke:var(--line)}
+.spark .ref{stroke:var(--safranin);stroke-dasharray:3 3;opacity:.7}
+.spark .ln{stroke:var(--violet);stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+.spark .dt{fill:var(--violet)}
+.spark .dt.last{fill:var(--surface);stroke:var(--violet);stroke-width:2.2}
+.spark .xl{font-size:9px;fill:var(--muted)}
+.spark .xl.fut{opacity:.35}
+.cnote{font-size:.76rem;color:var(--muted);margin:6px 0 0}
+
+.sus{width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.5}
+.sus caption{text-align:left;font-weight:700;margin-bottom:6px}
+.sus th{font-weight:500;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.sus td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.sus td:nth-child(2),.sus td:last-child,.sus th{white-space:nowrap}
+.sus .S{color:var(--ok);font-weight:700}
+.sus .R{color:var(--ng);font-weight:700}
+.tablewrap{overflow-x:auto;margin:0 0 14px}
+.rules{list-style:none;padding:0;margin:18px 0;display:grid;gap:10px}
+.rules li{display:flex;gap:12px;align-items:flex-start}
+.rules .ic{flex:none;width:2.8em;text-align:center;font-weight:700;color:var(--violet);font-size:.85rem;padding-top:.2em}
+/* 胸水の試験管と検査値 */
+.fluid{display:flex;gap:14px;align-items:flex-start;margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
+.tube{flex:none;width:52px;height:auto}
+.tube .glass{fill:none;stroke:var(--muted);stroke-width:1.6}
+.tube .rim{fill:var(--line);stroke:var(--muted);stroke-width:1}
+.tube .tube-air{fill:var(--bg)}
+.fl-body{flex:1;min-width:0}
+.fl-look{margin:0 0 6px;font-weight:700}
+.fl-look span{display:inline-block;font-size:.72rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-right:6px}
+.fl-tab{width:100%;border-collapse:collapse;font-size:.88rem;line-height:1.45}
+.fl-tab th{font-weight:500;color:var(--muted);text-align:left;padding:4px 8px 4px 0;white-space:nowrap;vertical-align:top}
+.fl-tab td{padding:4px 0;font-variant-numeric:tabular-nums}
+.fl-tab tr+tr th,.fl-tab tr+tr td{border-top:1px solid var(--line)}
+
+.cxr,.drain{margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface)}
+.cxr svg{display:block;width:100%;max-width:300px;height:auto;margin:0 auto}
+.drain svg{display:block;width:100%;max-width:360px;height:auto;margin:0 auto}
+.cxr figcaption,.drain figcaption{font-size:.8rem;color:var(--muted);margin-top:6px;text-align:center}
+.drain .ch{fill:var(--surface);stroke:var(--muted);stroke-width:1.4}
+.drain .water{fill:#8fb8e3;opacity:.55}
+.drain .arrow{stroke:var(--violet);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.drain .flat{stroke:var(--ng);stroke-width:2;stroke-dasharray:4 3}
+.drain .bub{fill:none;stroke:#2f6fb0;stroke-width:1.5}
+.drain .hd{font-size:11px;font-weight:700;fill:var(--ink)}
+.drain .sm{font-size:10px;fill:var(--muted)}
+/* ===== 鑑別診断形式の追加スタイル ===== */
+.vital .v{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:3px}
+.vital .v small{white-space:nowrap;margin-left:0}
+.mfill.burden{background:var(--safranin)}
+.title .kind{display:inline-block;font-size:.8rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 10px;margin:0 0 8px}
+.ranks{color:var(--muted);font-size:.9rem}
+.rkind{font-size:.75rem;font-weight:700;color:var(--muted);margin:0}
+.labtab{margin:0 0 14px;border:1px solid var(--line);border-radius:10px;padding:4px 12px;display:block;background:var(--surface)}
+.labtab tbody{display:table;width:100%}
+.q .labtab{margin:0 0 14px}
+/* 鑑別ボード（小） */
+.bstrip{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 12px}
+.bs{font-size:.7rem;font-weight:700;line-height:1.5;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink);background:var(--surface)}
+.bs.up{border-color:var(--violet);color:var(--violet);background:var(--violet-soft)}
+.bs.dx{border-color:var(--violet);background:var(--violet);color:var(--on-violet)}
+.bs.low{color:var(--muted);border-style:dashed}
+.bs.out{color:var(--muted);text-decoration:line-through;opacity:.55}
+/* 鑑別ボード（大） */
+.board{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.bnote{color:var(--muted);font-size:.9rem;margin:-6px 0 12px}
+.blist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.brow{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px}
+.brow.changed{border-color:var(--safranin);animation:rise .4s ease-out}
+.bhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.bname{font-weight:700}
+.bstate{flex:none;font-size:.75rem;font-weight:700;padding:0 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.brow.up .bstate{color:var(--violet);border-color:var(--violet)}
+.brow.dx .bstate{color:var(--on-violet);background:var(--violet);border-color:var(--violet)}
+.brow.out .bname{text-decoration:line-through;color:var(--muted)}
+.brow.low .bname{color:var(--muted)}
+.bwhy{margin:4px 0 0;font-size:.9rem}
+.bwhy::before{content:"理由：";font-weight:700;color:var(--safranin)}
+.dcard{margin-top:6px;border-top:1px dashed var(--line);padding-top:4px}
+.dcard summary{cursor:pointer;font-size:.85rem;font-weight:700;color:var(--violet);display:flex;align-items:center;gap:8px}
+.dcard summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.pts{margin:6px 0 2px;padding-left:1.2em;font-size:.92rem;line-height:1.6}
+.pts li{margin:2px 0}
+.stamp{display:inline-grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;border:2px solid var(--safranin);color:var(--safranin);font-family:var(--serif);font-size:.8rem;font-weight:600;transform:rotate(-12deg)}
+.cards{display:grid;gap:8px;margin-top:8px}
+.dcard.big{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface);margin:0}
+.dcard.big summary{color:var(--ink);font-size:.95rem}
+.dcard.big .cst{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:500}
+/* キーポイント */
+.kp{background:var(--violet-soft);border-radius:10px;padding:10px 14px;margin-top:12px}
+.kp h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
+.kp ul{margin:0;padding-left:1.2em}
+.kp li{margin:2px 0}
+/* 紹介状 */
+.letter{margin:0 0 14px;border:1px solid var(--line);border-radius:4px;padding:12px 14px 10px;background:var(--surface);box-shadow:3px 3px 0 var(--line)}
+.lt-head{font-family:var(--serif);font-weight:600;font-size:1.05rem;text-align:center;letter-spacing:.2em;margin:0 0 8px;border-bottom:1px double var(--line);padding-bottom:4px}
+.letter dl{margin:0;display:grid;gap:4px;font-size:.92rem;line-height:1.6}
+.letter dl div{display:grid;grid-template-columns:4.6em 1fr;gap:8px}
+.letter dt{color:var(--muted)}
+.letter dd{margin:0}
+.lt-from{text-align:right;font-size:.85rem;color:var(--muted);margin:8px 0 0}
+/* 図 */
+.fig{margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface)}
+.fig svg{display:block;width:100%;max-width:360px;height:auto;margin:0 auto}
+.fig figcaption{font-size:.8rem;color:var(--muted);margin-top:6px;text-align:center}
+.fig .skin{fill:#f2d3bd;stroke:#9b6f55;stroke-width:1.4}
+.fig .nail{fill:none;stroke:#b98b86;stroke-width:4;stroke-linecap:round}
+.fig .ang{stroke:var(--violet);stroke-width:1.4;stroke-dasharray:4 3}
+.fig .lb{font-size:11px;fill:var(--ink);font-weight:700}
+.ausc .ck{stroke:var(--safranin);stroke-width:1.6;stroke-linecap:round;fill:none}
+.cxr .hc{fill:none;stroke:#e2e2e2;stroke-width:1.3}
+.cxr .tb{fill:none;stroke:#cfcfcf;stroke-width:2.4;stroke-linecap:round}
+.cxr svg{max-width:320px}
+</style>
+</head>
+<body>
+<header class="hud" id="hud" hidden>
+  <div class="hud-in">
+    <div class="meters">
+      <div class="meter" id="m-conf" role="img" aria-label="確信度"><span>確信度</span><span class="mbar"><span class="mfill" id="f-conf"></span></span></div>
+      <div class="meter" id="m-burden" role="img" aria-label="負担"><span>負担</span><span class="mbar"><span class="mfill burden" id="f-burden"></span></span></div>
+    </div>
+    <div class="scorebox">
+      <span class="score" id="score">0</span><span class="pts">点</span>
+    </div>
+    <button class="mute" id="mute" type="button"></button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="note"><a href="./" style="color:var(--violet);font-weight:700">症例の一覧に戻る</a><br>学習用の架空症例です。実際の診療では最新のガイドラインと施設の方針を確認してください。</footer>
+
+<script>
+/* =========================================================
+   登場人物
+   ========================================================= */
+const CAST = {
+  kikawa: { name: "木川先生", role: "呼吸器内科 指導医", mark: "木", color: "var(--violet)" },
+  hayase: { name: "早瀬さん", role: "外来看護師", mark: "早", color: "var(--ok)" },
+  me:     { name: "あなた", role: "医学生（外来実習）", mark: "学", color: "var(--muted)" },
+  pt:     { name: "佐伯さん", role: "72歳", mark: "佐", color: "var(--safranin)" },
+  rad:    { name: "放射線科", role: "読影医", mark: "放", color: "var(--ink)" }
+};
+
+const META = {
+  id: "ipf-dx", title: "影の正体を絞り込め!!!", h1: "影の正体を<br>絞り込め!!!",
+  sub: "72歳男性、佐伯さん。「びまん性肺疾患の疑い」で外来に紹介されてきました。問診、診察、検査と進みながら、8つの鑑別疾患を一つずつ絞り込み、診断にたどり着きます。",
+  rules: [
+    ["鑑別", "画面上の「鑑別ボード」に、8つの候補疾患が並びます。新しい情報が入るたびに、可能性が上がったり下がったりします。"],
+    ["カード", "可能性が下がった疾患は「疾患カード」が開き、国試のキーポイントが読めます。直前の問題に正解すると、カードに印がつきます。"],
+    ["確信度", "正しい判断を重ねるほど、診断の確信度が上がります。"],
+    ["負担", "必要のない検査や侵襲的な検査を選ぶと、患者さんの負担が増えます。"]
+  ],
+  lead: "kikawa", conf: "確信度", burden: "負担", best: "ipf-dx-best"
+};
+
+/* =========================================================
+   鑑別ボードの疾患と、疾患カード（国試のキーポイント）
+   ========================================================= */
+const DX = [
+  { id: "ipf", name: "特発性肺線維症（IPF）", short: "IPF", points: [
+    "60歳以上の男性、喫煙者に多い",
+    "症状と所見：①乾いた咳、②労作時の息切れ、③fine crackles、④ばち指",
+    "HRCT：胸膜直下・肺底部に優位な蜂巣肺と牽引性気管支拡張（UIPパターン）",
+    "治療：抗線維化薬（ピルフェニドン、ニンテダニブ）。ステロイド単独は行わない",
+    "注意する合併症：①急性増悪、②肺癌" ]},
+  { id: "ctd", name: "膠原病に伴う間質性肺疾患", short: "膠原病", points: [
+    "多い膠原病：①関節リウマチ、②全身性強皮症、③皮膚筋炎・多発性筋炎、④シェーグレン症候群",
+    "手の所見：①機械工の手、②Gottron徴候、③Raynaud現象、④手指の皮膚硬化",
+    "抗体：抗ARS抗体（抗Jo-1抗体など）、抗MDA5抗体（急速に進行しやすい）、抗Scl-70抗体",
+    "画像はNSIPパターンが多い。肺の病変が膠原病の症状より先に出ることもある" ]},
+  { id: "hp", name: "過敏性肺炎", short: "過敏性肺炎", points: [
+    "抗原を繰り返し吸い込むことで起こる、アレルギー性の肺炎",
+    "日本の代表：①夏型（木造家屋のカビ、トリコスポロン）、②鳥関連（鳥の飼育、羽毛布団）",
+    "家を離れると良くなり、帰宅すると悪くなる（入院すると良くなる）",
+    "BAL：リンパ球の増加。治療の基本は抗原の回避" ]},
+  { id: "asb", name: "石綿肺", short: "石綿肺", points: [
+    "石綿（アスベスト）を長く吸い込んで起こるじん肺。下葉に優位な線維化",
+    "曝露の指標：胸膜プラーク（壁側胸膜の限局した肥厚、石灰化を伴うことも）",
+    "石綿が原因になる病気：①石綿肺、②肺癌、③悪性胸膜中皮腫、④良性石綿胸水",
+    "曝露から発症まで数十年かかる。職業歴は若いころまでさかのぼって聞く" ]},
+  { id: "drug", name: "薬剤性肺障害", short: "薬剤性", points: [
+    "どんな薬でも起こりうる。サプリメントや漢方薬も含め、飲んでいる薬をすべて確認する",
+    "多い薬：①抗癌薬、②メトトレキサート、③アミオダロン、④小柴胡湯などの漢方薬",
+    "治療：①被疑薬の中止、②重症度に応じてステロイド" ]},
+  { id: "sarc", name: "サルコイドーシス", short: "サルコイドーシス", points: [
+    "全身に、乾酪壊死のない類上皮細胞肉芽腫ができる原因不明の病気",
+    "胸部X線：両側肺門リンパ節腫脹（BHL）",
+    "検査：①ACE・リゾチームの上昇、②sIL-2Rの上昇、③BALでリンパ球とCD4/CD8比の上昇",
+    "肺以外：①ぶどう膜炎（眼）、②房室ブロック（心臓）、③皮膚病変" ]},
+  { id: "hf", name: "心不全（肺うっ血）", short: "心不全", points: [
+    "所見：①coarse crackles、②下腿浮腫、③頸静脈の怒張",
+    "胸部X線：①心拡大、②胸水、③Kerley B線、④蝶形陰影",
+    "BNP・NT-proBNPが上昇する。心エコーで評価する",
+    "間質性の陰影と間違えやすい。利尿薬で陰影が改善する" ]},
+  { id: "lymph", name: "癌性リンパ管症", short: "癌性リンパ管症", points: [
+    "癌がリンパ管に沿って肺に広がった状態（胃癌、乳癌、肺癌などから）",
+    "HRCT：小葉間隔壁や気管支血管束の、結節状（数珠状）の肥厚",
+    "息切れが週から月の単位で比較的急に進む。予後は不良" ]}
+];
+const STATE_LABEL = { cand: "候補", up: "可能性が高い", low: "可能性が低い", out: "除外", dx: "診断" };
+
+/* =========================================================
+   外来カード（受診ごとの記録）
+   ========================================================= */
+const ROUNDS = {
+  v0: { label: "初診　呼吸器内科外来",
+    vitals: [["SpO₂（室内気）","96","%"],["呼吸数","18","/分"],["脈拍","78","/分"],["血圧","134/80","mmHg"],["体温","36.5","℃"],["BMI","22.4",""]],
+    notes: ["喫煙：20本/日を40年（5年前に禁煙）", "既往：高血圧（アムロジピン 5 mg を内服）", "近医の胸部X線：両側の下肺野に網状影"] },
+  v1: { label: "2週間後　検査結果の説明",
+    vitals: [["SpO₂（室内気）","96","%"],["呼吸数","18","/分"],["脈拍","80","/分"],["血圧","130/78","mmHg"],["体温","36.4","℃"],["下腿浮腫","なし",""]],
+    labs: [["KL-6","1,450 U/mL"],["SP-D","280 ng/mL"],["LDH","236 IU/L"],["CRP","0.3 mg/dL"],["BNP","22 pg/mL"]],
+    notes: ["膠原病の症状（関節痛、朝のこわばり、Raynaud現象、皮疹、筋力低下）はない", "自己抗体の結果は、次の画面で確認する"] },
+  v2: { label: "1か月後　画像の結果と診断",
+    vitals: [["SpO₂（室内気）","96","%"],["呼吸数","18","/分"],["脈拍","78","/分"],["血圧","132/78","mmHg"],["体温","36.5","℃"],["6分間歩行","最低86","%"]],
+    notes: ["胸部HRCTを撮影した", "放射線科と、画像を一緒に見る集学的検討（MDD）を行った"] }
+};
+
+/* =========================================================
+   問題データ
+   visual："letter"（紹介状）、"crackle"（聴診図）、"clubbing"（ばち指）、
+           "cxr"（胸部X線の模式図）、"hrct"（胸部HRCTの模式図）
+   options の fx：conf（確信度）、burden（負担）の増減と、分岐の目印 flag
+   ========================================================= */
+const QUESTIONS = [
+  /* ----- 第1章 紹介状 ----- */
+  {
+    id: "symptom", category: "紹介状", timeLimit: 40,
+    case: "近医からの紹介状を読む。",
+    visual: "letter",
+    question: "間質性肺炎を疑う症状と経過として、最も典型的なのは？",
+    options: [
+      { text: "乾いた咳と労作時の息切れが、月から年の単位で少しずつ進む", correct: true, why: "間質性肺炎は、痰の少ない咳と、動いたときの息切れで始まり、ゆっくり進みます。" },
+      { text: "痰の多い湿った咳と労作時の息切れが、月から年の単位で少しずつ進む", why: "息切れと経過は合っています。ただし間質性肺炎の咳は、痰の少ない乾いた咳が典型です。痰が多ければ、気管支拡張症などを考えます。" },
+      { text: "発作的な息苦しさと喘鳴が、夜間や明け方に繰り返し起こる", why: "気管支喘息を考える症状です。" },
+      { text: "高熱と膿性の痰が急に出て、息切れも数日で強くなっていく", why: "細菌性肺炎などの、急性の感染症を考える経過です。" }
+    ],
+    explanation: "間質性肺炎は、肺胞の壁（間質）に炎症や線維化が起こる病気です。肺が硬く縮むため、動いたときの息切れから始まります。",
+    keypoints: ["症状：①乾いた咳、②労作時の息切れ", "所見：①fine crackles（捻髪音）、②ばち指", "慢性の経過（月から年）が多い。急に悪くなる場合は、感染症や急性増悪、薬剤性も考える"]
+  },
+
+  /* ----- 第2章 問診 ----- */
+  {
+    id: "history-cause", category: "問診", timeLimit: 40,
+    case: "木川先生「特発性、つまり原因が分からないと言うためには、原因の分かるものを先に除外する必要がある」",
+    question: "原因の分かる間質性肺疾患を除外するために、問診で確かめることとして最も適切なのは？",
+    options: [
+      { text: "職業歴、住まいの環境（鳥やカビ）、飲んでいる薬、膠原病の症状", correct: true, why: "原因の分かる間質性肺疾患は、曝露、薬、膠原病の3つに分けて確かめます。" },
+      { text: "喫煙歴を詳しく聞き、喫煙指数（本数×年数）を正確に計算する", fx: { flag: "noExpo" }, why: "喫煙歴も大切ですが、それだけでは原因の分かる間質性肺疾患を除外できません。職業、環境、薬、膠原病を聞きます。" },
+      { text: "家族歴を中心に聞き、家族に同じ肺の病気の人がいないかを確かめる", why: "家族性の間質性肺炎もありますが、先に除外すべきなのは、曝露、薬、膠原病による間質性肺疾患です。" },
+      { text: "問診より先に、外科的肺生検で組織のパターンを確かめておく", fx: { burden: 20 }, why: "問診で原因が分かれば、生検をしなくて済むことがあります。侵襲的な検査は、必要なときに後から考えます。" }
+    ],
+    explanation: "IPFは「原因が分からない」ことが診断の前提です。原因の分かる間質性肺疾患を、①膠原病、②環境・職業（過敏性肺炎、じん肺）、③薬剤の3つに分けて除外します。",
+    keypoints: ["原因の分かる間質性肺疾患：①膠原病、②環境・職業（過敏性肺炎、じん肺）、③薬剤", "薬はサプリメントや漢方薬まで聞く", "曝露はすぐには思い出せないことが多いので、具体的に一つずつ聞く"]
+  },
+  {
+    id: "hp-history", category: "問診", timeLimit: 40,
+    case: "佐伯さん「家は築40年の木造です。ペットは飼っていません」",
+    question: "過敏性肺炎を考えて、さらに確かめることとして最も適切なのは？",
+    options: [
+      { text: "鳥との接触や羽毛布団の使用、自宅の湿気とカビ、加湿器の使用", correct: true, why: "日本の過敏性肺炎は、鳥とカビによるものが代表的です。羽毛布団も鳥の抗原になります。" },
+      { text: "犬や猫などのペットの飼育歴と、同居する家族のアレルギーの有無", fx: { flag: "noExpo" }, why: "ペットも大切な問診ですが、過敏性肺炎の原因で多いのは鳥とカビです。羽毛布団も聞き漏らさないようにします。" },
+      { text: "花粉症の有無と、春や秋に症状が悪くなる季節性があるかどうか", why: "花粉は、過敏性肺炎の代表的な原因ではありません。" },
+      { text: "最近の海外旅行歴と、旅行先で生水や生ものを口にしたかどうか", why: "感染症を考える問診です。過敏性肺炎とは関係が薄いです。" }
+    ],
+    explanation: "過敏性肺炎は、抗原を繰り返し吸い込むことで起こります。原因が家にあれば、入院や外泊で症状が変わることも手がかりになります。",
+    keypoints: ["夏型過敏性肺炎：木造家屋のカビ（トリコスポロン）。梅雨から夏に悪くなる", "鳥関連過敏性肺炎：鳥の飼育、羽毛布団、鶏糞肥料", "そのほか：加湿器肺、農夫肺、キノコ栽培者肺など", "治療の基本は、抗原の回避"]
+  },
+  {
+    id: "asbestos", category: "問診", timeLimit: 40,
+    case: "佐伯さん「そういえば30代のころ、3年間だけ造船所で配管の仕事をしていました」",
+    question: "石綿（アスベスト）に曝露したことを示すCT所見として、最も特徴的なのは？",
+    options: [
+      { text: "胸膜プラーク（壁側胸膜の限局した肥厚や石灰化）", correct: true, why: "胸膜プラークは、石綿に曝露したことを示す、もっとも特徴的な所見です。" },
+      { text: "両側の下葉に優位な、網状影や蜂巣肺などの線維化", why: "石綿肺でもみられますが、IPFでも同じように見えるため、曝露の証拠にはなりません。" },
+      { text: "上葉に優位な粒状影と、リンパ節の卵殻状の石灰化", why: "珪肺（シリカの曝露）を考える所見です。" },
+      { text: "両側の肺門リンパ節腫脹（BHL）と気管支周囲の粒状影", why: "サルコイドーシスを考える所見です。" }
+    ],
+    explanation: "石綿の曝露は、何十年も後になって病気を起こします。造船、建設、配管、断熱材の仕事は、代表的な曝露歴です。",
+    keypoints: ["石綿による病気：①胸膜プラーク、②石綿肺、③肺癌、④悪性胸膜中皮腫、⑤良性石綿胸水", "曝露の指標：胸膜プラーク", "珪肺：上葉優位の粒状影、リンパ節の卵殻状石灰化"]
+  },
+
+  /* ----- 第3章 診察 ----- */
+  {
+    id: "crackles", category: "診察", timeLimit: 40,
+    case: "両側の背部、下のほうで聴診する。吸気の終わりに、細かいパチパチという音が聞こえる。",
+    visual: "crackle",
+    question: "この副雑音として最も適切なのは？",
+    options: [
+      { text: "fine crackles（捻髪音）", correct: true, why: "硬くなった肺胞が、吸気の終わりに一気に開くときの細かい音です。" },
+      { text: "coarse crackles（水泡音）", why: "同じ断続性の副雑音ですが、coarse crackles は低く粗い音で、吸気の初めから聞こえます。肺炎や心不全で聞かれます。" },
+      { text: "wheezes（笛音）", why: "wheezes は高い音の連続性副雑音で、喘息などの気道の狭窄で聞かれます。" },
+      { text: "rhonchi（いびき音）", why: "rhonchi は低い音の連続性副雑音で、太い気道の分泌物で聞かれます。" }
+    ],
+    explanation: "fine crackles は、間質性肺炎の代表的な聴診所見です。マジックテープをはがすような音（ベルクロ・ラ音）とも表現されます。",
+    keypoints: ["断続性副雑音：①fine crackles（間質性肺炎）、②coarse crackles（肺炎・心不全・気管支拡張症）", "連続性副雑音：①wheezes（喘息・COPD）、②rhonchi（太い気道の分泌物）", "fine crackles は、吸気の終わりに、下肺の背側で聞こえやすい"]
+  },
+  {
+    id: "clubbing", category: "診察", timeLimit: 40,
+    case: "手の指を見ると、指先が太鼓のばちのように丸く膨らみ、爪の付け根の角度が180°を超えている。",
+    visual: "clubbing",
+    question: "ばち指を起こす疾患の組み合わせとして、正しいのは？",
+    options: [
+      { text: "特発性肺線維症・肺癌・気管支拡張症", correct: true, why: "どれも、ばち指を起こす代表的な呼吸器疾患です。" },
+      { text: "特発性肺線維症・肺癌・COPD", why: "COPDだけでは、ばち指は起こりません。COPDの人にばち指があれば、肺癌などの合併を考えます。" },
+      { text: "気管支喘息・COPD・サルコイドーシス", why: "どれも、ふつうはばち指を起こしません。" },
+      { text: "市中肺炎・肺血栓塞栓症・気胸", why: "ばち指は、慢性の肺疾患や心疾患で起こります。急性の病気では起こりません。" }
+    ],
+    explanation: "ばち指は、爪の付け根の角度（ロビボンド角）が180°を超えるのが目安です。慢性の肺疾患、心疾患、消化器疾患で起こります。",
+    keypoints: ["呼吸器：①特発性肺線維症、②肺癌、③気管支拡張症・肺膿瘍・膿胸", "循環器：①チアノーゼ性先天性心疾患、②感染性心内膜炎", "消化器：①肝硬変、②炎症性腸疾患", "COPDや喘息だけでは起こらない"]
+  },
+
+  /* ----- 第4章 検査 ----- */
+  {
+    id: "serology", category: "血液検査", timeLimit: 45,
+    case: "自己抗体の結果が届いた。",
+    labs: [["抗核抗体","40倍（speckled）"],["リウマトイド因子","陰性"],["抗CCP抗体","陰性"],["抗ARS抗体","陰性"],["抗Scl-70抗体","陰性"],["抗SS-A抗体","陰性"],["MPO-ANCA","陰性"],["CK","98 IU/L"]],
+    question: "外来カードの結果も合わせた解釈として、最も適切なのは？",
+    options: [
+      { text: "KL-6・SP-Dは間質性肺炎を示し、膠原病らしさは乏しい", correct: true, why: "KL-6とSP-Dは間質性肺炎のマーカーです。膠原病の症状がなく、特異的な抗体も陰性です。" },
+      { text: "抗核抗体が陽性なので、膠原病に伴う間質性肺疾患と診断する", why: "抗核抗体の40倍程度は、高齢者では健康な人でもよくみられます。症状や特異的な抗体がそろわなければ、膠原病とは診断しません。" },
+      { text: "KL-6が高いので、肺癌を最も強く疑って腫瘍マーカーを追加する", why: "KL-6は肺胞上皮の傷害を反映する、間質性肺炎のマーカーです。" },
+      { text: "BNPが正常なので、心不全と同じく間質性肺炎も否定的と考える", why: "BNPが正常なら心不全は考えにくくなりますが、間質性肺炎の否定にはなりません。" }
+    ],
+    explanation: "KL-6、SP-D、SP-Aは、間質性肺炎の診断と活動性の目安になる血液マーカーです。膠原病の抗体は、症状や身体所見と組み合わせて判断します。",
+    keypoints: ["間質性肺炎のマーカー：①KL-6、②SP-D、③SP-A", "膠原病の手がかり：①関節炎・朝のこわばり、②Raynaud現象、③機械工の手・Gottron徴候、④皮膚硬化", "抗ARS抗体（抗Jo-1抗体など）：間質性肺炎を合併しやすい筋炎の抗体", "低い力価の抗核抗体は、高齢者ではよくある"]
+  },
+  {
+    id: "pft", category: "呼吸機能", timeLimit: 45,
+    case: "呼吸機能検査と6分間歩行試験の結果。",
+    labs: [["VC","2.30 L（%VC 68%）"],["FEV₁","1.98 L"],["FEV₁/FVC","86%"],["%DLco","52%"],["6分間歩行","SpO₂ 97% → 86%"]],
+    question: "結果の解釈として最も適切なのは？",
+    options: [
+      { text: "拘束性障害と拡散障害があり、歩くと低酸素になる", correct: true, why: "%VCとDLcoがともに下がり、歩行でSpO₂が下がっています。間質性肺炎に典型的な結果です。" },
+      { text: "拘束性換気障害があるが、拡散障害はみられていない", why: "%VCの低下は拘束性障害を示します。ただし%DLcoも52%と下がっており、拡散障害もあります。歩行時のSpO₂低下もその表れです。" },
+      { text: "1秒率が高いので、閉塞性換気障害が主体と考える", why: "閉塞性障害は、1秒率が70%未満のときです。" },
+      { text: "%VCが80%未満なので、混合性換気障害と考える", why: "混合性障害は、%VCが80%未満で、かつ1秒率が70%未満のときです。1秒率は保たれています。" }
+    ],
+    explanation: "間質性肺炎では、肺が硬く縮むため%VCが下がり（拘束性障害）、肺胞の壁が厚くなるためDLcoが下がります（拡散障害）。",
+    keypoints: ["拘束性換気障害：%VC 80%未満", "閉塞性換気障害：1秒率（FEV₁/FVC）70%未満", "間質性肺炎：①%VCの低下、②%DLcoの低下、③労作時の低酸素", "6分間歩行試験のSpO₂低下は、重症度と予後の目安になる"]
+  },
+  {
+    id: "cxr-sarc", category: "胸部X線", timeLimit: 40,
+    case: "あらためて胸部X線を見る。両側の下肺野に網状影があり、肺は全体に小さい（容積減少）。肺門は腫れていない。",
+    visual: "cxr",
+    question: "鑑別のうち、サルコイドーシスで典型的にみられる胸部X線所見は？",
+    options: [
+      { text: "両側肺門リンパ節腫脹（BHL）", correct: true, why: "BHLはサルコイドーシスの代表的な所見です。この症例ではみられません。" },
+      { text: "片側だけの肺門リンパ節の腫れ（片側性）", why: "サルコイドーシスの肺門リンパ節腫脹は、両側にそろって起こるのが特徴です。片側だけなら、肺癌や結核も考えます。" },
+      { text: "両側の肋骨横隔膜角の鈍化（胸水）", why: "胸水の所見です。心不全などを考えます。" },
+      { text: "肺の過膨張と横隔膜の平低化", why: "COPDを考える所見です。" }
+    ],
+    explanation: "サルコイドーシスは、全身に肉芽腫ができる原因不明の病気です。胸部X線ではBHLが典型で、眼、心臓、皮膚にも病変が出ます。",
+    keypoints: ["サルコイドーシス：①BHL、②ぶどう膜炎、③心臓病変（房室ブロック）、④皮膚病変", "検査：ACE・リゾチーム・sIL-2Rの上昇、BALでCD4/CD8比の上昇", "間質性肺炎の胸部X線：下肺野の網状影と、肺の容積減少"]
+  },
+
+  /* ----- 第5章 HRCT ----- */
+  {
+    id: "hrct", category: "HRCT", timeLimit: 45,
+    case: "胸部HRCT。両側の下葉の胸膜直下に優位な、蜂巣肺と牽引性気管支拡張がある。すりガラス影は少ない。胸膜プラークはない。",
+    visual: "hrct",
+    question: "このHRCTのパターンとして最も適切なのは？",
+    options: [
+      { text: "UIPパターン", correct: true, why: "胸膜直下・肺底部に優位な蜂巣肺と牽引性気管支拡張は、UIPパターンの特徴です。" },
+      { text: "NSIPパターン", why: "NSIPは、すりガラス影が主体で、胸膜直下が保たれることがあります。蜂巣肺はまれです。" },
+      { text: "器質化肺炎パターン", why: "器質化肺炎は、斑状の浸潤影が主体で、場所が移り変わることがあります。" },
+      { text: "癌性リンパ管症のパターン", why: "癌性リンパ管症では、小葉間隔壁が結節状に厚くなります。蜂巣肺はみられません。" }
+    ],
+    explanation: "UIPパターンは、①胸膜直下・肺底部に優位、②蜂巣肺、③牽引性気管支拡張がそろう画像です。HRCTでUIPパターンと判断するには、蜂巣肺が必要です。",
+    keypoints: ["UIPパターン：①胸膜直下・肺底部優位、②蜂巣肺、③牽引性気管支拡張", "NSIPパターン：すりガラス影が主体。膠原病でよくみられる", "胸膜プラークがなければ、石綿肺は考えにくい"]
+  },
+  {
+    id: "mdd", category: "診断", timeLimit: 45,
+    case: "原因となる曝露、薬、膠原病は見つからない。HRCTはUIPパターンだった。",
+    question: "次の対応として最も適切なのは？",
+    options: [
+      { text: "生検はせず、集学的検討（MDD）でIPFと診断する", correct: true, fx: { conf: 10 }, why: "原因が見つからず、HRCTでUIPパターンなら、多くは生検をしなくてもIPFと診断できます。" },
+      { text: "診断を確実にするため、全例で外科的肺生検を行う", fx: { burden: 30, flag: "bx" }, why: "この症例では生検は必要ありません。外科的肺生検は、急性増悪の引き金になることもあります。" },
+      { text: "気管支鏡で肺生検を行い、UIPと確かめてから診断する", fx: { burden: 15 }, why: "経気管支肺生検の小さな組織では、UIPの判定は難しいことが多いです。この症例では必要ありません。" },
+      { text: "診断がつかないので、1年後にCTを撮り直してから考える", why: "必要な情報はそろっています。診断と治療が遅れてしまいます。" }
+    ],
+    explanation: "IPFの診断は、①原因の分かる間質性肺疾患を除外し、②HRCTでUIPパターンを確認する、の2段階です。画像で判断が難しいときに、気管支鏡や外科的肺生検を考えます。",
+    keypoints: ["IPFの診断：①原因の分かる間質性肺疾患の除外、②HRCTのUIPパターン", "HRCTがUIPパターンなら、多くは生検なしで診断できる", "画像が典型的でないときは、気管支鏡や外科的肺生検を考える", "日本では、指定難病の基準にもとづいて診断する"]
+  },
+
+  /* ----- 第6章 診断の説明 ----- */
+  {
+    id: "tx", category: "治療", timeLimit: 40,
+    question: "IPFの慢性期の治療として、最も適切なのは？",
+    options: [
+      { text: "抗線維化薬（ピルフェニドンかニンテダニブ）を始める", correct: true, why: "抗線維化薬は、肺活量の低下を遅らせます。" },
+      { text: "ステロイドを単独で使い、炎症を抑えて線維化を食い止める", fx: { burden: 10 }, why: "IPFでは、ステロイド単独療法は行わないよう推奨されています。副作用が増えるだけになります。" },
+      { text: "ステロイドと免疫抑制薬を一緒に使い、進行を抑える", fx: { burden: 10 }, why: "IPFでは、ステロイドと免疫抑制薬の併用も行わないよう推奨されています。" },
+      { text: "症状が軽いので治療はせず、1年後に再診してもらう", why: "IPFは進行する病気です。治療を考え、数か月ごとに呼吸機能を確かめます。" }
+    ],
+    explanation: "抗線維化薬は、IPFを治す薬ではなく、進行を遅らせる薬です。副作用を管理しながら続けます。",
+    keypoints: ["抗線維化薬：①ピルフェニドン、②ニンテダニブ", "ピルフェニドンの副作用：光線過敏症、食欲不振", "ニンテダニブの副作用：下痢、肝障害", "ステロイド単独、ステロイドと免疫抑制薬の併用は行わない"]
+  },
+  {
+    id: "complication", category: "合併症", timeLimit: 40,
+    question: "IPFの経過で、特に注意する合併症の組み合わせは？",
+    options: [
+      { text: "急性増悪と肺癌", correct: true, why: "どちらもIPFの主な死因です。" },
+      { text: "急性増悪と悪性胸膜中皮腫", why: "急性増悪は正解です。ただし中皮腫は石綿と関係する腫瘍です。IPFで多いのは肺癌です。" },
+      { text: "自然気胸と肺血栓塞栓症", why: "起こることはありますが、最も注意するのは急性増悪と肺癌です。" },
+      { text: "肺結核と非結核性抗酸菌症", why: "IPFそのものの合併症として、特に多いものではありません。" }
+    ],
+    explanation: "IPFの主な死因は、①急性増悪、②慢性呼吸不全の進行、③肺癌です。肺癌の手術や抗癌薬が、急性増悪の引き金になることもあります。",
+    keypoints: ["IPFの主な死因：①急性増悪、②慢性呼吸不全、③肺癌", "急性増悪：1か月以内に息切れが急に悪化し、新しいすりガラス影が出る", "肺癌はIPFの人に多く、治療が急性増悪の引き金になることがある"]
+  },
+  {
+    id: "life", category: "生活", timeLimit: 40,
+    question: "佐伯さんへの生活の説明として、最も適切なのは？",
+    options: [
+      { text: "禁煙を続け、インフルエンザと肺炎球菌のワクチンを打つ", correct: true, why: "感染症は急性増悪の引き金になります。ワクチンで予防します。" },
+      { text: "禁煙は続け、ワクチンは急性増悪を招くので接種を控えておく", why: "禁煙は正解です。ワクチンは、感染による急性増悪を防ぐため、むしろ勧めます。" },
+      { text: "息切れが強くならないよう、なるべく安静にして過ごす", why: "安静にすると体力が落ち、息切れが悪化します。呼吸リハビリテーションを勧めます。" },
+      { text: "歩くと低酸素になるので、今日から在宅酸素を必ず始める", fx: { burden: 5 }, why: "在宅酸素の保険適用は、安静時のPaO₂が55 Torr以下か、60 Torr以下で睡眠時・運動時に著しい低酸素になる場合です。安静時のSpO₂は96%で、まだ適用になりません。" }
+    ],
+    explanation: "IPFの日常生活では、①禁煙、②感染予防（ワクチン）、③呼吸リハビリテーションが大切です。病状が進めば、在宅酸素療法を考えます。",
+    keypoints: ["生活の三本柱：①禁煙、②ワクチン（インフルエンザ・肺炎球菌）、③呼吸リハビリテーション", "在宅酸素療法の目安：安静時PaO₂ 55 Torr以下、または60 Torr以下で睡眠時・運動時に著しい低酸素", "IPFは指定難病。重症度によって医療費の助成がある"]
+  }
+];
+
+/* =========================================================
+   ストーリーの台本
+   { t: "talk" }  会話
+   { t: "round", day }  外来カード
+   { t: "q", id, react }  出題
+   { t: "board", from: 問題のid, changes: [[疾患id, 状態, 理由]] }
+     鑑別ボードの更新。状態は up / low / out / dx。
+     from の問題に正解していれば、開いた疾患カードに印がつく。
+   ========================================================= */
+const STORY = [
+  { day: "初診", place: "呼吸器内科外来", title: "紹介状", scenes: [
+    { t: "talk", lines: [
+      ["narr", "呼吸器内科の外来。今日は木川先生の外来で実習だ。"],
+      ["kikawa", "次の患者さんは紹介だ。「びまん性肺疾患の疑い」。まず、紹介状から読もう。"]
+    ]},
+    { t: "q", id: "symptom", react: { ok: "その通り。乾いた咳と、動いたときの息切れ。これが入り口だ。", ng: "咳の性質と経過のスピードは、鑑別の大きな手がかりになる。" }},
+    { t: "talk", lines: [
+      ["kikawa", "鑑別に挙がる疾患を、ボードに並べておこう。これから一つずつ絞り込んでいく。"]
+    ]},
+    { t: "board", intro: true, changes: [] },
+    { t: "round", day: "v0" }
+  ]},
+  { day: "初診", place: "診察室", title: "原因を探す問診", scenes: [
+    { t: "talk", lines: [
+      ["pt", "1年くらい前から、坂道で息が切れるんです。年のせいだと思っていたんですが……。"],
+      ["kikawa", "では、問診だ。何を聞くかで、鑑別の絞り方が決まる。"]
+    ]},
+    { t: "q", id: "history-cause", react: { ok: "いい。曝露、薬、膠原病。この3つは必ず聞こう。", ng: "IPFは、ほかの原因を除外して初めて診断できる病気なんだ。" }},
+    { t: "talk", lines: [
+      ["pt", "薬は、血圧の薬を1つ飲んでいるだけです。サプリメントや漢方薬は飲んでいません。"]
+    ]},
+    { t: "board", from: "history-cause", changes: [["drug", "out", "飲んでいるのはアムロジピンだけで、肺障害を起こしやすい薬やサプリメント、漢方薬はない"]] },
+    { t: "q", id: "hp-history", react: { ok: "その通り。鳥とカビ。羽毛布団も忘れずに。", ng: "日本の過敏性肺炎で多い原因を、思い出してみよう。" }},
+    { t: "talk", lines: [
+      ["pt", "鳥は飼っていませんし、近くに鳥が集まる場所もありません。布団は綿です。梅雨に悪くなることもありません。"]
+    ]},
+    { t: "board", from: "hp-history", changes: [["hp", "low", "鳥、羽毛布団、カビへの曝露がなく、季節や場所による変化もない"]] },
+    { t: "q", id: "asbestos", react: { ok: "そう。胸膜プラークがあるかどうか、CTで確かめよう。", ng: "曝露の証拠になるのは、肺ではなく胸膜の所見なんだ。" }},
+    { t: "talk", lines: [
+      ["kikawa", "3年間、それも40年近く前だ。石綿肺を起こすには短いが、CTで胸膜プラークを確かめておこう。"]
+    ]}
+  ]},
+  { day: "初診", place: "診察室", title: "胸の音と指先", scenes: [
+    { t: "talk", lines: [["kikawa", "次は診察だ。背中の下のほうを、よく聴いてごらん。"]] },
+    { t: "q", id: "crackles", react: { ok: "その通り。吸気の終わりのパチパチ音。間質性肺炎の音だ。", ng: "音の高さと、聞こえるタイミングを区別しよう。" }},
+    { t: "talk", lines: [["kikawa", "手も見せてもらおう。指先に、大事な所見がある。"]] },
+    { t: "q", id: "clubbing", react: { ok: "完璧だ。COPDだけでは起こらない。ここは試験でもよく問われる。", ng: "ばち指を起こす病気と、起こさない病気を分けて覚えよう。" }},
+    { t: "talk", lines: [
+      ["me", "（機械工の手、Gottron徴候、Raynaud現象はない。関節の腫れもない）"],
+      ["kikawa", "fine crackles とばち指。IPFらしさが増してきた。血液検査と呼吸機能検査を出して、2週間後にまた来てもらおう。"]
+    ]},
+    { t: "board", from: "clubbing", changes: [["ipf", "up", "60歳以上の男性で喫煙歴があり、fine crackles とばち指がある"]] }
+  ]},
+  { day: "2週間後", place: "呼吸器内科外来", title: "数字が語ること", scenes: [
+    { t: "round", day: "v1" },
+    { t: "q", id: "serology", react: { ok: "その通り。抗体は、症状と合わせて読むものだ。", ng: "抗体が一つ陽性でも、それだけで膠原病とは言えないんだ。" }},
+    { t: "board", from: "serology", changes: [
+      ["ctd", "low", "膠原病の症状や手の所見がなく、特異的な自己抗体も陰性"],
+      ["hf", "out", "BNPが正常で、coarse crackles も下腿浮腫もない"]
+    ]},
+    { t: "q", id: "pft", react: { ok: "いい。DLcoの低下を見逃さなかったね。", ng: "%VCだけでなく、DLcoと歩行時のSpO₂も見よう。" }},
+    { t: "q", id: "cxr-sarc", react: { ok: "その通り。BHLがないことも、大事な所見だ。", ng: "サルコイドーシスの胸部X線は、肺門を見るんだ。" }},
+    { t: "board", from: "cxr-sarc", changes: [["sarc", "out", "胸部X線で両側肺門リンパ節腫脹（BHL）がなく、眼の症状もない"]] },
+    { t: "talk", lines: [["kikawa", "残る候補は少なくなってきた。HRCTで決着をつけよう。"]] }
+  ]},
+  { day: "1か月後", place: "読影室", title: "胸膜の下の蜂の巣", scenes: [
+    { t: "round", day: "v2" },
+    { t: "talk", lines: [["rad", "両側の下葉、胸膜の直下に、きれいに並んだ蜂巣肺があります。"]] },
+    { t: "q", id: "hrct", react: { ok: "その通り。蜂巣肺があって、胸膜直下・肺底部に優位。典型的なUIPだ。", ng: "蜂巣肺があるかどうか。それがUIPの決め手だよ。" }},
+    { t: "board", from: "hrct", changes: [
+      ["asb", "out", "胸膜プラークがなく、曝露も3年と短い"],
+      ["lymph", "out", "小葉間隔壁の結節状の肥厚がなく、経過も1年とゆっくり"],
+      ["ipf", "up", "HRCTでUIPパターン"]
+    ]},
+    { t: "q", id: "mdd", react: { ok: "その通り。必要な検査を、必要なだけ。それも診断の力だ。", ng: "生検は、診断を確かにする一方で、危険も伴うんだ。" }},
+    { t: "board", from: "mdd", changes: [
+      ["ctd", "out", "集学的検討でも、膠原病を示す所見はない"],
+      ["hp", "out", "集学的検討でも、曝露はなく、画像も過敏性肺炎らしくない"],
+      ["ipf", "dx", "原因の分かる間質性肺疾患が除外され、HRCTはUIPパターン"]
+    ]}
+  ]},
+  { day: "1か月後", place: "診察室", title: "名前のついた影", scenes: [
+    { t: "talk", lines: [
+      ["kikawa", "佐伯さん、検査の結果がそろいました。特発性肺線維症という病気です。"],
+      ["pt", "肺が硬くなる病気、ということですか。治るんでしょうか。"]
+    ]},
+    { t: "q", id: "tx", react: { ok: "その通り。治すのではなく、進行を遅らせる。そう説明しよう。", ng: "IPFでは、ステロイドは効かないどころか、害になることがある。" }},
+    { t: "q", id: "complication", react: { ok: "そう。急性増悪と肺癌。この2つを、定期的な受診で見張る。", ng: "IPFの人の命に関わる合併症を、思い出してみよう。" }},
+    { t: "q", id: "life", react: { ok: "いい説明だ。薬だけが治療じゃない。", ng: "生活の中でできることも、大切な治療なんだ。" }},
+    { t: "talk", lines: [["pt", "病名が分かって、少しほっとしました。これからもよろしくお願いします。"]] }
+  ]}
+];
+
+/* エンディング（上から順に条件を確認） */
+const EPILOGUE = { day: "エピローグ", place: "医局", title: "鑑別ボードを片づけて" };
+const ENDINGS = [
+  { name: "急いだ生検", when: g => g.flags.bx, lines: [
+    ["narr", "生検の結果もUIPだった。だが佐伯さんは、術後しばらく息切れが強く、入院が延びた。"],
+    ["kikawa", "HRCTがUIPパターンで、原因が見つからなければ、多くは生検なしで診断できる。"],
+    ["kikawa", "検査は、患者さんの負担と引き換えだ。その検査で何が変わるのかを、いつも考えよう。"]
+  ]},
+  { name: "見落とした曝露", when: g => g.flags.noExpo, lines: [
+    ["narr", "今回は、曝露のない特発性肺線維症だった。"],
+    ["kikawa", "ただ、問診で曝露を聞き漏らすと、過敏性肺炎や石綿肺を見逃すことがある。"],
+    ["kikawa", "原因の分かる病気なら、原因を断つことが治療になる。問診は、いちばん安い精密検査だ。"]
+  ]},
+  { name: "確かな診断", when: g => g.conf >= 75 && g.burden <= 30, lines: [
+    ["kikawa", "見事だった。問診、診察、検査。一つずつ鑑別を絞り込んで、生検なしで診断にたどり着いた。"],
+    ["kikawa", "外したカードの中身も、試験ではよく問われる。全部、自分のものにしておこう。"],
+    ["narr", "ボードに残った一枚を、木川先生は静かに指でたたいた。"]
+  ]},
+  { name: "遠回りの診断", when: g => g.conf >= 45, lines: [
+    ["kikawa", "おつかれさま。診断にはたどり着いたが、迷った場面もあったね。"],
+    ["kikawa", "疾患カードを見返そう。外した理由が言えれば、鑑別は強くなる。"]
+  ]},
+  { name: "もう一度、紹介状から", when: () => true, lines: [
+    ["kikawa", "おつかれさま。今日の鑑別は、少し手ごわかったね。"],
+    ["kikawa", "紹介状をもう一度読むところから、やり直してみよう。カードのキーポイントが、そのまま国試の対策になる。"]
+  ]}
+];
+
+const RANKS = [[0,"見学の医学生"],[400,"ポリクリ生"],[900,"クリクラ生"],[1500,"鑑別の名手"],[2200,"間質性肺炎の目利き"],[3000,"影の正体を見抜く者"]];
+
+/* ゲームの設定 */
+const CONF_START = 20, BURDEN_START = 10;  // 評価の初期値
+const CONF_UP = 6, CONF_DOWN = 3;          // fx に conf がない問題での確信度の増減
+const BASE = 100, SPEED_MAX = 50;          // 基本点、スピードボーナスの最大
+const COMBO_STEP = 0.25, COMBO_MAX = 2.0;
+const TYPE_MS = 26;
+
+/* =========================================================
+   ここから下はゲームの動作（通常は変更不要）
+   ========================================================= */
+const KEYS = ["a","b","c","d","e"];
+const BEST_KEY = META.best, MUTE_KEY = "resp-challenge-muted";
+const QMAP = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+const DXMAP = Object.fromEntries(DX.map(d => [d.id, d]));
+const $ = s => document.querySelector(s);
+const app = $("#app"), hud = $("#hud");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+const PAIR = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+let muted = store.get(MUTE_KEY) === "1";
+let G = null;
+
+const clamp = v => Math.max(0, Math.min(100, v));
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rankIndex(score){ let r = 0; RANKS.forEach(([t], i) => { if (score >= t) r = i; }); return r; }
+function correctText(q){ return q.options.find(o => o.correct).text; }
+function multOf(c){ return Math.min(1 + (c - 1) * COMBO_STEP, COMBO_MAX); }
+function multLabel(m){ return m.toFixed(2).replace(/0$/, ""); }
+function motifHTML(){ return `<svg class="motif" viewBox="0 0 150 20" aria-hidden="true">${[12,44,76,108,140].map((x, i) => `<g class="${i % 2 ? "s" : "v"}" transform="translate(${x} 10)">${PAIR}</g>`).join("")}</svg>`; }
+function toTop(){ window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }
+const signed = n => (n > 0 ? "+" : "−") + Math.abs(n);
+
+/* ---------- 効果音 ---------- */
+let actx = null;
+function audio(){
+  if (!actx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; try { actx = new C(); } catch(e){ return null; } }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, start, dur, type = "triangle", vol = 0.15){
+  if (muted) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  correct(c){ const f = 660 * Math.pow(2, Math.min(c - 1, 7) / 12); tone(f, 0, .12); tone(f * 1.26, .08, .2); },
+  wrong(){ tone(190, 0, .22, "sawtooth", .07); tone(125, .12, .32, "sawtooth", .07); },
+  rank(){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .22)); },
+  clear(){ [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * .1, .26)); },
+  chapter(){ tone(262, 0, .9, "sine", .07); tone(392, .06, .9, "sine", .05); tone(523, .12, .9, "sine", .04); },
+  tap(){ tone(520, 0, .06, "sine", .06); },
+  card(){ tone(784, 0, .12, "sine", .08); tone(1046, .1, .22, "sine", .07); }
+};
+function setMuteLabel(){
+  const b = $("#mute"); b.textContent = muted ? "🔇" : "🔊";
+  b.setAttribute("aria-label", muted ? "効果音をオンにする" : "効果音をオフにする");
+  const b2 = $("#mute2"); if (b2) b2.textContent = "効果音：" + (muted ? "オフ" : "オン");
+}
+function toggleMute(){ muted = !muted; store.set(MUTE_KEY, muted ? "1" : "0"); setMuteLabel(); if (!muted) SFX.tap(); }
+$("#mute").addEventListener("click", toggleMute);
+
+/* ---------- 演出 ---------- */
+function burst(x, y){
+  if (reduceMotion) return;
+  for (let i = 0; i < 16; i++){
+    const p = document.createElement("span");
+    p.className = "pt" + (i % 3 === 0 ? " pink" : "");
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 80;
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+    p.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+    p.style.setProperty("--r", Math.round(Math.random() * 360) + "deg");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+function floatText(text, x, y){
+  if (reduceMotion) return;
+  const f = document.createElement("span");
+  f.className = "float"; f.textContent = text;
+  f.style.left = x + "px"; f.style.top = (y - 10) + "px";
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 950);
+}
+function animateNumber(el, from, to, ms){
+  if (reduceMotion || ms <= 0){ el.textContent = to.toLocaleString(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const toastEl = $("#toast"); let toastQ = [], toastBusy = false;
+function toast(msg){ toastQ.push(msg); if (!toastBusy) nextToast(); }
+function nextToast(){
+  const msg = toastQ.shift(); if (!msg){ toastBusy = false; return; }
+  toastBusy = true; toastEl.textContent = msg; toastEl.className = "toast show"; SFX.rank();
+  setTimeout(() => { toastEl.className = "toast"; setTimeout(nextToast, 260); }, 1600);
+}
+
+/* ---------- ステータスバー ---------- */
+function renderMeters(dConf, dBurden){
+  [["conf", G.conf, dConf, META.conf, 1], ["burden", G.burden, dBurden, META.burden, -1]].forEach(([k, v, d, label, good]) => {
+    $("#f-" + k).style.width = v + "%";
+    const m = $("#m-" + k);
+    m.setAttribute("aria-label", `${label} ${v}`);
+    if (d && !reduceMotion){ m.classList.remove("up", "down"); void m.offsetWidth; m.classList.add(d * good > 0 ? "up" : "down"); }
+  });
+}
+
+/* ---------- 図表 ---------- */
+function vitalsHTML(v){
+  return `<div class="monitor">${v.map(([k, val, u]) => `<div class="vital"><span class="k">${k}</span><span class="v">${val}${u ? `<small>${u}</small>` : ""}</span></div>`).join("")}</div>`;
+}
+function labsHTML(l){ return `<table class="fl-tab labtab"><tbody>${l.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>`; }
+
+/* 紹介状 */
+function letterHTML(){
+  return `<figure class="letter" aria-label="紹介状">
+    <p class="lt-head">診療情報提供書</p>
+    <dl>
+      <div><dt>紹介先</dt><dd>呼吸器内科　木川先生</dd></div>
+      <div><dt>患者</dt><dd>佐伯 様（72歳　男性）</dd></div>
+      <div><dt>紹介目的</dt><dd>びまん性肺疾患の疑い。精査をお願いします。</dd></div>
+      <div><dt>経過</dt><dd>1年前から、坂道や階段での息切れと、乾いた咳が続いています。健診の胸部X線で、両側の下肺野に網状影を指摘されました。</dd></div>
+      <div><dt>処方</dt><dd>アムロジピン 5 mg　1日1回</dd></div>
+    </dl>
+    <p class="lt-from">さくら内科クリニック</p>
+  </figure>`;
+}
+
+/* 聴診図（fine crackles）。名前は答えるまで伏せる */
+function crackleLabel(reveal){ return reveal ? "fine crackles（捻髪音）" : "断続性副雑音"; }
+function crackleHTML(reveal = false){
+  const ticks = [];
+  for (let i = 0; i < 11; i++){ const x = 108 + i * 3.6, h = 7 + ((i * 7) % 5); ticks.push(`<line class="ck" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${30 - h}" y2="30"/>`); }
+  return `<figure class="ausc">
+    <figcaption><span class="site">聴診：両側の背部、下肺野</span><b class="ausc-label">${crackleLabel(reveal)}</b><span>吸気の終わりに、細かく高いパチパチという音</span></figcaption>
+    <svg viewBox="0 0 300 64" role="img" aria-label="呼吸と副雑音のタイミング図。吸気の終わりに細かい断続音">
+      <rect class="ib" x="40" y="32" width="110" height="8" rx="4"/>
+      <rect class="eb" x="158" y="32" width="132" height="8" rx="4"/>
+      ${ticks.join("")}
+      <text class="bl" x="95" y="58" text-anchor="middle">吸気</text>
+      <text class="bl" x="224" y="58" text-anchor="middle">呼気</text>
+      <text class="rl" x="4" y="40">安静呼吸</text>
+    </svg>
+  </figure>`;
+}
+
+/* ばち指の模式図 */
+function clubbingHTML(){
+  return `<figure class="fig">
+    <svg viewBox="0 0 300 120" role="img" aria-label="指を横から見た模式図。正常では爪の付け根の角度が約160度。ばち指では180度を超え、指先が丸く膨らむ">
+      <g transform="translate(4 8)">
+        <path class="skin" d="M0 40 L78 40 Q82 39 86 41 L118 52 Q128 58 126 70 Q122 82 104 82 L0 84 Z"/>
+        <path class="nail" d="M82 40 L118 52"/>
+        <line class="ang" x1="30" y1="40" x2="82" y2="40"/>
+        <line class="ang" x1="82" y1="40" x2="136" y2="58"/>
+        <text class="lb" x="66" y="104" text-anchor="middle">正常（約160°）</text>
+      </g>
+      <g transform="translate(152 8)">
+        <path class="skin" d="M0 42 L60 40 Q72 38 80 32 Q100 14 124 26 Q142 38 140 60 Q138 86 112 88 L0 86 Z"/>
+        <path class="nail" d="M82 31 Q102 16 124 27 Q136 34 139 46"/>
+        <line class="ang" x1="20" y1="44" x2="82" y2="31"/>
+        <line class="ang" x1="82" y1="31" x2="126" y2="6"/>
+        <text class="lb" x="70" y="104" text-anchor="middle">ばち指（180°超）</text>
+      </g>
+    </svg>
+    <figcaption>指を横から見た模式図。点線は爪の付け根の角度（ロビボンド角）。ばち指では指先が丸く膨らむ</figcaption>
+  </figure>`;
+}
+
+/* 胸部X線の模式図 */
+function cxrHTML(){
+  return `<figure class="cxr">
+    <svg viewBox="0 0 240 190" role="img" aria-label="胸部X線の模式図。両側の下肺野に網状影があり、肺は小さい。両側肺門リンパ節腫脹はない">
+      <defs>
+        <pattern id="ret" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">
+          <path d="M0 4.5 H9 M4.5 0 V9" stroke="#bdbdbd" stroke-width=".8" opacity=".5"/>
+        </pattern>
+        <clipPath id="lungs">
+          <path d="M46 146 Q42 74 82 40 Q102 32 110 50 L112 140 Q80 156 46 146 Z"/>
+          <path d="M194 146 Q198 74 158 40 Q138 32 130 50 L128 140 Q160 156 194 146 Z"/>
+        </clipPath>
+      </defs>
+      <rect width="240" height="190" rx="10" fill="#101010"/>
+      <path d="M28 172 Q22 58 70 24 Q120 4 170 24 Q218 58 212 172 Z" fill="#3b3b3b"/>
+      <path d="M46 146 Q42 74 82 40 Q102 32 110 50 L112 140 Q80 156 46 146 Z" fill="#161616"/>
+      <path d="M194 146 Q198 74 158 40 Q138 32 130 50 L128 140 Q160 156 194 146 Z" fill="#161616"/>
+      <g clip-path="url(#lungs)"><ellipse cx="62" cy="134" rx="42" ry="34" fill="url(#ret)"/><ellipse cx="178" cy="134" rx="42" ry="34" fill="url(#ret)"/></g>
+      <path d="M104 74 L138 74 Q150 108 146 140 Q122 150 100 140 Q96 108 104 74 Z" fill="#d6d6d6"/>
+      <rect x="114" y="12" width="12" height="62" rx="6" fill="#0b0b0b"/>
+      <path d="M46 146 Q80 128 112 140" stroke="#d8d8d8" stroke-width="2" fill="none"/>
+      <path d="M194 146 Q160 128 128 140" stroke="#d8d8d8" stroke-width="2" fill="none"/>
+      <text x="224" y="22" fill="#fff" font-size="13" font-weight="700" text-anchor="end">L</text>
+    </svg>
+    <figcaption>胸部X線（模式図）：両側の下肺野に網状影。肺は小さく、肺門の腫れはない</figcaption>
+  </figure>`;
+}
+
+/* 胸部HRCTの模式図（下葉のレベル） */
+function hrctHTML(){
+  return `<figure class="cxr">
+    <svg viewBox="0 0 260 190" role="img" aria-label="胸部HRCTの模式図。両側の下葉で、背側と外側の胸膜直下に蜂巣肺が並び、その内側に牽引性気管支拡張がある。胸膜プラークはない">
+      <rect width="260" height="190" rx="10" fill="#101010"/>
+      <ellipse cx="130" cy="98" rx="118" ry="80" fill="#3b3b3b"/>
+      <path d="M30 96 Q32 34 92 30 Q118 32 116 70 L114 152 Q100 172 70 168 Q30 158 30 96 Z" fill="#161616"/>
+      <path d="M230 96 Q228 34 168 30 Q142 32 144 70 L146 152 Q160 172 190 168 Q230 158 230 96 Z" fill="#161616"/>
+      <path d="M100 62 Q130 44 160 62 Q166 92 150 104 Q130 112 110 104 Q94 92 100 62 Z" fill="#cfcfcf" opacity=".85"/>
+      <circle cx="130" cy="156" r="14" fill="#e6e6e6"/>
+      <g>
+        ${[[44,118],[50,132],[60,144],[74,154],[90,160],[40,104],[38,90]].map(([x,y]) => `<circle class="hc" cx="${x}" cy="${y}" r="5"/>`).join("")}
+        ${[[54,112],[60,126],[70,138],[84,148]].map(([x,y]) => `<circle class="hc" cx="${x}" cy="${y}" r="4.2"/>`).join("")}
+        ${[[216,118],[210,132],[200,144],[186,154],[170,160],[220,104],[222,90]].map(([x,y]) => `<circle class="hc" cx="${x}" cy="${y}" r="5"/>`).join("")}
+        ${[[206,112],[200,126],[190,138],[176,148]].map(([x,y]) => `<circle class="hc" cx="${x}" cy="${y}" r="4.2"/>`).join("")}
+      </g>
+      <path class="tb" d="M78 96 Q72 108 74 122 M82 98 Q78 110 80 122"/>
+      <path class="tb" d="M182 96 Q188 108 186 122 M178 98 Q182 110 180 122"/>
+      <text x="130" y="20" fill="#bbb" font-size="10" text-anchor="middle">腹側</text>
+      <text x="130" y="186" fill="#bbb" font-size="10" text-anchor="middle">背側</text>
+      <text x="14" y="98" fill="#fff" font-size="12" font-weight="700">R</text>
+      <text x="246" y="98" fill="#fff" font-size="12" font-weight="700" text-anchor="end">L</text>
+    </svg>
+    <figcaption>胸部HRCT（模式図・下葉）：胸膜直下の蜂巣肺（小さな輪）と、その内側の牽引性気管支拡張</figcaption>
+  </figure>`;
+}
+
+function visualHTML(v){
+  if (v === "letter") return letterHTML();
+  if (v === "crackle") return crackleHTML(!!(G && G.revealed.crackle));
+  if (v === "clubbing") return clubbingHTML();
+  if (v === "cxr") return cxrHTML();
+  if (v === "hrct") return hrctHTML();
+  return "";
+}
+
+/* ---------- 鑑別ボード ---------- */
+function stripHTML(){
+  return `<div class="bstrip" aria-label="鑑別ボード">${DX.map(d => `<span class="bs ${G.board[d.id]}">${d.short}</span>`).join("")}</div>`;
+}
+function cardBody(d){
+  return `<ul class="pts">${d.points.map(p => `<li>${p}</li>`).join("")}</ul>`;
+}
+function applyBoard(step){
+  const changed = {};
+  step.changes.forEach(([id, st, why]) => {
+    G.board[id] = st; changed[id] = why;
+    const ok = !!(step.from && G.okMap[step.from]);
+    const c = G.cards[id];
+    if (!c) G.cards[id] = { stamp: ok };
+    else c.stamp = c.stamp || ok;
+  });
+  return changed;
+}
+function renderBoard(step){
+  if (!step.applied){ step.changed = applyBoard(step); step.applied = true; }
+  const changed = step.changed;
+  const rows = DX.map(d => {
+    const st = G.board[d.id], why = changed[d.id], card = G.cards[d.id];
+    return `<li class="brow ${st}${why ? " changed" : ""}">
+      <div class="bhead"><span class="bname">${d.name}</span><span class="bstate">${STATE_LABEL[st]}</span></div>
+      ${why ? `<p class="bwhy">${why}</p>` : ""}
+      ${card ? `<details class="dcard"${why ? " open" : ""}><summary>疾患カード${card.stamp ? `<span class="stamp">印</span>` : ""}</summary>${cardBody(d)}</details>` : ""}
+    </li>`;
+  }).join("");
+  app.innerHTML = `<section class="board">
+    <h2 class="rlabel">鑑別ボード</h2>
+    <p class="bnote">${step.intro ? "「びまん性肺疾患の疑い」で考える8つの候補です。情報が入るたびに更新されます。" : "新しい情報で、ボードが更新されました。"}</p>
+    <ul class="blist">${rows}</ul>
+    <button class="primary" id="go" type="button">${labelFor(peekNext())}</button>
+  </section>`;
+  if (Object.keys(changed).length) SFX.card();
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+/* ---------- 会話 ---------- */
+function talkHTML(who, text, extra = ""){
+  if (who === "narr") return `<p class="narr">${text}</p>`;
+  const c = CAST[who];
+  return `<div class="talk${who === "me" ? " me" : ""}" style="--c:${c.color}">
+    <span class="avatar" aria-hidden="true">${c.mark}</span>
+    <div class="bubble"><p class="who">${c.name}${c.role ? `<small>${c.role}</small>` : ""}${extra}</p><p class="say">${text}</p></div>
+  </div>`;
+}
+let typing = null;
+function typeInto(el, text){
+  if (reduceMotion){ el.textContent = text; return; }
+  let i = 0; el.textContent = "";
+  const id = setInterval(() => {
+    i++; el.textContent = text.slice(0, i);
+    if (i >= text.length){ clearInterval(id); typing = null; }
+  }, TYPE_MS);
+  typing = { finish(){ clearInterval(id); el.textContent = text; typing = null; } };
+}
+
+/* ---------- タイトル画面 ---------- */
+function renderTitle(){
+  hud.hidden = true;
+  const best = +store.get(BEST_KEY) || 0;
+  app.innerHTML = `<section class="title">
+    <p class="kind">鑑別診断</p>
+    <h1>${META.h1}</h1>
+    ${motifHTML()}
+    <p class="sub">${META.sub}</p>
+    <ul class="rules">
+      ${META.rules.map(([ic, t]) => `<li><span class="ic">${ic}</span><span>${t}</span></li>`).join("")}
+      <li><span class="ic">×${COMBO_MAX.toFixed(1)}</span><span>連続正解でコンボ倍率、速く答えるほどスピードボーナス（最大+${SPEED_MAX}点）。</span></li>
+    </ul>
+    <p class="ranks">エンディングは「${META.conf}」と「${META.burden}」、そして途中の判断で変わります。</p>
+    ${best ? `<p class="best" style="margin-top:16px">自己ベスト <b>${best.toLocaleString()}</b> 点</p>` : ""}
+    <button class="primary" id="start" type="button">外来を始める</button>
+    <button class="ghost" id="mute2" type="button"></button>
+  </section>`;
+  setMuteLabel();
+  $("#mute2").addEventListener("click", toggleMute);
+  $("#start").addEventListener("click", () => { audio(); SFX.tap(); newGame(); });
+}
+
+/* ---------- 進行 ---------- */
+function buildSeq(){
+  const seq = [];
+  STORY.forEach(ch => { seq.push({ t: "chapter", ch }); ch.scenes.forEach(s => seq.push({ ...s })); });
+  seq.push({ t: "ending" });
+  return seq;
+}
+function qTotal(){ return G.seq.filter(s => s.t === "q").length; }
+function peekNext(){ return G.seq[G.pos + 1] || null; }
+function labelFor(next){ return !next ? "結果を見る" : next.t === "q" ? "判断する" : next.t === "round" ? "外来カードを見る" : next.t === "board" ? "鑑別ボードを見る" : "次へ"; }
+function lineText(t){ return typeof t === "function" ? t(G) : String(t); }
+
+function newGame(){
+  G = { seq: buildSeq(), pos: 0, qi: 0, flags: {}, conf: CONF_START, burden: BURDEN_START,
+        score: 0, combo: 0, maxCombo: 0, correct: 0, missed: [], answered: false,
+        t0: 0, raf: 0, limit: 30, bonus: SPEED_MAX, rankIdx: 0, ending: null,
+        revealed: {}, okMap: {}, cards: {},
+        board: Object.fromEntries(DX.map(d => [d.id, "cand"])) };
+  hud.hidden = false;
+  G.log = []; G.startedAt = Date.now();
+  $("#score").textContent = "0";
+  renderMeters(0, 0); setMuteLabel();
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function renderStep(){
+  const s = G.seq[G.pos];
+  if (!s) return renderResult();
+  if (s.t === "chapter") return renderChapter(s.ch);
+  if (s.t === "talk") return renderTalk(s);
+  if (s.t === "round") return renderRound(s);
+  if (s.t === "board") return renderBoard(s);
+  if (s.t === "q") return renderQ(s);
+  if (s.t === "ending"){
+    const e = ENDINGS.find(x => x.when(G));
+    G.ending = e.name;
+    G.seq.splice(G.pos, 1, { t: "chapter", ch: EPILOGUE }, { t: "talk", lines: e.lines });
+    return renderStep();
+  }
+}
+function advance(){ G.pos++; renderStep(); toTop(); }
+
+function renderChapter(ch){
+  app.innerHTML = `<section class="chapter">
+    <p class="day">${ch.day}</p>
+    <h2>${ch.title}</h2>
+    <p class="place">${ch.place}</p>
+    ${motifHTML()}
+    <button class="primary" id="go" type="button">はじめる</button>
+  </section>`;
+  SFX.chapter();
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderTalk(step){
+  const finalLabel = labelFor(peekNext());
+  app.innerHTML = `<section class="scene" id="scene"><div class="log" id="log" aria-live="polite"></div><button class="primary" id="adv" type="button">次へ</button></section>`;
+  let n = 0;
+  const btn = $("#adv"), log = $("#log");
+  const show = () => {
+    const [who, raw] = step.lines[n++];
+    const text = lineText(raw);
+    log.insertAdjacentHTML("beforeend", talkHTML(who, ""));
+    const el = log.lastElementChild;
+    typeInto(who === "narr" ? el : el.querySelector(".say"), text);
+    if (n >= step.lines.length) btn.textContent = finalLabel;
+    setTimeout(() => btn.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 30);
+  };
+  $("#scene").addEventListener("click", () => {
+    if (typing){ typing.finish(); return; }
+    if (n < step.lines.length){ show(); return; }
+    SFX.tap(); advance();
+  });
+  show();
+}
+
+function renderRound(step){
+  const R = ROUNDS[step.day];
+  app.innerHTML = `<section class="round">
+    <p class="rkind">外来カード</p>
+    <h2 class="rlabel">${R.label}</h2>
+    ${vitalsHTML(R.vitals)}
+    ${R.labs ? labsHTML(R.labs) : ""}
+    ${R.notes.length ? `<ul class="notes">${R.notes.map(n => `<li>${n}</li>`).join("")}</ul>` : ""}
+    <h3 class="rh">鑑別ボード</h3>
+    ${stripHTML()}
+    <button class="primary" id="go" type="button">${labelFor(peekNext())}</button>
+  </section>`;
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderQ(step){
+  const q = QMAP[step.id];
+  const idx = q.options.map((_, i) => i);
+  const order = q.fixedOrder ? idx : shuffle(idx);
+  G.limit = q.timeLimit || 30;
+  app.innerHTML = `<section class="q" id="qcard" aria-labelledby="qtext">
+    <div class="qtop"><span class="qno">問 ${G.qi + 1} / ${qTotal()}</span><span class="chip">${q.category}</span><span class="bonus" id="bonus">ボーナス +${SPEED_MAX}</span></div>
+    <div class="gauge" aria-hidden="true"><div class="gauge-fill" id="gauge"></div></div>
+    ${stripHTML()}
+    ${q.case ? `<p class="story">${q.case}</p>` : ""}
+    ${q.vitals ? vitalsHTML(q.vitals) : ""}
+    ${q.labs ? labsHTML(q.labs) : ""}
+    ${visualHTML(q.visual)}
+    <h2 class="qtext" id="qtext">${q.question}</h2>
+    <ul class="opts">${order.map((oi, k) => `<li><button class="opt" type="button" data-oi="${oi}"><span class="key" aria-hidden="true">${KEYS[k]}</span><span class="txt">${q.options[oi].text}</span></button></li>`).join("")}</ul>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  app.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(step, +b.dataset.oi, b)));
+  startTimer();
+}
+
+function startTimer(){
+  G.t0 = performance.now(); G.bonus = SPEED_MAX;
+  const fill = $("#gauge"), lab = $("#bonus");
+  const tick = now => {
+    if (G.answered) return;
+    const frac = Math.max(0, 1 - (now - G.t0) / 1000 / G.limit);
+    fill.style.transform = `scaleX(${frac})`;
+    fill.classList.toggle("low", frac < 0.3);
+    const b = Math.round(SPEED_MAX * frac);
+    if (b !== G.bonus){ G.bonus = b; lab.textContent = b > 0 ? `ボーナス +${b}` : "ボーナス終了"; }
+    if (frac > 0) G.raf = requestAnimationFrame(tick);
+  };
+  G.raf = requestAnimationFrame(tick);
+}
+
+function answer(step, oi, btn){
+  if (G.answered) return;
+  G.answered = true; cancelAnimationFrame(G.raf);
+  const q = QMAP[step.id];
+  const chosen = q.options[oi], ok = !!chosen.correct, fx = chosen.fx || {};
+  const bonus = Math.round(SPEED_MAX * Math.max(0, 1 - (performance.now() - G.t0) / 1000 / G.limit));
+  G.okMap[q.id] = ok;
+  G.log.push({ qid: q.id, category: q.category, question: q.question, ok, chosen: chosen.text, seconds: Math.round((performance.now() - G.t0) / 100) / 10 });
+
+  app.querySelectorAll(".opt").forEach(b => {
+    const o = q.options[+b.dataset.oi]; b.disabled = true;
+    if (o.correct){ b.classList.add("is-correct"); b.insertAdjacentHTML("beforeend", '<span class="tag">正解</span>'); }
+    else if (b === btn){ b.classList.add("is-wrong"); b.insertAdjacentHTML("beforeend", '<span class="tag">あなたの回答</span>'); }
+    else b.classList.add("is-dim");
+  });
+
+  if (q.visual === "crackle"){
+    G.revealed.crackle = true;
+    const lab = app.querySelector(".ausc-label");
+    if (lab) lab.textContent = crackleLabel(true);
+  }
+  const dConf = fx.conf !== undefined ? fx.conf : (ok ? CONF_UP : -CONF_DOWN);
+  const dBurden = fx.burden || 0;
+  if (fx.flag) [].concat(fx.flag).forEach(f => { G.flags[f] = true; });
+  G.conf = clamp(G.conf + dConf); G.burden = clamp(G.burden + dBurden);
+  renderMeters(dConf, dBurden);
+
+  const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2;
+  let head = "";
+  if (ok){
+    G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++;
+    const mult = multOf(G.combo), gained = Math.round((BASE + bonus) * mult), prev = G.score;
+    G.score += gained;
+    animateNumber($("#score"), prev, G.score, 500);
+    burst(cx, r.top + r.height / 2); floatText(`+${gained}`, cx, r.top); SFX.correct(G.combo);
+    const ri = rankIndex(G.score);
+    if (ri > G.rankIdx){ G.rankIdx = ri; setTimeout(() => toast(`ランクアップ！ ${RANKS[ri][1]}`), 380); }
+    const multTxt = mult > 1 ? ` ×${multLabel(mult)}` : "";
+    head = `<p class="fb-head ok"><span>${G.combo >= 2 ? `正解！ ${G.combo}連続` : "正解！"}</span><span>+${gained}点</span><span class="calc">（基本${BASE} + スピード${bonus}）${multTxt}</span></p>`;
+  } else {
+    G.combo = 0; G.missed.push({ q, chosen: oi });
+    SFX.wrong();
+    const card = $("#qcard");
+    if (!reduceMotion){ card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+    head = `<p class="fb-head ng"><span>不正解</span></p>`;
+  }
+
+  const tags = [];
+  if (dConf) tags.push(`<span class="dtag ${dConf > 0 ? "ok" : "ng"}">${META.conf} ${signed(dConf)}</span>`);
+  if (dBurden) tags.push(`<span class="dtag ${dBurden < 0 ? "ok" : "ng"}">${META.burden} ${signed(dBurden)}</span>`);
+  const react = step.react ? talkHTML(META.lead, ok ? step.react.ok : step.react.ng, tags.join("")) : "";
+
+  const fb = $("#fb");
+  fb.innerHTML = `${head}
+    ${react}
+    <p>${chosen.why}</p>
+    ${ok ? "" : `<p class="right">正解：${correctText(q)}</p>`}
+    <div class="explain"><h3>解説</h3><p>${q.explanation}</p></div>
+    ${q.keypoints ? `<div class="kp"><h3>キーポイント</h3><ul>${q.keypoints.map(k => `<li>${k}</li>`).join("")}</ul></div>` : ""}
+    <button class="primary" id="next" type="button">${labelFor(peekNext())}</button>`;
+  fb.classList.add("show");
+  $("#next").addEventListener("click", () => { SFX.tap(); G.qi++; G.answered = false; advance(); });
+  setTimeout(() => fb.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 60);
+}
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  hud.hidden = true;
+  const best = +store.get(BEST_KEY) || 0;
+  const isBest = G.score > best;
+  if (isBest) store.set(BEST_KEY, String(G.score));
+  const ri = rankIndex(G.score), next = RANKS[ri + 1];
+  const stamps = DX.filter(d => G.cards[d.id] && G.cards[d.id].stamp).length;
+  const review = G.missed.length
+    ? G.missed.map(({ q, chosen }) => `<details class="review"><summary><span class="chip">${q.category}</span><span>${q.question}</span></summary>
+        <div class="body">${q.case ? `<p>${q.case}</p>` : ""}<p>あなたの回答：${q.options[chosen].text}</p><p class="right">正解：${correctText(q)}</p><p>${q.explanation}</p></div></details>`).join("")
+    : `<p class="empty-note">間違えた問題はありません。</p>`;
+  const cards = DX.map(d => {
+    const c = G.cards[d.id];
+    return `<details class="dcard big"><summary><span class="bname">${d.name}</span><span class="cst">${STATE_LABEL[G.board[d.id]]}</span>${c && c.stamp ? `<span class="stamp">印</span>` : ""}</summary>${cardBody(d)}</details>`;
+  }).join("");
+  app.innerHTML = `<section class="result">
+    <p class="verdict ok">外来終了</p>
+    <p class="ending">エンディング「${G.ending}」</p>
+    <p class="final"><span class="big" id="final">0</span><span class="of">点</span></p>
+    ${isBest ? `<p class="newbest">自己ベスト更新</p>` : ""}
+    <p class="rank">ランク<b>${RANKS[ri][1]}</b></p>
+    ${next ? `<p class="nextrank">「${next[1]}」まであと${(next[0] - G.score).toLocaleString()}点</p>` : ""}
+    <dl class="stats four">
+      <div><dt>正解</dt><dd>${G.correct} / ${G.qi}</dd></div>
+      <div><dt>最大コンボ</dt><dd>${G.maxCombo}</dd></div>
+      <div><dt>${META.conf}</dt><dd>${G.conf}</dd></div>
+      <div><dt>${META.burden}</dt><dd>${G.burden}</dd></div>
+      <div><dt>疾患カードの印</dt><dd>${stamps} / ${DX.length}</dd></div>
+      <div><dt>自己ベスト</dt><dd>${Math.max(best, G.score).toLocaleString()}</dd></div>
+    </dl>
+    <h2>疾患カード</h2>
+    <p class="nextrank">鑑別に挙げた8つの疾患の、国試のキーポイントです。印は、その疾患を外したときの問題に正解した証です。</p>
+    <div class="cards">${cards}</div>
+    <div id="fb-mount"></div>
+    <h2>間違えた問題の復習</h2>
+    ${review}
+    <button class="primary" id="again" type="button">もう一度外来を始める</button>
+    <button class="ghost" id="home" type="button">タイトルに戻る</button>
+  </section>`;
+  animateNumber($("#final"), 0, G.score, 900);
+  if (window.Feedback) Feedback.mount($("#fb-mount"), {
+    caseId: META.id, caseTitle: META.title,
+    mode: "鑑別診断",
+    score: G.score, correct: G.correct, total: G.qi, maxCombo: G.maxCombo,
+    meters: `${META.conf} ${G.conf} / ${META.burden} ${G.burden}`,
+    ending: G.ending,
+    events: `疾患カードの印 ${stamps}/${DX.length}`,
+    discharge: "",
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+    answers: G.log || []
+  });
+  SFX.clear();
+  $("#again").addEventListener("click", () => { SFX.tap(); newGame(); });
+  $("#home").addEventListener("click", () => { SFX.tap(); renderTitle(); window.scrollTo(0, 0); });
+}
+
+setMuteLabel();
+renderTitle();
+</script>
+<script src="feedback.js"></script>
+</body>
+</html>
