@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>副作用を見抜け!!!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --serif:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#1F2430; --muted:#5C6373; --line:#D6DAE2;
+  --violet:#4A2C82; --violet-soft:#ECE6F7; --on-violet:#FFFFFF; --safranin:#C0396B;
+  --ok:#1E7A55; --ok-soft:#E3F3EA; --ng:#B23A2E; --ng-soft:#FBE7E4;
+  --eyepiece:#1D1A24;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+    --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+    --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+    --eyepiece:#0F0D15;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1726; --surface:#241F33; --ink:#E8E6EE; --muted:#A8A3B8; --line:#3A3350;
+  --violet:#B9A2F0; --violet-soft:#2F2747; --on-violet:#1B1726; --safranin:#F08AAE;
+  --ok:#6FD3A6; --ok-soft:#1D3A2F; --ng:#FF8A7A; --ng-soft:#41231F;
+  --eyepiece:#0F0D15;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{touch-action:manipulation}
+.wrap{max-width:680px;margin:0 auto;padding:18px 18px 32px}
+
+/* ステータスバー */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.hud-in{max-width:680px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.lives{display:flex;gap:4px}
+.heart{width:26px;height:26px;color:var(--safranin);display:block}
+.heart svg{width:100%;height:100%;display:block;fill:currentColor}
+.heart.empty{color:var(--muted);opacity:.5}
+.heart.empty svg{fill:none;stroke:currentColor;stroke-width:1.8}
+.heart.lost{animation:lose .55s ease-out}
+.heart.gain{animation:pop .5s ease-out}
+@keyframes lose{0%{transform:scale(1.3);opacity:1}45%{transform:scale(.6) rotate(-14deg)}100%{transform:none}}
+.trust{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted)}
+.tbar{width:58px;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.tfill{display:block;height:100%;width:30%;background:var(--violet);transition:width .5s ease-out}
+.tnum{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:1.7em}
+.trust.up .tbar{animation:glow .7s ease-out}
+.trust.down{animation:shake .4s}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--ok)}100%{box-shadow:0 0 0 7px transparent}}
+.scorebox{margin-left:auto;display:flex;align-items:center;gap:8px}
+.combo{font-size:.75rem;font-weight:700;color:var(--on-violet);background:var(--violet);padding:2px 9px;border-radius:999px;white-space:nowrap;visibility:hidden}
+.combo.on{visibility:visible}
+.combo.pop{animation:pop .4s ease-out}
+.score{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;min-width:3em;text-align:right}
+.pts{font-size:.8rem;color:var(--muted);margin-left:-4px}
+.mute{flex:none;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:.95rem;cursor:pointer;display:grid;place-items:center}
+.mute:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.2)}100%{transform:none}}
+
+/* タイトル */
+.title{padding-top:24px}
+.title h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1.3;margin:0}
+.motif{display:block;width:150px;height:auto;margin:14px 0 16px}
+.motif .v{fill:var(--violet)} .motif .s{fill:var(--safranin)}
+.title .sub{color:var(--muted);margin:0 0 8px}
+.mode{border-top:1px solid var(--line);padding:18px 0 4px}
+.mode h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:0}
+.mode p{margin:4px 0 0}
+.mode .best{color:var(--muted);font-size:.88rem;margin-top:8px}
+.mode .best b{color:var(--ink);font-variant-numeric:tabular-nums}
+.common{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:.88rem;color:var(--muted)}
+.common p{margin:0 0 6px}
+
+/* ストーリー */
+.chapter{min-height:58vh;display:flex;flex-direction:column;justify-content:center;padding:16px 2px}
+.chapter .day{color:var(--muted);margin:0;font-size:.95rem}
+.chapter h2{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,10vw,3rem);line-height:1.3;margin:6px 0 6px;animation:settle 1.1s ease-out both}
+@keyframes settle{from{opacity:0;letter-spacing:.35em;filter:blur(3px)}to{opacity:1;letter-spacing:.02em;filter:none}}
+.chapter .place{color:var(--violet);font-weight:700;margin:0}
+.chapter .motif{margin:18px 0 0}
+.scene{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.log{display:grid;gap:14px}
+.talk{display:flex;gap:10px;align-items:flex-start;animation:rise .3s ease-out}
+.talk.me{flex-direction:row-reverse}
+.avatar{flex:none;width:44px;height:44px;border-radius:50%;border:2px solid var(--c);color:var(--c);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:1.2rem;background:var(--surface)}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:7px 14px 9px;max-width:calc(100% - 54px)}
+.talk.me .bubble{border-radius:14px 4px 14px 14px;background:var(--violet-soft)}
+.who{font-size:.78rem;font-weight:700;color:var(--c);margin:0}
+.who small{font-weight:500;color:var(--muted);margin-left:6px}
+.say{margin:2px 0 0;min-height:1.75em}
+.narr{font-family:var(--serif);font-weight:600;color:var(--muted);margin:2px;line-height:1.95;animation:rise .4s ease-out}
+.dtag{font-size:.72rem;font-weight:700;margin-left:8px}
+.dtag.ok{color:var(--ok)} .dtag.ng{color:var(--ng)}
+.fb .talk{margin:10px 0 12px}
+
+/* 問題 */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px 20px}
+.q.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.qtop{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.qno{color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;color:var(--violet);border:1.5px solid currentColor;border-radius:999px;padding:0 9px;line-height:1.6;flex:none}
+.bonus{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.gauge{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:8px 0 14px}
+.gauge-fill{height:100%;background:var(--violet);transform-origin:left center}
+.gauge-fill.low{background:var(--safranin)}
+.story{font-family:var(--serif);font-weight:600;font-size:clamp(1.08rem,4vw,1.28rem);line-height:1.85;margin:0 0 12px}
+.monitor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.vital{background:var(--surface);padding:6px 10px 8px;display:flex;flex-direction:column}
+.vital .k{font-size:.74rem;color:var(--muted)}
+.vital .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.4}
+.vital .v{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:3px}
+.vital .v small{font-size:.7rem;white-space:nowrap;font-weight:500;color:var(--muted);margin-left:3px}
+@media (min-width:600px){.monitor{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.qtext{font-size:1.1rem;line-height:1.6;margin:0}
+.scope{background:var(--eyepiece);border-radius:16px;padding:16px 14px 10px;margin:0 0 14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.scope svg{width:100%;max-width:280px;height:auto;display:block}
+.scope figcaption{color:#CFC8DA;font-size:.78rem}
+.opts{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;font:inherit;line-height:1.6;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;min-height:52px;transition:border-color .15s,background-color .15s}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt .key{flex:none;width:1.75em;height:1.75em;margin-top:.05em;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.85rem;font-weight:700;color:var(--muted)}
+.opt .txt{flex:1}
+.opt .tag{flex:none;font-size:.75rem;font-weight:700;align-self:center}
+.opt.is-correct{border-color:var(--ok);background:var(--ok-soft)}
+.opt.is-correct .key{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.opt.is-correct .tag{color:var(--ok)}
+.opt.is-wrong{border-color:var(--ng);background:var(--ng-soft)}
+.opt.is-wrong .key{background:var(--ng);border-color:var(--ng);color:var(--surface)}
+.opt.is-wrong .tag{color:var(--ng)}
+.opt.is-dim{opacity:.5}
+
+/* 回答後 */
+.fb.show{margin-top:18px;animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fb-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font-weight:700;font-size:1.15rem;margin:0 0 4px}
+.fb-head.ok{color:var(--ok)}
+.fb-head.ng{color:var(--ng)}
+.calc{font-size:.8rem;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fb > p{margin:0 0 8px}
+.right{color:var(--ok);font-weight:700}
+.over{color:var(--ng);font-weight:700}
+.explain{border-left:3px solid var(--violet);padding:2px 0 2px 14px;margin-top:14px}
+.explain h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
+.explain p{margin:0}
+
+.primary{display:block;margin-top:20px;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--violet);color:var(--on-violet);font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.ghost{display:block;margin-top:10px;width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:.95rem;cursor:pointer}
+.mode .primary,.mode .ghost{margin-top:12px}
+.primary:focus-visible,.ghost:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
+
+/* 結果 */
+.verdict{font-weight:700;font-size:1.05rem;margin:20px 0 0}
+.verdict.ok{color:var(--ok)} .verdict.ng{color:var(--ng)}
+.ending{font-family:var(--serif);font-weight:600;font-size:1.25rem;margin:2px 0 0}
+.final{display:flex;align-items:baseline;gap:8px;margin:2px 0 6px}
+.final .big{font-family:var(--serif);font-size:3.6rem;line-height:1.1;color:var(--violet);font-variant-numeric:tabular-nums}
+.final .of{font-weight:700}
+.newbest{display:inline-block;background:var(--safranin);color:var(--on-violet);font-weight:700;font-size:.85rem;padding:2px 12px;border-radius:999px;margin:0 0 6px;animation:pop .5s ease-out}
+.rank{margin:6px 0 0}
+.rank b{font-family:var(--serif);font-size:1.45rem;font-weight:600;margin-left:6px}
+.nextrank{color:var(--muted);font-size:.9rem;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0 0}
+.stats.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats div{background:var(--surface);padding:8px 12px}
+.stats dt{font-size:.76rem;color:var(--muted)}
+.stats dd{margin:0;font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.result h2{font-size:1rem;margin:26px 0 4px}
+.review{border-bottom:1px solid var(--line);padding:10px 0}
+.review summary{cursor:pointer;display:flex;gap:8px;align-items:flex-start;list-style:none;font-weight:500}
+.review summary::-webkit-details-marker{display:none}
+.review summary:focus-visible{outline:3px solid var(--violet);outline-offset:2px;border-radius:4px}
+.review .body{padding:8px 0 0;font-size:.95rem}
+.review .body p{margin:0 0 6px}
+.empty-note{color:var(--muted);margin:4px 0 0}
+
+/* 演出 */
+.pt{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--violet);box-shadow:8px 0 0 var(--violet);pointer-events:none;z-index:50;animation:fly .75s cubic-bezier(.2,.7,.3,1) forwards}
+.pt.pink{background:var(--safranin);box-shadow:8px 0 0 var(--safranin)}
+@keyframes fly{from{transform:translate(-50%,-50%) rotate(0deg);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
+.float{position:fixed;font-weight:700;font-size:1.2rem;color:var(--ok);pointer-events:none;z-index:40;transform:translate(-50%,0);animation:floatup .9s ease-out forwards;font-variant-numeric:tabular-nums}
+@keyframes floatup{to{transform:translate(-50%,-52px);opacity:0}}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translate(-50%,-10px);opacity:0;pointer-events:none;z-index:30;background:var(--violet);color:var(--on-violet);font-weight:700;padding:10px 20px;border-radius:999px;white-space:nowrap;transition:opacity .25s,transform .25s}
+.toast.heal{background:var(--ok)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.note{max-width:680px;margin:0 auto;padding:0 18px 28px;color:var(--muted);font-size:.8rem;line-height:1.6}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+
+/* 処方カードと検査値の表 */
+.rx{margin:0 0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.rx-head{display:flex;justify-content:space-between;align-items:baseline;margin:0;padding:5px 12px;background:var(--violet-soft);color:var(--violet);font-weight:700;font-size:.82rem}
+.rx-head span:first-child{font-family:var(--serif);font-size:1rem}
+.rx ol{margin:0;padding:6px 12px 8px 2.1em;font-size:.95rem;line-height:1.5}
+.rx li{padding:5px 0}
+.rx li+li{border-top:1px dashed var(--line)}
+.rx b{font-weight:700}
+.rx .size{margin-left:8px;font-variant-numeric:tabular-nums}
+.rx .use{display:block;color:var(--muted);font-size:.85rem}
+.labcard{margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:8px 12px 6px;background:var(--surface)}
+.labcard figcaption{font-size:.72rem;font-weight:700;color:var(--muted);margin:0 0 2px}
+.fl-tab{width:100%;border-collapse:collapse;font-size:.88rem;line-height:1.45}
+.fl-tab th{font-weight:500;color:var(--muted);text-align:left;padding:4px 8px 4px 0;white-space:nowrap;vertical-align:top}
+.fl-tab td{padding:4px 0;font-variant-numeric:tabular-nums}
+.fl-tab tr+tr th,.fl-tab tr+tr td{border-top:1px solid var(--line)}
+.keypts{margin-top:12px;background:var(--violet-soft);border-radius:10px;padding:10px 14px}
+.keypts h3{font-size:.9rem;color:var(--violet);margin:0 0 4px}
+.keypts ul{margin:0;padding-left:1.2em;font-size:.92rem}
+.keypts li{margin:3px 0}
+.review .keypts{margin-top:8px}
+</style>
+</head>
+<body>
+<header class="hud" id="hud" hidden>
+  <div class="hud-in">
+    <div class="lives" id="lives" role="img" aria-label="ライフ"></div>
+    <div class="trust" id="trust" role="img" aria-label="指導医の信頼"><span>信頼</span><span class="tbar"><span class="tfill" id="tfill"></span></span><span class="tnum" id="tnum">30</span></div>
+    <div class="scorebox">
+      <span class="combo" id="combo"></span>
+      <span class="score" id="score">0</span><span class="pts">点</span>
+    </div>
+    <button class="mute" id="mute" type="button"></button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="note"><a href="./" style="color:var(--violet);font-weight:700">症例の一覧に戻る</a><br>学習用の架空症例です。実際の診療では最新のガイドラインと施設の方針を確認してください。</footer>
+
+<script>
+/* =========================================================
+   問題データ（両モード共通）
+   1問ずつ { } で囲んで追加できます。
+   id：問題の名前（ストーリーから呼び出すときに使う）
+   category：分野名／case：症例文／vitals：バイタルの表
+   rx：処方カード [[薬の名前, 規格, 用法], ...]
+   labs：検査値の表 [[項目, 値], ...]
+   options：選択肢。正解に correct: true、why に選んだときの説明
+   keypoints：キーポイント（①②③でまとめて覚える形）
+   fixedOrder：true なら選択肢を並べ替えない
+   timeLimit：スピードボーナスの秒数（省略時30秒）
+   ========================================================= */
+const QUESTIONS = [
+  /* ----- 第1章 抗癌薬 ----- */
+  {
+    id: "chemo-pair", category: "抗癌薬", timeLimit: 40,
+    case: "外来化学療法室。今日はいろいろなレジメンの患者さんが治療を受けている。",
+    question: "抗癌薬と、とくに注意する副作用の組み合わせで正しいのは？",
+    options: [
+      { text: "シスプラチン ― 腎障害", correct: true, why: "シスプラチンは腎障害が代表的です。大量の補液で予防します。" },
+      { text: "ブレオマイシン ― 心筋障害", why: "ブレオマイシンで注意するのは、間質性肺炎と肺線維症です。心筋障害はアントラサイクリン系です。" },
+      { text: "ドキソルビシン ― 出血性膀胱炎", why: "ドキソルビシンで注意するのは、心筋障害です。累積投与量に上限があります。" },
+      { text: "シクロホスファミド ― 腎障害", why: "おしい組み合わせです。シクロホスファミドで傷つくのは腎臓ではなく膀胱で、出血性膀胱炎を起こします。" }
+    ],
+    explanation: "抗癌薬には、どの薬でも起こりやすい副作用と、薬ごとに特徴的な臓器障害があります。特徴的なものは「薬と臓器」の組で覚えます。",
+    keypoints: ["共通の副作用：①骨髄抑制、②悪心・嘔吐、③脱毛、④口内炎", "シスプラチン：①腎障害、②聴力障害、③末梢神経障害、④強い悪心・嘔吐", "ドキソルビシン：心筋障害／ブレオマイシン：間質性肺炎・肺線維症", "シクロホスファミド：出血性膀胱炎／ビンクリスチン：末梢神経障害"]
+  },
+  {
+    id: "fn", category: "抗癌薬", timeLimit: 45,
+    case: "肺癌で化学療法を受けて10日目の66歳男性。38.2℃の発熱で受診した。",
+    vitals: [["体温", "38.2", "℃"], ["脈拍", "104", "/分"], ["血圧", "118/70", "mmHg"], ["呼吸数", "20", "/分"], ["SpO₂", "96", "%"], ["意識", "清明", ""]],
+    labs: [["白血球", "800 /μL"], ["好中球", "300 /μL"], ["CRP", "4.8 mg/dL"]],
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "血液培養を2セット採り、すぐに緑膿菌にも効く抗菌薬を始める", correct: true, why: "発熱性好中球減少症は急速に重症化します。培養を採ったら、結果を待たずに抗菌薬を始めます。" },
+      { text: "血液培養を2セット採り、菌が分かってから最適な抗菌薬を始める", why: "培養を採るところまでは正解です。ただし結果を待つ間に敗血症が進みます。抗菌薬は1時間以内を目安に始めます。" },
+      { text: "感染巣がはっきりしないので、解熱薬で様子をみてから判断する", why: "好中球が少ないと炎症の所見が出にくく、感染巣が分からないことがほとんどです。" },
+      { text: "G-CSFで好中球を増やして回復を待ち、抗菌薬はまだ使わない", why: "G-CSFだけでは感染症は治りません。治療の中心は抗菌薬です。" }
+    ],
+    explanation: "発熱性好中球減少症は、がん薬物療法で最も急いで対応する副作用です。好中球がいちばん減る時期（ナディル）は、投与後およそ7〜14日です。",
+    keypoints: ["定義：好中球 500/μL未満（または1,000/μL未満で、500/μL未満に減る見込み）＋腋窩温 37.5℃以上", "対応：①血液培養2セット、②1時間以内に抗緑膿菌活性のあるβラクタム薬（セフェピムなど）、③重症化リスクの評価（MASCCスコア）", "好中球が少ないと、感染巣の症状や所見が出にくい", "G-CSFは予防や補助に使う。治療の主役は抗菌薬"]
+  },
+  {
+    id: "irae", category: "抗癌薬", timeLimit: 45,
+    case: "ペムブロリズマブ（免疫チェックポイント阻害薬）で治療中の70歳男性。数日前から強い口渇、多尿、倦怠感がある。ステロイドは使っていない。",
+    labs: [["血糖", "520 mg/dL"], ["HbA1c", "6.6 %"], ["尿ケトン体", "3+"], ["血中Cペプチド", "0.1 ng/mL（低値）"]],
+    question: "最も考えられる病態と対応は？",
+    options: [
+      { text: "irAEの劇症1型糖尿病を考え、輸液とインスリンで治療する", correct: true, why: "膵臓のβ細胞が急に壊れ、インスリンが出なくなっています。HbA1cが高くないのは、発症が急だからです。" },
+      { text: "irAEと考え、高用量のステロイドで免疫反応を抑えて治療する", why: "irAEと気づけたのは正解です。ただし1型糖尿病はステロイドでは戻らず、高血糖をむしろ悪化させます。" },
+      { text: "2型糖尿病が悪化したと考え、経口血糖降下薬から始める", why: "ケトン体が陽性で、Cペプチドも低く、インスリンが出ていません。経口薬では治療できません。" },
+      { text: "HbA1cが高くないので一時的な高血糖と考え、経過をみる", why: "HbA1cは過去1〜2か月の平均です。急な発症では、まだ上がりきっていません。" }
+    ],
+    explanation: "免疫チェックポイント阻害薬は免疫のブレーキを外すため、全身の臓器に自己免疫のような副作用（irAE）が起こります。多くはステロイドで治療しますが、内分泌の障害はホルモンの補充が中心です。",
+    keypoints: ["代表的なirAE：①間質性肺炎、②大腸炎（下痢）、③甲状腺機能異常、④1型糖尿病、⑤下垂体炎・副腎不全、⑥肝障害、⑦皮膚障害", "肺炎・大腸炎・肝障害：休薬とステロイド", "内分泌の障害：ホルモンの補充（インスリン、甲状腺ホルモン、ヒドロコルチゾン）", "投与を終えてから起こることもある"]
+  },
+
+  /* ----- 第2章 医療用麻薬 ----- */
+  {
+    id: "opioid-three", category: "医療用麻薬", timeLimit: 40,
+    case: "肺癌の骨転移による痛みで、オキシコドンの内服を始めることになった68歳女性。",
+    rx: [["オキシコドン徐放錠", "5 mg", "1回1錠　1日2回　12時間ごと"], ["オキシコドン速放散", "2.5 mg", "痛いとき　1回1包"]],
+    question: "開始時の説明と処方として最も適切なのは？",
+    options: [
+      { text: "便秘は飲んでいる間ずっと続くので、最初から下剤も処方する", correct: true, why: "便秘には耐性ができず、飲み続ける限り続きます。始めるときから下剤を使います。" },
+      { text: "吐き気も便秘も数日で慣れるので、出たときに薬を追加する", why: "吐き気は1〜2週で慣れることが多いですが、便秘は慣れません。最初から予防します。" },
+      { text: "依存になりやすいので、痛みが強いときだけ飲むように伝える", why: "がんの痛みに適切に使えば、精神依存はまれです。定時に飲み、強い痛みにはレスキューを使います。" },
+      { text: "眠気が出たら危険な副作用なので、すぐに自分で中止させる", why: "飲み始めや増量時の眠気は、数日で慣れることが多い副作用です。自己判断で止めず、相談してもらいます。" }
+    ],
+    explanation: "オピオイドの三大副作用は、①便秘、②悪心・嘔吐、③眠気です。このうち便秘だけは耐性ができないため、最初から予防します。",
+    keypoints: ["三大副作用：①便秘、②悪心・嘔吐、③眠気", "耐性ができる：悪心・嘔吐、眠気（1〜2週で慣れることが多い）", "耐性ができない：便秘、縮瞳 → 下剤は始めから（ナルデメジンなど）", "がんの痛みに適切に使えば、精神依存はまれ"]
+  },
+  {
+    id: "opioid-od", category: "医療用麻薬", timeLimit: 40,
+    case: "モルヒネの持続皮下注射を増量した翌朝。呼びかけにほとんど反応しない。",
+    vitals: [["呼吸数", "6", "/分"], ["SpO₂", "86", "%"], ["脈拍", "64", "/分"], ["血圧", "108/62", "mmHg"], ["瞳孔", "1.5", "mm"], ["意識", "JCS 20", ""]],
+    question: "まず行うこととして最も適切なのは？",
+    options: [
+      { text: "モルヒネを止めてナロキソンを使い、効果切れ後の再燃も見張る", correct: true, why: "ナロキソンはモルヒネより作用時間が短く、効果が切れると呼吸抑制がまた起こることがあります。" },
+      { text: "モルヒネを止めてナロキソンを投与し、呼吸が戻れば観察を終える", why: "ナロキソンまでは正解です。ただし作用は30〜60分ほどで切れるため、再び呼吸が弱くなることがあります。" },
+      { text: "縮瞳と意識障害から脳幹出血を疑い、まず頭部CTを撮影する", why: "増量の直後で、呼吸数の低下と縮瞳がそろっています。まずオピオイドの過量を考えて対応します。" },
+      { text: "痛みが戻らないようにモルヒネは同じ量で続け、酸素だけを増やす", why: "原因の薬を続けたままでは、呼吸抑制は改善しません。" }
+    ],
+    explanation: "オピオイドの過量では、①意識障害、②呼吸数の低下、③縮瞳の3つがそろいます。呼吸抑制の前には強い眠気が出るので、眠気の観察が大切です。",
+    keypoints: ["過量の三徴：①意識障害（強い眠気）、②呼吸数の低下、③縮瞳", "拮抗薬はナロキソン。作用時間が短く、繰り返しの投与が必要になることがある", "がんの痛みがある人では、少量ずつ使う（一気に拮抗すると強い痛みが戻る）", "腎機能が低いとモルヒネの代謝物がたまり、過量になりやすい"]
+  },
+  {
+    id: "opioid-renal", category: "医療用麻薬", timeLimit: 40,
+    case: "慢性腎臓病（eGFR 22 mL/分/1.73m²）のある78歳男性。がんの痛みにオピオイドを始めたい。",
+    question: "選ぶオピオイドとして最も適切なのは？",
+    options: [
+      { text: "代謝物が腎臓から出るモルヒネは避け、フェンタニルなどを選ぶ", correct: true, why: "モルヒネの活性代謝物（M6G）は腎臓から出るため、腎機能が低いとたまって眠気や呼吸抑制を起こします。" },
+      { text: "モルヒネを選び、腎機能に合わせて通常の半分の量から始める", why: "減量しても代謝物はたまり続けます。腎機能が低い場合は、別のオピオイドを選ぶほうが安全です。" },
+      { text: "腎臓を守るためオピオイドは使わず、NSAIDsで痛みを抑える", why: "NSAIDsこそ腎機能を悪化させます。腎機能が低い人には、特に注意して使います。" },
+      { text: "腎機能はオピオイドの選び方に関係しないので、どれでもよい", why: "モルヒネは腎機能の影響を大きく受けます。種類によって違います。" }
+    ],
+    explanation: "モルヒネは肝臓で代謝され、活性のある代謝物が腎臓から排泄されます。腎機能が低い人では、フェンタニルなど腎機能の影響を受けにくいオピオイドを選びます。",
+    keypoints: ["腎機能が低いとき：モルヒネは避ける（代謝物M6Gが蓄積）", "選びやすい：フェンタニル（腎機能の影響が少ない）。オキシコドンも少量から使える", "NSAIDsの代表的な副作用：①消化性潰瘍、②腎障害、③喘息の誘発（アスピリン喘息）", "がんの痛みは、非オピオイド鎮痛薬とオピオイドを組み合わせて治療する"]
+  },
+
+  /* ----- 第3章 ステロイド ----- */
+  {
+    id: "pcp-prophylaxis", category: "ステロイド", timeLimit: 40,
+    case: "間質性肺炎で、プレドニゾロン 30 mg/日を始めることになった65歳男性。少なくとも2か月は続ける予定。",
+    rx: [["プレドニゾロン錠", "5 mg", "1回6錠　1日1回　朝食後"]],
+    question: "ステロイドと一緒に始めるものとして最も適切なのは？",
+    options: [
+      { text: "ニューモシスチス肺炎の予防として、ST合剤を併用する", correct: true, why: "プレドニゾロン20 mg/日以上を4週間以上使う場合は、ニューモシスチス肺炎の予防を行います。" },
+      { text: "ST合剤による予防は、ステロイドが1年以上続く場合に始める", why: "予防の目安は1年ではありません。「20 mg/日以上を4週間以上」が目安です。" },
+      { text: "感染症を防ぐため、広域の抗菌薬を毎日飲み続けてもらう", why: "広域抗菌薬の予防内服は、耐性菌を増やします。予防するのはニューモシスチス肺炎です。" },
+      { text: "感染症を防ぐため、ステロイドは量を半分に減らして始める", why: "治療に必要な量を減らすと、間質性肺炎が抑えられません。量は保ち、予防を併用します。" }
+    ],
+    explanation: "ステロイドの副作用は数が多いので、「感染症」「代謝・内分泌」「その他」に分けて覚えます。長く使うときは、防げる副作用を最初から予防します。",
+    keypoints: ["感染症：①ニューモシスチス肺炎、②結核の再燃、③帯状疱疹など", "代謝・内分泌：①糖尿病、②脂質異常症、③骨粗鬆症、④副腎不全", "その他：①消化性潰瘍、②精神症状（不眠・多幸）、③白内障・緑内障、④満月様顔貌・中心性肥満", "予防の目安：プレドニゾロン20 mg/日以上を4週間以上でST合剤"]
+  },
+  {
+    id: "steroid-bone", category: "ステロイド", timeLimit: 40,
+    case: "関節リウマチで、プレドニゾロン 7.5 mg/日を半年以上飲んでいる72歳女性。骨折したことはない。",
+    labs: [["腰椎の骨密度", "YAM 72 %"], ["血清カルシウム", "9.2 mg/dL"]],
+    question: "骨について最も適切な対応は？",
+    options: [
+      { text: "ステロイド性骨粗鬆症を考え、ビスホスホネート薬を始める", correct: true, why: "ステロイドは骨を作る働きを抑えます。高齢で7.5 mg/日以上を使っており、薬で骨折を防ぎます。" },
+      { text: "骨密度がYAMの70%を下回るまでは、カルシウムだけで様子をみる", why: "70%は、ステロイドを使っていない骨粗鬆症の目安です。ステロイドでは、骨密度が保たれていても骨折します。" },
+      { text: "骨を守るために、ステロイドは今日からすぐに中止してもらう", why: "長く使っているステロイドを急にやめると、副腎不全を起こします。" },
+      { text: "骨折しないように、運動は控えてなるべく安静に過ごしてもらう", why: "安静にすると、骨はさらに弱くなります。動ける範囲で体を動かしてもらいます。" }
+    ],
+    explanation: "ステロイド性骨粗鬆症は、ステロイドの副作用の中でも特に多いものです。骨密度が保たれていても骨折しやすいため、早めに予防します。",
+    keypoints: ["ステロイドの骨の副作用：①骨粗鬆症（椎体骨折が多い）、②大腿骨頭壊死", "骨密度が保たれていても骨折しやすい", "予防と治療の第一選択はビスホスホネート薬", "日本のガイドラインでは、年齢・ステロイドの量・骨密度・骨折歴の点数で治療を決める"]
+  },
+  {
+    id: "adrenal", category: "ステロイド", timeLimit: 45,
+    case: "プレドニゾロン 10 mg/日を2年飲んでいた80歳女性。1週間前に薬が切れて飲んでいなかった。強い倦怠感と食欲不振で救急搬送された。",
+    vitals: [["血圧", "78/46", "mmHg"], ["脈拍", "112", "/分"], ["体温", "37.2", "℃"], ["呼吸数", "20", "/分"], ["SpO₂", "97", "%"], ["意識", "JCS 1", ""]],
+    labs: [["Na", "126 mEq/L"], ["K", "4.6 mEq/L"], ["血糖", "58 mg/dL"], ["好酸球", "9 %"]],
+    question: "最も考えられる病態と対応は？",
+    options: [
+      { text: "副腎クリーゼと考え、ヒドロコルチゾンの静注と輸液を行う", correct: true, why: "長く飲んでいたステロイドを急にやめたため、体が自分でコルチゾールを作れなくなっています。" },
+      { text: "副腎クリーゼと考え、ホルモンの検査結果が出てから治療する", why: "副腎クリーゼと気づけたのは正解です。ただし命に関わるため、採血をしたらすぐ治療を始めます。" },
+      { text: "脱水による低血圧と考え、生理食塩水の輸液だけで様子をみる", why: "低ナトリウムと低血糖がそろい、ステロイドの中断もあります。輸液だけでは回復しません。" },
+      { text: "低血糖が意識の原因と考え、ブドウ糖の投与だけを行う", why: "低血糖は副腎不全の結果です。原因であるコルチゾールの不足を補います。" }
+    ],
+    explanation: "長く飲んでいるステロイドは、自己中断や、手術・感染症などのストレスで足りなくなり、副腎不全を起こします。シックデイの対応も含めて、あらかじめ説明しておきます。",
+    keypoints: ["副腎不全の検査所見：①低ナトリウム血症、②低血糖、③好酸球増多", "症状：倦怠感、食欲不振、低血圧、ショック", "治療：ヒドロコルチゾンの静注と、ブドウ糖を含む輸液", "予防：自己判断でやめない。発熱時などは一時的に増やす（シックデイ）"]
+  },
+
+  /* ----- 第4章 抗結核薬 ----- */
+  {
+    id: "tb-pair", category: "抗結核薬", timeLimit: 40,
+    case: "肺結核の標準治療（INH・RFP・EB・PZA）を始める。病棟で副作用の観察点を共有したい。",
+    question: "抗結核薬と、とくに注意する副作用の組み合わせで正しいのは？",
+    options: [
+      { text: "エタンブトール ― 視神経障害", correct: true, why: "EBは視力低下や色覚の異常を起こします。" },
+      { text: "ストレプトマイシン ― 視神経障害", why: "おしい組み合わせです。SMで注意するのは第8脳神経の障害で、聴力低下やめまいを起こします。" },
+      { text: "ピラジナミド ― 末梢神経障害", why: "PZAで注意するのは、肝障害と高尿酸血症です。末梢神経障害はINHです。" },
+      { text: "イソニアジド ― 高尿酸血症", why: "INHで注意するのは、肝障害と末梢神経障害です。高尿酸血症はPZAです。" }
+    ],
+    explanation: "抗結核薬は、ほとんどの薬で肝障害に注意が必要です。そのうえで、薬ごとの特徴的な副作用を組で覚えます。",
+    keypoints: ["INH：①肝障害、②末梢神経障害（ビタミンB6で予防）", "RFP：①肝障害、②血球減少、③尿・涙などの橙色着色、④薬物相互作用", "EB：視神経障害（視力低下・色覚異常）／PZA：①肝障害、②高尿酸血症", "SM：①第8脳神経障害（聴力低下・めまい）、②腎障害"]
+  },
+  {
+    id: "inh-b6", category: "抗結核薬", timeLimit: 40,
+    case: "糖尿病とアルコール多飲のある58歳男性。肺結核の治療を始めて2か月。両足の先がしびれると話す。",
+    question: "最も考えられる原因と対応は？",
+    options: [
+      { text: "イソニアジドによる末梢神経障害を考え、ビタミンB6を投与する", correct: true, why: "INHはビタミンB6の働きを妨げます。糖尿病やアルコール多飲は、起こりやすくなる要因です。" },
+      { text: "エタンブトールによる神経障害を考え、エタンブトールを中止する", why: "EBで注意する神経は視神経です。手足のしびれは、INHによる末梢神経障害を考えます。" },
+      { text: "糖尿病による神経障害と考え、抗結核薬はそのまま続けて様子をみる", why: "糖尿病も原因になりえますが、INHによるものは予防も治療もできます。見逃さないようにします。" },
+      { text: "結核の治療をいったんすべて中止して、しびれが消えるのを待つ", why: "結核の治療を中断すると、治療の失敗や耐性菌の原因になります。原因の薬に合わせて対応します。" }
+    ],
+    explanation: "INHによる末梢神経障害は、ビタミンB6（ピリドキシン）の不足によって起こります。起こりやすい人には、治療の初めからビタミンB6を一緒に使います。",
+    keypoints: ["起こりやすい人：①糖尿病、②アルコール多飲、③低栄養、④妊婦、⑤腎不全", "予防と治療：ビタミンB6（ピリドキシン）", "INHの二大副作用：①肝障害、②末梢神経障害", "結核の治療は、副作用があっても自己判断で中断しない"]
+  },
+  {
+    id: "tb-liver", category: "抗結核薬", timeLimit: 45,
+    case: "肺結核の治療（INH・RFP・EB・PZA）を始めて3週間の60歳女性。倦怠感や食欲低下などの症状はない。",
+    labs: [["AST", "180 IU/L（基準値上限 30）"], ["ALT", "165 IU/L（基準値上限 30）"], ["総ビリルビン", "0.9 mg/dL"]],
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "基準値上限の5倍を超えたので、抗結核薬をすべて休薬する", correct: true, why: "症状がなくても、AST・ALTが基準値上限の5倍以上なら休薬の基準を満たします。" },
+      { text: "肝障害の原因として多いPZAだけを中止し、残りの3剤は続ける", why: "PZAは原因として多い薬ですが、INHやRFPでも起こります。まず全剤を止め、戻ってから1剤ずつ再開します。" },
+      { text: "症状がないので、抗結核薬をそのまま続けて1か月後に再検する", why: "5倍を超える上昇は、症状がなくても休薬の基準です。放置すると重い肝障害になることがあります。" },
+      { text: "肝臓を守る薬を追加して、抗結核薬はすべてそのまま続ける", why: "肝臓を守る薬を足しても、原因の薬を続ければ肝障害は進みます。" }
+    ],
+    explanation: "抗結核薬による肝障害は、治療を始めて2か月以内に多く起こります。基準を超えたら全剤をいったん止め、肝機能が戻ってから1剤ずつ再開します。",
+    keypoints: ["肝障害を起こしやすい：①PZA、②INH、③RFP（EBは起こしにくい）", "休薬の目安：AST・ALTが基準値上限の5倍以上（症状があれば3倍以上）", "休薬後は肝機能の回復を待ち、1剤ずつ再開する", "治療の初めは、肝機能をこまめに確認する"]
+  },
+
+  /* ----- 第5章 相互作用と薬剤性肺障害 ----- */
+  {
+    id: "rfp-interact", category: "相互作用", timeLimit: 45,
+    case: "プレドニゾロン 10 mg/日で関節リウマチが落ち着いていた70歳女性。肺結核と診断され、リファンピシンを含む治療を始めた。2週間後から関節の痛みと腫れが強くなった。",
+    rx: [["リファンピシンカプセル", "150 mg", "1回3カプセル　1日1回　朝食前"], ["プレドニゾロン錠", "5 mg", "1回2錠　1日1回　朝食後"]],
+    question: "最も考えられる原因と対応は？",
+    options: [
+      { text: "リファンピシンでステロイドが効きにくくなっており、増量する", correct: true, why: "RFPは肝臓の代謝酵素（CYP3A4など）を強く誘導し、ステロイドの効き目を弱めます。倍量程度への増量を考えます。" },
+      { text: "リファンピシンの相互作用と考え、リファンピシンをすぐに中止する", why: "相互作用に気づけたのは正解です。ただしRFPは結核治療の要の薬です。止めずに、相手の薬の量を調整します。" },
+      { text: "結核が関節にも広がったと考え、抗結核薬をもう1剤追加する", why: "治療を始めてから悪化した関節症状は、まず薬の相互作用を考えます。" },
+      { text: "関節リウマチの自然な悪化と考え、生物学的製剤を始める", why: "活動性の結核を治療している最中に、生物学的製剤を始めるのは危険です。" }
+    ],
+    explanation: "リファンピシンは、多くの薬の効き目を弱めます。結核の治療を始めるときは、飲んでいる薬をすべて確認します。",
+    keypoints: ["RFPで効き目が弱まる薬：①ステロイド、②ワルファリン、③経口避妊薬、④アゾール系抗真菌薬・抗HIV薬など", "仕組み：肝臓の代謝酵素（CYP3A4など）の誘導", "RFPで尿・汗・涙が橙色になる（ソフトコンタクトレンズも着色する）", "結核の治療を始めるときは、併用薬をすべて確認する"]
+  },
+  {
+    id: "dili-tki", category: "薬剤性肺障害", timeLimit: 45,
+    case: "EGFR遺伝子変異陽性の肺腺癌で、オシメルチニブを始めて6週間の72歳男性。数日前から乾いた咳と息切れが出てきた。両側の背部で fine crackles を聴取し、胸部CTで両側にすりガラス影がある。",
+    vitals: [["SpO₂（室内気）", "92", "%"], ["呼吸数", "22", "/分"], ["体温", "37.4", "℃"], ["脈拍", "96", "/分"], ["血圧", "130/76", "mmHg"], ["意識", "清明", ""]],
+    labs: [["KL-6", "1,250 U/mL"], ["CRP", "3.2 mg/dL"], ["β-Dグルカン", "陰性"], ["BNP", "18 pg/mL"]],
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "薬剤性肺障害を考え、オシメルチニブを中止し、感染症も除外する", correct: true, why: "治療の基本は、被疑薬の中止です。あわせて感染症や心不全、癌の悪化と見分けます。" },
+      { text: "薬剤性肺障害を考え、オシメルチニブを半分に減量して投与を続ける", why: "薬剤性肺障害と気づけたのは正解です。ただし命に関わることがあるため、減量ではなく中止します。" },
+      { text: "癌が肺に広がったと考え、オシメルチニブの量を増やして続ける", why: "開始から数週間で出たすりガラス影とKL-6の上昇は、薬剤性肺障害を強く疑う所見です。" },
+      { text: "細菌性肺炎と考え、オシメルチニブは続けたまま抗菌薬を始める", why: "感染症の除外は必要ですが、薬剤性肺障害を見逃して投与を続けると重症化します。" }
+    ],
+    explanation: "薬剤性肺障害は、抗癌薬をはじめ、さまざまな薬で起こります。治療の基本は、①被疑薬の中止、②ステロイド、③呼吸管理の3つです。",
+    keypoints: ["起こしやすい薬：①抗癌薬（EGFR-TKI、免疫チェックポイント阻害薬、ブレオマイシンなど）、②抗リウマチ薬（MTX）、③アミオダロン、④漢方薬（小柴胡湯）", "症状：乾いた咳、息切れ、発熱。聴診で捻髪音（fine crackles）", "検査：KL-6・SP-Dの上昇、CTのすりガラス影。感染症や心不全を除外する", "治療：①被疑薬の中止、②重症度に応じてステロイド、③呼吸管理"]
+  },
+  {
+    id: "mtx", category: "薬剤性肺障害", timeLimit: 45,
+    case: "関節リウマチでメトトレキサート（MTX）を飲んでいる68歳女性。1週間前から発熱、乾いた咳、息切れがある。胸部CTで両側にすりガラス影がある。",
+    labs: [["KL-6", "980 U/mL"], ["β-Dグルカン", "85 pg/mL（基準 20 以下）"], ["CRP", "6.0 mg/dL"], ["SpO₂（室内気）", "91 %"]],
+    question: "対応として最も適切なのは？",
+    options: [
+      { text: "MTXを中止し、ニューモシスチス肺炎も調べてST合剤を検討する", correct: true, why: "MTXによる肺障害とニューモシスチス肺炎は、症状も画像もよく似ています。β-Dグルカンの上昇は、ニューモシスチス肺炎を疑う所見です。" },
+      { text: "MTXによる肺障害と考えてMTXを中止し、ステロイドだけで治療する", why: "MTXの中止は正解です。ただしニューモシスチス肺炎だった場合、ステロイドだけでは悪化します。" },
+      { text: "関節リウマチの悪化を防ぐため、MTXは続けて抗菌薬を追加する", why: "肺障害を疑う状況でMTXを続けると、重症化するおそれがあります。" },
+      { text: "MTXの副作用を防ぐ葉酸を増やせば、この肺の陰影も改善する", why: "葉酸は、口内炎や肝障害、骨髄抑制の予防に使います。肺障害には効きません。" }
+    ],
+    explanation: "MTXは関節リウマチの中心となる薬ですが、副作用も多い薬です。肺に影が出たら、薬剤性肺障害と感染症の両方を考えます。",
+    keypoints: ["MTXの副作用：①骨髄抑制、②肝障害、③口内炎・消化器症状、④間質性肺炎、⑤感染症（ニューモシスチス肺炎など）", "葉酸の併用で①〜③を減らせる。④の肺障害には効かない", "MTXによる肺障害とニューモシスチス肺炎は似ている。β-Dグルカンや喀痰のPCRで見分ける", "MTXは腎臓から排泄される。腎機能が低いと副作用が出やすい"]
+  }
+];
+
+/* =========================================================
+   ストーリーの台本
+   場面の種類：
+   { t: "talk", lines: [[話す人, せりふ], ...] }  会話（"narr" は地の文）
+   { t: "q", id: 問題のid, react: { ok: 正解時, ng: 不正解時 } }  出題
+   ========================================================= */
+const CAST = {
+  fukusa: { name: "服紗先生", role: "呼吸器内科 指導医", mark: "服", color: "var(--violet)" },
+  hayase: { name: "早瀬さん", role: "病棟看護師", mark: "早", color: "var(--ok)" },
+  manabe: { name: "真鍋さん", role: "薬剤師", mark: "薬", color: "var(--ink)" },
+  me:     { name: "あなた", role: "医学生", mark: "学", color: "var(--muted)" },
+  pt:     { name: "患者さん", role: "", mark: "患", color: "var(--safranin)" }
+};
+const LEAD = "fukusa";
+
+const STORY = [
+  { day: "第1章", place: "外来化学療法室　朝", title: "抗癌薬の顔ぶれ", scenes: [
+    { t: "talk", lines: [
+      ["narr", "今日は一日、服紗先生について、病棟と外来の「薬の副作用」の相談を回ることになった。"],
+      ["fukusa", "おはようございます。今日のテーマは副作用です。一つずつ覚えるより、まとめて覚えるのがコツですよ。"],
+      ["manabe", "先生、化学療法室の今日のレジメン表です。いろいろな薬が並んでいます。"]
+    ]},
+    { t: "q", id: "chemo-pair", react: { ok: "その通りです。「薬と臓器」の組で覚えると、忘れにくいですよ。", ng: "惜しいですね。どの臓器を傷つけるか、組み合わせを見直しましょう。" }},
+    { t: "talk", lines: [
+      ["hayase", "先生、化学療法10日目の方が、38℃台の熱で受診されました。"],
+      ["fukusa", "10日目……ちょうど好中球がいちばん減る時期ですね。"]
+    ]},
+    { t: "q", id: "fn", react: { ok: "そうです。培養を採ったら、待たずに始める。それが大切です。", ng: "培養の結果を待つ間にも、病状は進みます。時間との勝負ですよ。" }},
+    { t: "talk", lines: [
+      ["manabe", "免疫チェックポイント阻害薬を使っている方で、血糖が500を超えています。"],
+      ["fukusa", "この薬の副作用は、ほかの抗癌薬と少し考え方が違います。"]
+    ]},
+    { t: "q", id: "irae", react: { ok: "よく気づきましたね。内分泌の副作用は、ホルモンの補充が基本です。", ng: "irAEの多くはステロイドで治療しますが、内分泌の障害は例外なんです。" }}
+  ]},
+  { day: "第2章", place: "緩和ケア病棟　昼前", title: "痛みを取る薬", scenes: [
+    { t: "talk", lines: [
+      ["pt", "痛み止めに医療用の麻薬を使うと聞いて、少し怖いんです。"],
+      ["fukusa", "大丈夫ですよ。副作用を知って先回りすれば、安心して使えます。"]
+    ]},
+    { t: "q", id: "opioid-three", react: { ok: "その通りです。便秘だけは慣れない。試験でもよく問われます。", ng: "吐き気と眠気には慣れますが、便秘には慣れません。ここが分かれ目です。" }},
+    { t: "talk", lines: [
+      ["hayase", "先生、昨日モルヒネを増やした方が、呼びかけにほとんど反応しません。呼吸は1分に6回です。"],
+      ["me", "（瞳孔がとても小さい……）"]
+    ]},
+    { t: "q", id: "opioid-od", react: { ok: "完璧です。ナロキソンは効き目が短い。そこまで見張れたら安心です。", ng: "ナロキソンは、モルヒネより先に効き目が切れます。そのあとが要注意です。" }},
+    { t: "talk", lines: [["manabe", "腎機能が低い方に、オピオイドを始めたいそうです。どれにしましょうか。"]] },
+    { t: "q", id: "opioid-renal", react: { ok: "そうです。モルヒネは、腎臓の影響を大きく受けます。", ng: "モルヒネの代謝物は腎臓から出ます。腎機能が低いと、たまってしまうんです。" }}
+  ]},
+  { day: "第3章", place: "呼吸器内科病棟　午後", title: "ステロイドの光と影", scenes: [
+    { t: "talk", lines: [
+      ["fukusa", "ステロイドは、呼吸器内科で毎日のように使う薬です。副作用も、いちばん幅広いんですよ。"],
+      ["me", "（感染症、骨、糖尿病……数えきれないな）"],
+      ["fukusa", "数えきれないときこそ、グループに分けて覚えましょう。"]
+    ]},
+    { t: "q", id: "pcp-prophylaxis", react: { ok: "その通りです。「20 mgを4週間」、この数字は覚えておきましょう。", ng: "予防の目安は、量と期間です。もう一度確認しておきましょう。" }},
+    { t: "talk", lines: [["pt", "ステロイドで骨が弱くなると聞いたんですが、私は大丈夫でしょうか。"]] },
+    { t: "q", id: "steroid-bone", react: { ok: "そうです。ステロイドでは、骨密度がそれほど低くなくても骨折します。", ng: "ステロイドの骨粗鬆症は、骨密度だけでは判断できないんです。" }},
+    { t: "talk", lines: [["hayase", "救急外来から連絡です。ステロイドを飲めていなかった方が、血圧が低くて搬送されました。"]] },
+    { t: "q", id: "adrenal", react: { ok: "完璧です。採血をしたら、すぐにヒドロコルチゾンですね。", ng: "急にやめると、体は自分でコルチゾールを作れないんです。急ぎましょう。" }}
+  ]},
+  { day: "第4章", place: "結核病棟　夕方", title: "四つの薬の顔", scenes: [
+    { t: "talk", lines: [
+      ["fukusa", "結核の治療は、四つの薬を同時に使います。副作用も、薬ごとの顔を覚えましょう。"],
+      ["manabe", "看護師さん向けに、観察のポイントをまとめたいです。"]
+    ]},
+    { t: "q", id: "tb-pair", react: { ok: "その通りです。EBは目、SMは耳。セットで覚えましょう。", ng: "目と耳、尿酸としびれ。組み合わせを、もう一度整理しましょう。" }},
+    { t: "talk", lines: [["pt", "先生、最近、足の先がジンジンするんです。"]] },
+    { t: "q", id: "inh-b6", react: { ok: "よく気づきましたね。ビタミンB6で防げる副作用です。", ng: "手足のしびれは、INHを考えます。EBの神経は視神経ですよ。" }},
+    { t: "talk", lines: [["hayase", "先生、別の方の採血で、ASTとALTがかなり上がっています。症状はないそうです。"]] },
+    { t: "q", id: "tb-liver", react: { ok: "その通りです。全部止めて、戻ったら一つずつ。基本の流れです。", ng: "基準を超えたら、まず全剤を止めます。数字の目安を確認しましょう。" }}
+  ]},
+  { day: "第5章", place: "副作用カンファレンス　夜", title: "薬と薬、薬と肺", scenes: [
+    { t: "talk", lines: [
+      ["fukusa", "最後は今日のまとめです。薬どうしの組み合わせと、肺に出る副作用を見ていきましょう。"],
+      ["manabe", "まずは、結核の治療を始めたリウマチの方です。"]
+    ]},
+    { t: "q", id: "rfp-interact", react: { ok: "その通りです。RFPを見たら、併用薬をすべて確認しましょう。", ng: "RFPは、ほかの薬の効き目を弱めます。止めるより、相手の量を調整します。" }},
+    { t: "talk", lines: [["hayase", "オシメルチニブを飲んでいる方が、咳と息切れを訴えています。"]] },
+    { t: "q", id: "dili-tki", react: { ok: "そうです。まず被疑薬を止める。これが薬剤性肺障害の第一歩です。", ng: "命に関わる副作用です。減量ではなく、まず中止しましょう。" }},
+    { t: "talk", lines: [["fukusa", "最後の一例です。MTXを飲んでいる方の肺の影。よく似た病気を忘れずに。"]] },
+    { t: "q", id: "mtx", react: { ok: "完璧です。薬剤性と感染症、両方を考えられたら一人前ですね。", ng: "MTXの肺障害とそっくりな病気があります。β-Dグルカンを見てみましょう。" }}
+  ]}
+];
+
+/* エンディング（最終的な信頼度で分岐） */
+const EPILOGUE = { day: "エピローグ", place: "医局", title: "副作用カンファレンスを終えて" };
+const ENDINGS = [
+  { min: 80, name: "処方の番人", lines: [
+    ["fukusa", "おつかれさまでした。今日の副作用、ほとんど見抜けていましたね。"],
+    ["fukusa", "副作用は、まとめて覚えて、先回りする。それができれば、患者さんは安心して薬を使えます。"],
+    ["narr", "カンファレンス室の窓の外で、病棟の灯りが一つずつ消えていった。"]
+  ]},
+  { min: 40, name: "副作用ハンター見習い", lines: [
+    ["fukusa", "おつかれさまでした。迷った問題もありましたが、よく考えて答えていましたね。"],
+    ["fukusa", "キーポイントの①②③を、もう一度声に出して覚えておきましょう。"]
+  ]},
+  { min: 0, name: "もう一度、カンファレンスへ", lines: [
+    ["fukusa", "おつかれさまでした。今日は少し手ごわかったですね。"],
+    ["fukusa", "大丈夫です。間違えた問題のキーポイントが、そのまま試験対策になります。もう一度挑戦しましょう。"]
+  ]}
+];
+
+/* ランク（必要な得点, 名前） */
+const RANKS = [[0,"添付文書ビギナー"],[400,"処方見習い"],[900,"副作用ハンター"],[1500,"相互作用の読み手"],[2200,"薬剤の番人"],[3000,"副作用を倒す者"]];
+
+/* ゲームの設定 */
+const LIVES_MAX = 3;     // チャレンジモードのライフ
+const HEAL_EVERY = 5;    // 何連続正解でライフ回復するか
+const TRUST_START = 30;  // ストーリーモードの信頼度（最初）
+const TRUST_UP = 6;      // 正解で上がる信頼度
+const TRUST_DOWN = 8;    // 不正解で下がる信頼度
+const BASE = 100;        // 1問正解の基本点
+const SPEED_MAX = 50;    // スピードボーナスの最大点
+const COMBO_STEP = 0.25; // 連続正解1回ごとに増える倍率
+const COMBO_MAX = 2.0;   // 倍率の上限
+const TYPE_MS = 26;      // せりふの文字送りの速さ（ミリ秒）
+
+/* =========================================================
+   ここから下はゲームの動作（通常は変更不要）
+   ========================================================= */
+const KEYS = ["a","b","c","d","e"];
+const BEST = { challenge: "drugae-challenge-best", story: "drugae-story-best" };
+const MUTE_KEY = "resp-challenge-muted";
+const QMAP = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+const $ = s => document.querySelector(s);
+const app = $("#app"), hud = $("#hud");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.2-4.4-9.3-8.9C1.2 8.3 3.2 4.5 6.8 4.5c2.1 0 3.7 1.2 5.2 3 1.5-1.8 3.1-3 5.2-3 3.6 0 5.6 3.8 4.1 7.1-2.1 4.5-9.3 8.9-9.3 8.9z"/></svg>';
+const PAIR = '<path d="M-9.5 0Q-7 -3.8 -1.2 -3.2Q0.6 0 -1.2 3.2Q-7 3.8 -9.5 0Z"/><path d="M9.5 0Q7 -3.8 1.2 -3.2Q-0.6 0 1.2 3.2Q7 3.8 9.5 0Z"/>';
+let muted = store.get(MUTE_KEY) === "1";
+let G = null;
+
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rankIndex(score){ let r = 0; RANKS.forEach(([t], i) => { if (score >= t) r = i; }); return r; }
+function correctText(q){ return q.options.find(o => o.correct).text; }
+function multOf(c){ return Math.min(1 + (c - 1) * COMBO_STEP, COMBO_MAX); }
+function multLabel(m){ return m.toFixed(2).replace(/0$/, ""); }
+function motifHTML(){ return `<svg class="motif" viewBox="0 0 150 20" aria-hidden="true">${[12,44,76,108,140].map((x, i) => `<g class="${i % 2 ? "s" : "v"}" transform="translate(${x} 10)">${PAIR}</g>`).join("")}</svg>`; }
+function toTop(){ window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); }
+
+/* ---------- 効果音（Web Audioで合成） ---------- */
+let actx = null;
+function audio(){
+  if (!actx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; try { actx = new C(); } catch(e){ return null; } }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, start, dur, type = "triangle", vol = 0.15){
+  if (muted) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+const SFX = {
+  correct(c){ const f = 660 * Math.pow(2, Math.min(c - 1, 7) / 12); tone(f, 0, .12); tone(f * 1.26, .08, .2); },
+  wrong(){ tone(190, 0, .22, "sawtooth", .07); tone(125, .12, .32, "sawtooth", .07); },
+  rank(){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .09, .22)); },
+  heal(){ tone(880, 0, .1, "sine", .12); tone(1175, .08, .22, "sine", .12); },
+  over(){ [392, 330, 262].forEach((f, i) => tone(f, i * .18, .32, "triangle", .12)); },
+  clear(){ [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, i * .1, .26)); },
+  chapter(){ tone(262, 0, .9, "sine", .07); tone(392, .06, .9, "sine", .05); tone(523, .12, .9, "sine", .04); },
+  tap(){ tone(520, 0, .06, "sine", .06); }
+};
+function setMuteLabel(){
+  const b = $("#mute"); b.textContent = muted ? "🔇" : "🔊";
+  b.setAttribute("aria-label", muted ? "効果音をオンにする" : "効果音をオフにする");
+  const b2 = $("#mute2"); if (b2) b2.textContent = "効果音：" + (muted ? "オフ" : "オン");
+}
+function toggleMute(){ muted = !muted; store.set(MUTE_KEY, muted ? "1" : "0"); setMuteLabel(); if (!muted) SFX.tap(); }
+$("#mute").addEventListener("click", toggleMute);
+
+/* ---------- 演出 ---------- */
+function burst(x, y){
+  if (reduceMotion) return;
+  for (let i = 0; i < 16; i++){
+    const p = document.createElement("span");
+    p.className = "pt" + (i % 3 === 0 ? " pink" : "");
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 80;
+    p.style.left = x + "px"; p.style.top = y + "px";
+    p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+    p.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+    p.style.setProperty("--r", Math.round(Math.random() * 360) + "deg");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+}
+function floatText(text, x, y){
+  if (reduceMotion) return;
+  const f = document.createElement("span");
+  f.className = "float"; f.textContent = text;
+  f.style.left = x + "px"; f.style.top = (y - 10) + "px";
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 950);
+}
+function animateNumber(el, from, to, ms){
+  if (reduceMotion || ms <= 0){ el.textContent = to.toLocaleString(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const toastEl = $("#toast"); let toastQ = [], toastBusy = false;
+function toast(kind, msg){ toastQ.push([kind, msg]); if (!toastBusy) nextToast(); }
+function nextToast(){
+  const t = toastQ.shift(); if (!t){ toastBusy = false; return; }
+  toastBusy = true; const [kind, msg] = t;
+  toastEl.textContent = msg; toastEl.className = "toast show " + kind;
+  kind === "rank" ? SFX.rank() : SFX.heal();
+  setTimeout(() => { toastEl.className = "toast " + kind; setTimeout(nextToast, 260); }, 1600);
+}
+
+/* ---------- ステータスバー ---------- */
+function renderLives(anim){
+  const el = $("#lives");
+  el.innerHTML = Array.from({ length: LIVES_MAX }, (_, i) => `<span class="heart${i < G.lives ? "" : " empty"}">${HEART}</span>`).join("");
+  if (anim === "lost" && el.children[G.lives]) el.children[G.lives].classList.add("lost");
+  if (anim === "gain" && el.children[G.lives - 1]) el.children[G.lives - 1].classList.add("gain");
+  el.setAttribute("aria-label", `ライフ 残り${G.lives}`);
+}
+function renderTrust(delta){
+  const el = $("#trust");
+  $("#tfill").style.width = G.trust + "%";
+  $("#tnum").textContent = G.trust;
+  el.setAttribute("aria-label", `指導医の信頼 ${G.trust}`);
+  if (delta && !reduceMotion){ el.classList.remove("up", "down"); void el.offsetWidth; el.classList.add(delta > 0 ? "up" : "down"); }
+}
+function renderCombo(popIt){
+  const el = $("#combo");
+  if (G.combo >= 2){
+    el.textContent = `${G.combo}連続`;
+    el.classList.add("on");
+    if (popIt && !reduceMotion){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  } else { el.classList.remove("on", "pop"); el.textContent = ""; }
+}
+
+/* ---------- 会話 ---------- */
+function talkHTML(who, text, extra = ""){
+  if (who === "narr") return `<p class="narr">${text}</p>`;
+  const c = CAST[who];
+  return `<div class="talk${who === "me" ? " me" : ""}" style="--c:${c.color}">
+    <span class="avatar" aria-hidden="true">${c.mark}</span>
+    <div class="bubble"><p class="who">${c.name}${c.role ? `<small>${c.role}</small>` : ""}${extra}</p><p class="say">${text}</p></div>
+  </div>`;
+}
+let typing = null;
+function typeInto(el, text){
+  if (reduceMotion){ el.textContent = text; return; }
+  let i = 0; el.textContent = "";
+  const id = setInterval(() => {
+    i++; el.textContent = text.slice(0, i);
+    if (i >= text.length){ clearInterval(id); typing = null; }
+  }, TYPE_MS);
+  typing = { finish(){ clearInterval(id); el.textContent = text; typing = null; } };
+}
+
+/* ---------- 処方カード ---------- */
+function rxHTML(rx){
+  return `<figure class="rx" aria-label="処方内容">
+    <p class="rx-head"><span>Rp.</span><span>処方</span></p>
+    <ol>${rx.map(([name, size, use]) => `<li><b>${name}</b><span class="size">${size}</span><span class="use">${use}</span></li>`).join("")}</ol>
+  </figure>`;
+}
+/* ---------- 検査値の表 ---------- */
+function labsHTML(labs){
+  return `<figure class="labcard"><figcaption>検査</figcaption>
+    <table class="fl-tab"><tbody>${labs.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>
+  </figure>`;
+}
+function keyHTML(q){
+  if (!q.keypoints) return "";
+  return `<div class="keypts"><h3>キーポイント</h3><ul>${q.keypoints.map(k => `<li>${k}</li>`).join("")}</ul></div>`;
+}
+
+/* ---------- タイトル画面 ---------- */
+function renderTitle(){
+  hud.hidden = true;
+  const bs = +store.get(BEST.story) || 0, bc = +store.get(BEST.challenge) || 0;
+  app.innerHTML = `<section class="title">
+    <h1>副作用を<br>見抜け!!!</h1>
+    ${motifHTML()}
+    <p class="sub">全${QUESTIONS.length}問。抗癌薬、医療用麻薬、ステロイド、抗結核薬、そして薬剤性肺障害。国家試験によく出る薬の副作用を、①②③とまとめて覚えます。</p>
+    <div class="mode">
+      <h2>ストーリーモード</h2>
+      <p>服紗先生と一日、化学療法室から結核病棟まで、薬の副作用の相談を5つの章で回ります。結末は信頼度で変わります。</p>
+      ${bs ? `<p class="best">自己ベスト <b>${bs.toLocaleString()}</b> 点</p>` : ""}
+      <button class="primary" id="go-story" type="button">ストーリーを始める</button>
+    </div>
+    <div class="mode">
+      <h2>チャレンジモード</h2>
+      <p>ランダムに出題。ライフは${LIVES_MAX}つで、${HEAL_EVERY}連続正解で1つ回復します。</p>
+      ${bc ? `<p class="best">自己ベスト <b>${bc.toLocaleString()}</b> 点</p>` : ""}
+      <button class="ghost" id="go-challenge" type="button">チャレンジを始める</button>
+    </div>
+    <div class="common">
+      <p>どちらのモードも、連続正解でコンボ倍率が上がり（最大×${COMBO_MAX.toFixed(1)}）、速く答えるほどスピードボーナス（最大+${SPEED_MAX}点）が付きます。</p>
+      <p>ランク：${RANKS.map(r => r[1]).join(" ＞ ")}</p>
+    </div>
+    <button class="ghost" id="mute2" type="button"></button>
+  </section>`;
+  setMuteLabel();
+  $("#mute2").addEventListener("click", toggleMute);
+  $("#go-story").addEventListener("click", () => { audio(); SFX.tap(); newGame("story"); });
+  $("#go-challenge").addEventListener("click", () => { audio(); SFX.tap(); newGame("challenge"); });
+}
+
+/* ---------- 進行 ---------- */
+function buildStory(){
+  const seq = [];
+  STORY.forEach(ch => { seq.push({ t: "chapter", ch }); ch.scenes.forEach(s => seq.push(s)); });
+  seq.push({ t: "ending" });
+  return seq;
+}
+
+function newGame(mode){
+  const story = mode === "story";
+  const seq = story ? buildStory() : shuffle(QUESTIONS.map(q => q.id)).map(id => ({ t: "q", id }));
+  G = { mode, seq, pos: 0, qi: 0, qTotal: seq.filter(s => s.t === "q").length,
+        lives: LIVES_MAX, trust: TRUST_START, score: 0, combo: 0, maxCombo: 0, correct: 0, missed: [],
+        answered: false, t0: 0, raf: 0, limit: 30, bonus: SPEED_MAX, rankIdx: 0, ending: null };
+  hud.hidden = false;
+  G.log = []; G.startedAt = Date.now();
+  $("#lives").hidden = story; $("#trust").hidden = !story;
+  $("#score").textContent = "0";
+  renderLives(); renderTrust(0); renderCombo(false); setMuteLabel();
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function renderStep(){
+  const s = G.seq[G.pos];
+  if (!s) return renderResult();
+  if (s.t === "chapter") return renderChapter(s.ch);
+  if (s.t === "talk") return renderTalk(s);
+  if (s.t === "q") return renderQ(s);
+  if (s.t === "ending"){
+    const e = ENDINGS.find(x => G.trust >= x.min);
+    G.ending = e.name;
+    G.seq.splice(G.pos, 1, { t: "chapter", ch: EPILOGUE }, { t: "talk", lines: e.lines });
+    return renderStep();
+  }
+}
+function advance(){ G.pos++; renderStep(); toTop(); }
+
+function renderChapter(ch){
+  app.innerHTML = `<section class="chapter">
+    <p class="day">${ch.day}</p>
+    <h2>${ch.title}</h2>
+    <p class="place">${ch.place}</p>
+    ${motifHTML()}
+    <button class="primary" id="go" type="button">はじめる</button>
+  </section>`;
+  SFX.chapter();
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
+function renderTalk(step){
+  const nextStep = G.seq[G.pos + 1];
+  const finalLabel = !nextStep ? "結果を見る" : nextStep.t === "q" ? "診察する" : "次へ";
+  app.innerHTML = `<section class="scene" id="scene"><div class="log" id="log" aria-live="polite"></div><button class="primary" id="adv" type="button">次へ</button></section>`;
+  let n = 0;
+  const btn = $("#adv"), log = $("#log");
+  const show = () => {
+    const [who, text] = step.lines[n++];
+    log.insertAdjacentHTML("beforeend", talkHTML(who, ""));
+    const el = log.lastElementChild;
+    typeInto(who === "narr" ? el : el.querySelector(".say"), text);
+    if (n >= step.lines.length) btn.textContent = finalLabel;
+    setTimeout(() => btn.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 30);
+  };
+  $("#scene").addEventListener("click", () => {
+    if (typing){ typing.finish(); return; }
+    if (n < step.lines.length){ show(); return; }
+    SFX.tap(); advance();
+  });
+  show();
+}
+
+function vitalsHTML(v){
+  return `<div class="monitor">${v.map(([k, val, u]) => `<div class="vital"><span class="k">${k}</span><span class="v">${val}${u ? `<small>${u}</small>` : ""}</span></div>`).join("")}</div>`;
+}
+
+function renderQ(step){
+  const q = QMAP[step.id];
+  const idx = q.options.map((_, i) => i);
+  const order = q.fixedOrder ? idx : shuffle(idx);
+  G.limit = q.timeLimit || 30;
+  app.innerHTML = `<section class="q" id="qcard" aria-labelledby="qtext">
+    <div class="qtop"><span class="qno">問 ${G.qi + 1} / ${G.qTotal}</span><span class="chip">${q.category}</span><span class="bonus" id="bonus">ボーナス +${SPEED_MAX}</span></div>
+    <div class="gauge" aria-hidden="true"><div class="gauge-fill" id="gauge"></div></div>
+    ${q.case ? `<p class="story">${q.case}</p>` : ""}
+    ${q.vitals ? vitalsHTML(q.vitals) : ""}
+    ${q.rx ? rxHTML(q.rx) : ""}${q.labs ? labsHTML(q.labs) : ""}
+    <h2 class="qtext" id="qtext">${q.question}</h2>
+    <ul class="opts">${order.map((oi, k) => `<li><button class="opt" type="button" data-oi="${oi}"><span class="key" aria-hidden="true">${KEYS[k]}</span><span class="txt">${q.options[oi].text}</span></button></li>`).join("")}</ul>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  app.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(step, +b.dataset.oi, b)));
+  startTimer();
+}
+
+function startTimer(){
+  G.t0 = performance.now(); G.bonus = SPEED_MAX;
+  const fill = $("#gauge"), lab = $("#bonus");
+  const tick = now => {
+    if (G.answered) return;
+    const frac = Math.max(0, 1 - (now - G.t0) / 1000 / G.limit);
+    fill.style.transform = `scaleX(${frac})`;
+    fill.classList.toggle("low", frac < 0.3);
+    const b = Math.round(SPEED_MAX * frac);
+    if (b !== G.bonus){ G.bonus = b; lab.textContent = b > 0 ? `ボーナス +${b}` : "ボーナス終了"; }
+    if (frac > 0) G.raf = requestAnimationFrame(tick);
+  };
+  G.raf = requestAnimationFrame(tick);
+}
+
+function answer(step, oi, btn){
+  if (G.answered) return;
+  G.answered = true; cancelAnimationFrame(G.raf);
+  const story = G.mode === "story";
+  const q = QMAP[step.id];
+  const chosen = q.options[oi], ok = !!chosen.correct;
+  const bonus = Math.round(SPEED_MAX * Math.max(0, 1 - (performance.now() - G.t0) / 1000 / G.limit));
+  (G.log = G.log || []).push({ qid: q.id, category: q.category, question: q.question, ok, chosen: chosen.text, seconds: Math.round((performance.now() - G.t0) / 100) / 10 });
+
+  app.querySelectorAll(".opt").forEach(b => {
+    const o = q.options[+b.dataset.oi]; b.disabled = true;
+    if (o.correct){ b.classList.add("is-correct"); b.insertAdjacentHTML("beforeend", '<span class="tag">正解</span>'); }
+    else if (b === btn){ b.classList.add("is-wrong"); b.insertAdjacentHTML("beforeend", '<span class="tag">あなたの回答</span>'); }
+    else b.classList.add("is-dim");
+  });
+
+  const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let head = "", events = [];
+  if (ok){
+    G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo); G.correct++;
+    const mult = multOf(G.combo), gained = Math.round((BASE + bonus) * mult), prev = G.score;
+    G.score += gained;
+    animateNumber($("#score"), prev, G.score, 500);
+    burst(cx, cy); floatText(`+${gained}`, cx, r.top); SFX.correct(G.combo);
+    let healed = false;
+    if (story){ G.trust = Math.min(100, G.trust + TRUST_UP); renderTrust(1); }
+    else if (G.combo % HEAL_EVERY === 0 && G.lives < LIVES_MAX){ G.lives++; healed = true; events.push(["heal", `${G.combo}連続正解！ ライフ回復`]); }
+    const ri = rankIndex(G.score);
+    if (ri > G.rankIdx){ G.rankIdx = ri; events.push(["rank", `ランクアップ！ ${RANKS[ri][1]}`]); }
+    if (!story) renderLives(healed ? "gain" : null);
+    renderCombo(true);
+    const multTxt = mult > 1 ? ` ×${multLabel(mult)}` : "";
+    head = `<p class="fb-head ok"><span>${G.combo >= 2 ? `正解！ ${G.combo}連続` : "正解！"}</span><span>+${gained}点</span><span class="calc">（基本${BASE} + スピード${bonus}）${multTxt}</span></p>`;
+  } else {
+    G.combo = 0; G.missed.push({ q, chosen: oi });
+    SFX.wrong();
+    const card = $("#qcard");
+    if (!reduceMotion){ card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake"); }
+    if (story){ G.trust = Math.max(0, G.trust - TRUST_DOWN); renderTrust(-1); }
+    else { G.lives--; renderLives("lost"); }
+    renderCombo(false);
+    head = `<p class="fb-head ng"><span>不正解</span></p>`;
+  }
+  if (events.length) setTimeout(() => events.forEach(([k, m]) => toast(k, m)), 380);
+
+  const react = story && step.react
+    ? talkHTML(step.who || LEAD, ok ? step.react.ok : step.react.ng,
+        `<span class="dtag ${ok ? "ok" : "ng"}">信頼 ${ok ? "+" + TRUST_UP : "−" + TRUST_DOWN}</span>`)
+    : "";
+  const over = !story && G.lives <= 0;
+  const lastQ = G.qi === G.qTotal - 1;
+  const label = story ? "次へ" : (over || lastQ ? "結果を見る" : "次の問題へ");
+  const fb = $("#fb");
+  fb.innerHTML = `${head}
+    ${react}
+    <p>${chosen.why}</p>
+    ${ok ? "" : `<p class="right">正解：${correctText(q)}</p>`}
+    ${over ? `<p class="over">ライフがなくなりました</p>` : ""}
+    <div class="explain"><h3>解説</h3><p>${q.explanation}</p></div>
+    ${keyHTML(q)}
+    <button class="primary" id="next" type="button">${label}</button>`;
+  fb.classList.add("show");
+  $("#next").addEventListener("click", () => {
+    SFX.tap(); G.qi++; G.answered = false;
+    if (over){ renderResult(); toTop(); } else advance();
+  });
+  setTimeout(() => fb.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" }), 60);
+}
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  hud.hidden = true;
+  const story = G.mode === "story";
+  const cleared = story || G.lives > 0;
+  const key = BEST[G.mode];
+  const best = +store.get(key) || 0;
+  const isBest = G.score > best;
+  if (isBest) store.set(key, String(G.score));
+  const ri = rankIndex(G.score), next = RANKS[ri + 1];
+  const review = G.missed.length
+    ? G.missed.map(({ q, chosen }) => `<details class="review"><summary><span class="chip">${q.category}</span><span>${q.question}</span></summary>
+        <div class="body">${q.case ? `<p>${q.case}</p>` : ""}<p>あなたの回答：${q.options[chosen].text}</p><p class="right">正解：${correctText(q)}</p><p>${q.explanation}</p>${keyHTML(q)}</div></details>`).join("")
+    : `<p class="empty-note">間違えた問題はありません。</p>`;
+  const verdict = story ? `<p class="verdict ok">ストーリー完了</p><p class="ending">エンディング「${G.ending}」</p>`
+                        : `<p class="verdict ${cleared ? "ok" : "ng"}">${cleared ? "全問クリア" : "ゲームオーバー"}</p>`;
+  app.innerHTML = `<section class="result">
+    ${verdict}
+    <p class="final"><span class="big" id="final">0</span><span class="of">点</span></p>
+    ${isBest ? `<p class="newbest">自己ベスト更新</p>` : ""}
+    <p class="rank">ランク<b>${RANKS[ri][1]}</b></p>
+    ${next ? `<p class="nextrank">「${next[1]}」まであと${(next[0] - G.score).toLocaleString()}点</p>` : ""}
+    <dl class="stats${story ? " four" : ""}">
+      <div><dt>正解</dt><dd>${G.correct} / ${G.qi}</dd></div>
+      <div><dt>最大コンボ</dt><dd>${G.maxCombo}</dd></div>
+      ${story ? `<div><dt>指導医の信頼</dt><dd>${G.trust}</dd></div>` : ""}
+      <div><dt>自己ベスト</dt><dd>${Math.max(best, G.score).toLocaleString()}</dd></div>
+    </dl>
+    <div id="fb-mount"></div>
+    <h2>間違えた問題の復習</h2>
+    ${review}
+    <button class="primary" id="again" type="button">もう一度挑戦</button>
+    <button class="ghost" id="home" type="button">タイトルに戻る</button>
+  </section>`;
+  animateNumber($("#final"), 0, G.score, 900);
+  if (window.Feedback) Feedback.mount($("#fb-mount"), {
+    caseId: "drug-ae-quiz", caseTitle: "副作用を見抜け!!!",
+    mode: story ? "ストーリー" : "チャレンジ",
+    score: G.score, correct: G.correct, total: G.qi, maxCombo: G.maxCombo,
+    meters: story ? `指導医の信頼 ${G.trust}` : `ライフ残り ${G.lives}`,
+    ending: story ? G.ending : (cleared ? "全問クリア" : "ゲームオーバー"),
+    events: "", discharge: "",
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+    answers: G.log || []
+  });
+  cleared ? SFX.clear() : SFX.over();
+  $("#again").addEventListener("click", () => { SFX.tap(); newGame(G.mode); });
+  $("#home").addEventListener("click", () => { SFX.tap(); renderTitle(); window.scrollTo(0, 0); });
+}
+
+setMuteLabel();
+renderTitle();
+</script>
+<script src="feedback.js"></script>
+</body>
+</html>
