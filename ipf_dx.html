@@ -349,6 +349,18 @@ button{touch-action:manipulation}
 .dcard.big{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface);margin:0}
 .dcard.big summary{color:var(--ink);font-size:.95rem}
 .dcard.big .cst{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:500}
+/* 略語の整理 */
+.glead{font-size:.92rem;background:var(--violet-soft);border-radius:10px;padding:10px 12px;margin:0 0 6px}
+.gh{display:flex;align-items:center;gap:8px;font-size:1rem;margin:16px 0 6px}
+.gk{flex:none;font-size:.7rem;font-weight:700;padding:0 8px;border-radius:999px;border:1.5px solid currentColor}
+.gk.病名{color:var(--violet)} .gk.パターン{color:var(--safranin)} .gk.所見{color:var(--ok)} .gk.検査{color:var(--muted)}
+.glist{margin:0;display:grid;gap:0}
+.glist div{border-top:1px solid var(--line);padding:6px 0}
+.glist dt{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+.glist dt b{font-variant-numeric:tabular-nums}
+.glist dt span{font-weight:700;font-size:.92rem}
+.glist dd{margin:0;font-size:.88rem;color:var(--muted);line-height:1.6}
+.dcard.gloss .glead{margin-top:8px}
 /* キーポイント */
 .kp{background:var(--violet-soft);border-radius:10px;padding:10px 14px;margin-top:12px}
 .kp h3{font-size:.92rem;color:var(--violet);margin:0 0 4px}
@@ -425,7 +437,7 @@ const DX = [
     "60歳以上の男性、喫煙者に多い",
     "症状と所見：①乾いた咳、②労作時の息切れ、③fine crackles、④ばち指",
     "HRCT：胸膜直下・肺底部に優位な蜂巣肺と牽引性気管支拡張（UIPパターン）",
-    "治療：抗線維化薬（ピルフェニドン、ニンテダニブ）。ステロイド単独は行わない",
+    "治療：抗線維化薬（ピルフェニドン、ニンテダニブ、ネランドミラスト）。ステロイド単独は行わない",
     "注意する合併症：①急性増悪、②肺癌" ]},
   { id: "ctd", name: "膠原病に伴う間質性肺疾患", short: "膠原病", points: [
     "多い膠原病：①関節リウマチ、②全身性強皮症、③皮膚筋炎・多発性筋炎、④シェーグレン症候群",
@@ -461,6 +473,48 @@ const DX = [
     "HRCT：小葉間隔壁や気管支血管束の、結節状（数珠状）の肥厚",
     "息切れが週から月の単位で比較的急に進む。予後は不良" ]}
 ];
+/* =========================================================
+   略語の整理（最後の鑑別ボードの次に表示）
+   kind：病名 / パターン / 所見 / 検査
+   ========================================================= */
+const GLOSSARY = {
+  lead: "間質性肺炎の略語には、病名、画像と病理の「パターン」、画像所見、検査が混ざっています。特に「IPF」は病名、「UIP」はパターンの名前です。UIPパターンは、IPF以外（膠原病、線維性過敏性肺炎、石綿肺など）でもみられます。",
+  groups: [
+    { title: "病名・分類", kind: "病名", items: [
+      ["ILD", "間質性肺疾患", "肺の間質に病変が起こる病気の大きなくくり。間質性肺炎を含む"],
+      ["IIPs", "特発性間質性肺炎", "原因の分からない間質性肺炎の総称。指定難病"],
+      ["IPF", "特発性肺線維症", "IIPsの中で最も多い病名。画像や病理はUIPパターン"],
+      ["CTD-ILD", "膠原病に伴う間質性肺疾患", "関節リウマチ、強皮症、筋炎などに伴う"],
+      ["HP", "過敏性肺炎", "抗原の吸入によるアレルギー性の肺炎。線維化したものを線維性HPと呼ぶ"],
+      ["PPF", "進行性肺線維症", "IPF以外の間質性肺疾患で、線維化が進んでいく状態"],
+      ["AE", "急性増悪", "1か月以内に急に悪化し、新しいすりガラス影が出る状態"]
+    ]},
+    { title: "画像と病理のパターン（病名ではない）", kind: "パターン", items: [
+      ["UIP", "通常型間質性肺炎", "胸膜直下・肺底部に優位な蜂巣肺。IPFの典型"],
+      ["NSIP", "非特異性間質性肺炎", "すりガラス影が主体で、均一。膠原病で多い"],
+      ["OP", "器質化肺炎", "斑状の浸潤影。場所が移り変わる。ステロイドがよく効く"],
+      ["DAD", "びまん性肺胞傷害", "急性増悪やARDSでみられる、急性の肺胞の傷害"]
+    ]},
+    { title: "画像所見", kind: "所見", items: [
+      ["HRCT", "高分解能CT", "薄い断面で、肺の細かい構造を見るCT"],
+      ["GGO", "すりガラス影", "下の血管が透けて見える、淡い陰影"],
+      ["", "蜂巣肺", "壁の厚い小さな嚢胞が、胸膜直下に層をなして並ぶ。UIPの決め手"],
+      ["", "牽引性気管支拡張", "まわりの線維化に引っぱられて、気管支が広がった所見"],
+      ["BHL", "両側肺門リンパ節腫脹", "サルコイドーシスで典型的"]
+    ]},
+    { title: "検査・手技", kind: "検査", items: [
+      ["KL-6・SP-D", "血清マーカー", "間質性肺炎の診断と活動性の目安"],
+      ["%VC・FVC", "肺活量・努力肺活量", "拘束性障害で低下。経過を追う指標"],
+      ["DLco", "肺拡散能", "ガス交換の障害で低下。間質性肺炎で早くから下がる"],
+      ["6MWT", "6分間歩行試験", "歩行時のSpO₂低下と歩行距離を見る"],
+      ["BAL", "気管支肺胞洗浄", "リンパ球の増加は過敏性肺炎やサルコイドーシスを示唆"],
+      ["TBLB", "経気管支肺生検", "気管支鏡で小さな組織をとる"],
+      ["TBLC", "経気管支クライオ肺生検", "凍らせて、TBLBより大きな組織をとる"],
+      ["SLB", "外科的肺生検", "胸腔鏡で大きな組織をとる。侵襲が大きい"],
+      ["MDD", "多分野による集学的検討", "臨床医、放射線科医、病理医が話し合って診断する"]
+    ]}
+  ]
+};
 const STATE_LABEL = { cand: "候補", up: "可能性が高い", low: "可能性が低い", out: "除外", dx: "診断" };
 
 /* =========================================================
@@ -634,16 +688,16 @@ const QUESTIONS = [
   },
   {
     id: "mdd", category: "診断", timeLimit: 45,
-    case: "原因となる曝露、薬、膠原病は見つからない。HRCTはUIPパターンだった。",
-    question: "次の対応として最も適切なのは？",
+    case: "問診と血液検査では、原因となる曝露、薬、膠原病は見つからない。HRCTはUIPパターンだった。集学的検討（MDD）では「IPFの可能性が高い」となった。",
+    question: "ここからの診断の進め方として、最も適切なのは？",
     options: [
-      { text: "生検はせず、集学的検討（MDD）でIPFと診断する", correct: true, fx: { conf: 10 }, why: "原因が見つからず、HRCTでUIPパターンなら、多くは生検をしなくてもIPFと診断できます。" },
-      { text: "診断を確実にするため、全例で外科的肺生検を行う", fx: { burden: 30, flag: "bx" }, why: "この症例では生検は必要ありません。外科的肺生検は、急性増悪の引き金になることもあります。" },
-      { text: "気管支鏡で肺生検を行い、UIPと確かめてから診断する", fx: { burden: 15 }, why: "経気管支肺生検の小さな組織では、UIPの判定は難しいことが多いです。この症例では必要ありません。" },
-      { text: "診断がつかないので、1年後にCTを撮り直してから考える", why: "必要な情報はそろっています。診断と治療が遅れてしまいます。" }
+      { text: "多くは生検なしで診断できるが、他疾患が残れば気管支鏡で除外する", correct: true, fx: { conf: 10 }, why: "原因がなくUIPパターンなら、多くは生検なしでIPFと診断できます。ただし線維性過敏性肺炎や膠原病などが否定しきれなければ、気管支鏡（BAL、経気管支肺生検、クライオ生検）で除外を進めます。" },
+      { text: "UIPパターンなので他疾患はなく、気管支鏡などの追加の検査はいらない", why: "UIPパターンは、線維性過敏性肺炎や膠原病、石綿肺などでもみられます。他疾患が否定しきれないときは、気管支鏡での除外を考えます。" },
+      { text: "診断を確実にするため、全例で外科的肺生検まで行うべきである", fx: { burden: 30, flag: "bx" }, why: "外科的肺生検は侵襲が大きく、急性増悪の引き金になることもあります。気管支鏡などでも診断の確信度が上がらないときに考えます。" },
+      { text: "診断がつかないので、1年後にCTを撮り直してから考える", why: "必要な情報はそろいつつあります。診断と治療が遅れてしまいます。" }
     ],
-    explanation: "IPFの診断は、①原因の分かる間質性肺疾患を除外し、②HRCTでUIPパターンを確認する、の2段階です。画像で判断が難しいときに、気管支鏡や外科的肺生検を考えます。",
-    keypoints: ["IPFの診断：①原因の分かる間質性肺疾患の除外、②HRCTのUIPパターン", "HRCTがUIPパターンなら、多くは生検なしで診断できる", "画像が典型的でないときは、気管支鏡や外科的肺生検を考える", "日本では、指定難病の基準にもとづいて診断する"]
+    explanation: "IPFの診断は、①原因の分かる間質性肺疾患を除外し、②HRCTでUIPパターンを確認する、の2段階です。UIPパターンでも、膠原病や線維性過敏性肺炎など他疾患が否定しきれないときは、気管支鏡で除外を進めます。",
+    keypoints: ["IPFの診断：①原因の分かる間質性肺疾患の除外、②HRCTのUIPパターン", "HRCTがUIPパターンで原因がなければ、多くは生検なしで診断できる", "他疾患が否定しきれないとき、画像が典型的でないとき：気管支鏡（BAL、経気管支肺生検、クライオ生検）を考える", "BALのリンパ球増加：過敏性肺炎、サルコイドーシス（CD4/CD8比の上昇）を考える", "外科的肺生検は、それでも診断の確信度が上がらないときに考える"]
   },
 
   /* ----- 第6章 診断の説明 ----- */
@@ -651,13 +705,13 @@ const QUESTIONS = [
     id: "tx", category: "治療", timeLimit: 40,
     question: "IPFの慢性期の治療として、最も適切なのは？",
     options: [
-      { text: "抗線維化薬（ピルフェニドンかニンテダニブ）を始める", correct: true, why: "抗線維化薬は、肺活量の低下を遅らせます。" },
+      { text: "抗線維化薬を始めて、肺活量の低下を遅らせる", correct: true, why: "抗線維化薬は、IPFの肺活量の低下を遅らせます。現在は3種類から選べます。" },
       { text: "ステロイドを単独で使い、炎症を抑えて線維化を食い止める", fx: { burden: 10 }, why: "IPFでは、ステロイド単独療法は行わないよう推奨されています。副作用が増えるだけになります。" },
       { text: "ステロイドと免疫抑制薬を一緒に使い、進行を抑える", fx: { burden: 10 }, why: "IPFでは、ステロイドと免疫抑制薬の併用も行わないよう推奨されています。" },
       { text: "症状が軽いので治療はせず、1年後に再診してもらう", why: "IPFは進行する病気です。治療を考え、数か月ごとに呼吸機能を確かめます。" }
     ],
-    explanation: "抗線維化薬は、IPFを治す薬ではなく、進行を遅らせる薬です。副作用を管理しながら続けます。",
-    keypoints: ["抗線維化薬：①ピルフェニドン、②ニンテダニブ", "ピルフェニドンの副作用：光線過敏症、食欲不振", "ニンテダニブの副作用：下痢、肝障害", "ステロイド単独、ステロイドと免疫抑制薬の併用は行わない"]
+    explanation: "抗線維化薬は、IPFを治す薬ではなく、進行を遅らせる薬です。ピルフェニドン、ニンテダニブ、ネランドミラストの3種類があり、副作用や生活に合わせて選び、副作用を管理しながら続けます。",
+    keypoints: ["抗線維化薬：①ピルフェニドン、②ニンテダニブ、③ネランドミラスト（ジャスケイド®、PDE4B阻害薬。2026年に発売）", "ピルフェニドンの副作用：光線過敏症、食欲不振", "ニンテダニブの副作用：下痢、肝障害", "ネランドミラストの副作用：下痢、体重減少", "ステロイド単独、ステロイドと免疫抑制薬の併用は行わない"]
   },
   {
     id: "complication", category: "合併症", timeLimit: 40,
@@ -759,12 +813,19 @@ const STORY = [
       ["lymph", "out", "小葉間隔壁の結節状の肥厚がなく、経過も1年とゆっくり"],
       ["ipf", "up", "HRCTでUIPパターン"]
     ]},
-    { t: "q", id: "mdd", react: { ok: "その通り。必要な検査を、必要なだけ。それも診断の力だ。", ng: "生検は、診断を確かにする一方で、危険も伴うんだ。" }},
+    { t: "q", id: "mdd", react: { ok: "その通り。必要な検査を、必要なだけ。それも診断の力だ。", ng: "UIPパターンでも、ほかの病気が隠れていることがある。かといって、全員に外科的肺生検が必要なわけでもない。" }},
+    { t: "talk", lines: [
+      ["kikawa", "曝露がはっきりしなくても、慢性の過敏性肺炎が隠れていることがある。佐伯さんには、気管支鏡で気管支肺胞洗浄（BAL）をしておこう。"],
+      ["narr", "BALの結果：リンパ球 8%、好中球 6%。CD4/CD8比の上昇はなく、悪性細胞や病原体もみられなかった。"],
+      ["kikawa", "リンパ球は増えていない。過敏性肺炎やサルコイドーシスらしさはないね。この結果を持って、もう一度MDDで話し合おう。"]
+    ]},
     { t: "board", from: "mdd", changes: [
       ["ctd", "out", "集学的検討でも、膠原病を示す所見はない"],
-      ["hp", "out", "集学的検討でも、曝露はなく、画像も過敏性肺炎らしくない"],
+      ["hp", "out", "曝露がなく、BALでもリンパ球の増加がない"],
       ["ipf", "dx", "原因の分かる間質性肺疾患が除外され、HRCTはUIPパターン"]
-    ]}
+    ]},
+    { t: "talk", lines: [["kikawa", "診断がついた。最後に、今日出てきた略語を整理しておこう。病名とパターンの名前が混ざりやすいところだ。"]] },
+    { t: "glossary" }
   ]},
   { day: "1か月後", place: "診察室", title: "名前のついた影", scenes: [
     { t: "talk", lines: [
@@ -782,8 +843,8 @@ const STORY = [
 const EPILOGUE = { day: "エピローグ", place: "医局", title: "鑑別ボードを片づけて" };
 const ENDINGS = [
   { name: "急いだ生検", when: g => g.flags.bx, lines: [
-    ["narr", "生検の結果もUIPだった。だが佐伯さんは、術後しばらく息切れが強く、入院が延びた。"],
-    ["kikawa", "HRCTがUIPパターンで、原因が見つからなければ、多くは生検なしで診断できる。"],
+    ["narr", "外科的肺生検の結果もUIPだった。だが佐伯さんは、術後しばらく息切れが強く、入院が延びた。"],
+    ["kikawa", "HRCTがUIPパターンで原因が見つからなければ、多くは外科的肺生検なしで診断できる。迷うときも、まずは気管支鏡だ。"],
     ["kikawa", "検査は、患者さんの負担と引き換えだ。その検査で何が変わるのかを、いつも考えよう。"]
   ]},
   { name: "見落とした曝露", when: g => g.flags.noExpo, lines: [
@@ -792,7 +853,7 @@ const ENDINGS = [
     ["kikawa", "原因の分かる病気なら、原因を断つことが治療になる。問診は、いちばん安い精密検査だ。"]
   ]},
   { name: "確かな診断", when: g => g.conf >= 75 && g.burden <= 30, lines: [
-    ["kikawa", "見事だった。問診、診察、検査。一つずつ鑑別を絞り込んで、生検なしで診断にたどり着いた。"],
+    ["kikawa", "見事だった。問診、診察、検査。一つずつ鑑別を絞り込んで、外科的肺生検をせずに診断にたどり着いた。"],
     ["kikawa", "外したカードの中身も、試験ではよく問われる。全部、自分のものにしておこう。"],
     ["narr", "ボードに残った一枚を、木川先生は静かに指でたたいた。"]
   ]},
@@ -1092,6 +1153,21 @@ function renderBoard(step){
   $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
 }
 
+/* ---------- 略語の整理 ---------- */
+function glossaryBody(){
+  return GLOSSARY.groups.map(g => `<h3 class="gh"><span class="gk ${g.kind}">${g.kind}</span>${g.title}</h3>
+    <dl class="glist">${g.items.map(([ab, ja, note]) => `<div><dt>${ab ? `<b>${ab}</b>` : ""}<span>${ja}</span></dt><dd>${note}</dd></div>`).join("")}</dl>`).join("");
+}
+function renderGlossary(){
+  app.innerHTML = `<section class="board">
+    <h2 class="rlabel">略語の整理</h2>
+    <p class="glead">${GLOSSARY.lead}</p>
+    ${glossaryBody()}
+    <button class="primary" id="go" type="button">${labelFor(peekNext())}</button>
+  </section>`;
+  $("#go").addEventListener("click", () => { SFX.tap(); advance(); });
+}
+
 /* ---------- 会話 ---------- */
 function talkHTML(who, text, extra = ""){
   if (who === "narr") return `<p class="narr">${text}</p>`;
@@ -1144,7 +1220,7 @@ function buildSeq(){
 }
 function qTotal(){ return G.seq.filter(s => s.t === "q").length; }
 function peekNext(){ return G.seq[G.pos + 1] || null; }
-function labelFor(next){ return !next ? "結果を見る" : next.t === "q" ? "判断する" : next.t === "round" ? "外来カードを見る" : next.t === "board" ? "鑑別ボードを見る" : "次へ"; }
+function labelFor(next){ return !next ? "結果を見る" : next.t === "q" ? "判断する" : next.t === "round" ? "外来カードを見る" : next.t === "board" ? "鑑別ボードを見る" : next.t === "glossary" ? "略語を整理する" : "次へ"; }
 function lineText(t){ return typeof t === "function" ? t(G) : String(t); }
 
 function newGame(){
@@ -1168,6 +1244,7 @@ function renderStep(){
   if (s.t === "talk") return renderTalk(s);
   if (s.t === "round") return renderRound(s);
   if (s.t === "board") return renderBoard(s);
+  if (s.t === "glossary") return renderGlossary();
   if (s.t === "q") return renderQ(s);
   if (s.t === "ending"){
     const e = ENDINGS.find(x => x.when(G));
@@ -1362,6 +1439,7 @@ function renderResult(){
     <h2>疾患カード</h2>
     <p class="nextrank">鑑別に挙げた8つの疾患の、国試のキーポイントです。印は、その疾患を外したときの問題に正解した証です。</p>
     <div class="cards">${cards}</div>
+    <details class="dcard big gloss"><summary><span class="bname">略語の整理</span></summary><p class="glead">${GLOSSARY.lead}</p>${glossaryBody()}</details>
     <div id="fb-mount"></div>
     <h2>間違えた問題の復習</h2>
     ${review}
