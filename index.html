@@ -116,6 +116,7 @@ h1{font-family:var(--serif);font-weight:600;font-size:clamp(2rem,8.5vw,2.8rem);l
   <ul class="notes">
     <li>すべて学習用の架空症例です。実際の診療では、最新のガイドラインと施設の方針を確認してください。</li>
     <li>得点や自己ベストは、お使いの端末のブラウザにだけ保存されます。</li>
+    <li>アクセス数を、Cookieを使わずに匿名で数えています（GoatCounter）。</li>
     <li>効果音が出ます。音を出したくない場合は、各症例の画面で効果音をオフにできます。</li>
   </ul>
 </main>
@@ -237,5 +238,6 @@ window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); })
 if (!location.hash && KINDS[ss.get()]) history.replaceState(null, "", "#" + ss.get());
 route();
 </script>
+<script data-goatcounter="https://ryukyu1nai.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
